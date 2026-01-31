@@ -2053,8 +2053,8 @@ describe('validate — card.styles integration', () => {
 // P2-8. Review feedback tests
 // ===========================================================================
 
-describe('validateLimits — absent state skip', () => {
-  it('does not error when card.state is absent and loop references state', () => {
+describe('validateLimits — loop source resolution policy', () => {
+  it('skips when card.state is absent (may be provided at runtime)', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
       views: {
@@ -2069,7 +2069,46 @@ describe('validateLimits — absent state skip', () => {
       },
     };
     const result = validate(card);
-    // Should pass validation — no LOOP_SOURCE_MISSING since state may come at runtime
+    expect(result.valid).toBe(true);
+  });
+
+  it('reports LOOP_SOURCE_MISSING for single-segment typo when state exists', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      state: { itmes: [1, 2, 3] },
+      views: {
+        Main: {
+          type: 'Box',
+          children: {
+            for: 'item',
+            in: '$items',
+            template: { type: 'Text', props: { content: 'hi' } },
+          },
+        },
+      },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('LOOP_SOURCE_MISSING');
+  });
+
+  it('skips dotted path when state exists but nested key is absent', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      state: { data: {} },
+      views: {
+        Main: {
+          type: 'Box',
+          children: {
+            for: 'item',
+            in: '$item.reactions',
+            template: { type: 'Text', props: { content: 'hi' } },
+          },
+        },
+      },
+    };
+    const result = validate(card);
+    // Dotted path → may be locals variable → skip
     expect(result.valid).toBe(true);
   });
 });

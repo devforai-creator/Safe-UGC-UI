@@ -301,9 +301,20 @@ export function validateLimits(
         } else {
           const source = resolveRefFromState(inValue, card.state);
           if (source === undefined) {
-            // Resolution failed (dotted path not found) — skip validation
-            // instead of reporting LOOP_SOURCE_MISSING, as the path may
-            // reference nested data that isn't present in static state.
+            // Single-segment path (e.g. "$items") must be a top-level state key.
+            // If missing, it's likely a typo → report error.
+            // Dotted paths (e.g. "$item.reactions") may reference nested/locals
+            // data not present in static state → skip.
+            const pathAfterDollar = inValue.slice(1);
+            if (!pathAfterDollar.includes('.')) {
+              errors.push(
+                createError(
+                  'LOOP_SOURCE_MISSING',
+                  `Loop source "${inValue}" not found in card state`,
+                  `${context.path}.children`,
+                ),
+              );
+            }
           } else if (!Array.isArray(source)) {
             errors.push(
               createError(

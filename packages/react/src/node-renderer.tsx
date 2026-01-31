@@ -390,10 +390,15 @@ function renderForLoop(
 ): ReactNode[] {
   // Resolve the source array from state (or locals)
   const source = resolveRef(loop.in, ctx.state, ctx.locals);
+  if (source === undefined) {
+    // Soft skip: source not found (may be provided at runtime or optional)
+    return [];
+  }
   if (!Array.isArray(source)) {
+    // Hard error: source exists but is not an array (type mismatch)
     ctx.onError?.([{
       code: 'RUNTIME_LOOP_SOURCE_INVALID',
-      message: `Loop source "${loop.in}" is not an array`,
+      message: `Loop source "${loop.in}" is not an array (got ${typeof source})`,
       path: `for(${loop.for} in ${loop.in})`,
     }]);
     return [];

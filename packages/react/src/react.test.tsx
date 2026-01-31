@@ -1164,7 +1164,7 @@ describe('Review feedback fixes', () => {
     );
   });
 
-  it('renderForLoop does not call onError when source is undefined (absent state)', () => {
+  it('renderForLoop soft-skips when source is undefined (no onError)', () => {
     const onError = vi.fn();
     const root = {
       type: 'Box',
@@ -1177,11 +1177,7 @@ describe('Review feedback fixes', () => {
     render(
       <>{renderTree(root, {}, {}, undefined, undefined, undefined, onError)}</>,
     );
-    // resolveRef for "$items" returns undefined → not an array → onError called
-    expect(onError).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ code: 'RUNTIME_LOOP_SOURCE_INVALID' }),
-      ]),
-    );
+    // resolveRef for "$items" returns undefined → soft skip, no error
+    expect(onError).not.toHaveBeenCalled();
   });
 });
