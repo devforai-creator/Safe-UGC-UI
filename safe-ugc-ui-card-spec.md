@@ -1,4 +1,4 @@
-# Safe UGC UI — Card JSON Specification (Phase 1)
+# Safe UGC UI — Card JSON Specification (Phase 2)
 
 You are generating a **Safe UGC UI card** — a JSON document that describes a UI layout rendered safely in a sandboxed environment. Follow this specification exactly.
 
@@ -12,6 +12,7 @@ A card is a JSON object with these top-level fields:
 {
   "meta": { "name": "my-card", "version": "1.0.0" },
   "state": { ... },
+  "styles": { ... },
   "views": {
     "Main": { ... }
   }
@@ -23,6 +24,7 @@ A card is a JSON object with these top-level fields:
 | `meta` | Yes | `name` (string) and `version` (string, e.g. `"1.0.0"`) |
 | `assets` | No | Manifest of local assets used by the card (see below) |
 | `state` | No | Key-value pairs for dynamic data binding |
+| `styles` | No | Named style definitions for reuse via `$style` (see Section 3.14) |
 | `views` | Yes | Named view definitions. Each value is a component tree (node). Must have at least one view. |
 
 ### Assets
@@ -40,19 +42,19 @@ The `assets` field declares which local assets the card references. Each value m
 
 **Rules:**
 - Every value must start with `@assets/`
-- No external URLs (`https://...`)
+- No external or inline URLs (`https://`, `http://`, `//`, `data:`, `javascript:` are all rejected)
 - No path traversal (`../`)
 - The actual image files are provided by the platform at render time
 
 ---
 
-## 2. Components (Phase 1)
+## 2. Components
 
-Five component types are available:
+Sixteen component types are available, organized into three categories.
 
 ### 2.1 Layout Components
 
-Layout components contain `children` (an array of child nodes).
+Layout components contain `children` — either an array of child nodes or a `for...in` loop object (see Section 4.5).
 
 #### Box
 General-purpose container. No default flex direction.
@@ -75,12 +77,26 @@ Vertical layout (like `flexDirection: column`). Children are laid out top-to-bot
 { "type": "Column", "style": { ... }, "children": [ ... ] }
 ```
 
+#### Stack
+Vertical stacking container with `flexDirection: column`. Supports `position: "absolute"` on its direct children, making it useful for overlays and layered layouts.
+
+```json
+{ "type": "Stack", "style": { ... }, "children": [ ... ] }
+```
+
+#### Grid
+CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to define the grid tracks (see Section 3.13).
+
+```json
+{ "type": "Grid", "style": { "gridTemplateColumns": "1fr 1fr 1fr" }, "children": [ ... ] }
+```
+
 **All layout components** share these fields:
 
 | Field | Required | Type |
 |-------|----------|------|
-| `type` | Yes | `"Box"` \| `"Row"` \| `"Column"` |
-| `children` | No | Array of child nodes |
+| `type` | Yes | `"Box"` \| `"Row"` \| `"Column"` \| `"Stack"` \| `"Grid"` |
+| `children` | No | Array of child nodes, or a `for...in` loop object |
 | `style` | No | Style object (see Section 3) |
 
 ### 2.2 Content Components
@@ -100,9 +116,7 @@ Displays text content.
 
 | Prop | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `content` | Yes | string | literal or $ref (Phase 1) |
-
-> **Phase 1 note:** `$expr` is not yet evaluated at runtime and will render as empty. Use literal strings or `$ref` for dynamic values. `$expr` will be supported in Phase 2.
+| `content` | Yes | string | literal or $ref |
 
 #### Image
 Displays an image from local assets only.
@@ -118,15 +132,137 @@ Displays an image from local assets only.
 | Prop | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `src` | Yes | AssetPath (`@assets/...`) | literal or $ref (no $expr) |
-| `alt` | No | string | literal or $ref (Phase 1) |
+| `alt` | No | string | literal or $ref |
 
-To control image dimensions, use `style.width` and `style.height` on the Image node.
+To control image dimensions, use `style.width` and `style.height` on the Image node. Do not use `props.width` or `props.height` — they exist in the schema but are ignored by the renderer.
 
 **Image src rules:**
 - Must start with `@assets/`
 - No external URLs — `https://`, `http://`, `//`, `data:`, `javascript:` are all forbidden
 - No path traversal (`../`)
 - `$expr` is forbidden for src (security)
+
+#### Avatar
+Circular image, typically used for profile pictures. Follows the same `@assets/` rules as Image.
+
+```json
+{
+  "type": "Avatar",
+  "props": { "src": "@assets/avatar.png", "size": 56 }
+}
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref (no $expr) |
+| `size` | No | length | literal or $ref |
+
+#### Icon
+Platform-provided icon. The icon name must be a static string — no dynamic binding allowed.
+
+```json
+{
+  "type": "Icon",
+  "props": { "name": "heart", "size": 24, "color": "#ff0066" }
+}
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `name` | Yes | string | static only (no $ref, no $expr) |
+| `size` | No | length | literal or $ref |
+| `color` | No | color | literal or $ref |
+
+#### Spacer
+Empty spacing element. Useful for adding fixed gaps or pushing siblings apart.
+
+```json
+{ "type": "Spacer", "props": { "size": 16 } }
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `size` | No | length | literal or $ref |
+
+#### Divider
+Horizontal line separator.
+
+```json
+{ "type": "Divider", "props": { "color": "#333", "thickness": 1 } }
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `color` | No | color | literal or $ref |
+| `thickness` | No | length | literal or $ref |
+
+#### ProgressBar
+Progress indicator, rendered as a filled bar.
+
+```json
+{
+  "type": "ProgressBar",
+  "props": { "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" }
+}
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `value` | Yes | number | literal or $ref |
+| `max` | Yes | number | literal or $ref |
+| `color` | No | color | literal or $ref |
+
+#### Badge
+Small label with a colored background. Good for status indicators, counts, or tags.
+
+```json
+{ "type": "Badge", "props": { "label": "NEW", "color": "#ff0066" } }
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `label` | Yes | string | literal or $ref |
+| `color` | No | color | literal or $ref |
+
+#### Chip
+Label with a border outline, similar to Badge but outlined rather than filled.
+
+```json
+{ "type": "Chip", "props": { "label": "Hacker", "color": "#00f0ff" } }
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `label` | Yes | string | literal or $ref |
+| `color` | No | color | literal or $ref |
+
+### 2.3 Interaction Components
+
+Interaction components have `props` and trigger callbacks.
+
+#### Button
+Triggers an action callback when pressed. The `action` string identifies which callback to invoke.
+
+```json
+{ "type": "Button", "props": { "label": "Accept", "action": "onAccept" } }
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `label` | Yes | string | literal or $ref |
+| `action` | Yes | string | static only |
+
+#### Toggle
+Boolean toggle switch that triggers a callback when flipped.
+
+```json
+{ "type": "Toggle", "props": { "value": { "$ref": "$darkMode" }, "onToggle": "onToggleDarkMode" } }
+```
+
+| Prop | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `value` | Yes | boolean | literal or $ref |
+| `onToggle` | Yes | string | static only |
 
 ---
 
@@ -186,8 +322,8 @@ All other style properties accept literal values or `$ref`.
 | Property | Values |
 |----------|--------|
 | `width`, `height` | number \| length string \| percentage string \| `"auto"` |
-| `minWidth`, `maxWidth` | number \| length string \| percentage string |
-| `minHeight`, `maxHeight` | number \| length string \| percentage string |
+| `minWidth`, `maxWidth` | number \| length string \| percentage string \| `"auto"` |
+| `minHeight`, `maxHeight` | number \| length string \| percentage string \| `"auto"` |
 
 Length values: bare number (treated as px), `"100px"`, `"50%"`, `"2em"`, `"1.5rem"`.
 
@@ -205,7 +341,7 @@ Length values: bare number (treated as px), `"100px"`, `"50%"`, `"2em"`, `"1.5re
 | Property | Values |
 |----------|--------|
 | `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft` | number or length string |
-| `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft` | number or length string |
+| `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft` | number or length string or `"auto"` |
 
 ### 3.4 Color Properties
 
@@ -258,10 +394,27 @@ Accepted color formats:
 | Property | Values | Constraints |
 |----------|--------|-------------|
 | `borderRadius` | number or length string | max 9999 |
+| `borderRadiusTopLeft` | number or length string | max 9999 |
+| `borderRadiusTopRight` | number or length string | max 9999 |
+| `borderRadiusBottomLeft` | number or length string | max 9999 |
+| `borderRadiusBottomRight` | number or length string | max 9999 |
 | `border` | BorderObject | — |
 | `borderTop`, `borderRight`, `borderBottom`, `borderLeft` | BorderObject | — |
 
 **BorderObject:** `{ "width": number, "style": "solid"|"dashed"|"dotted"|"none", "color": string }`
+
+**Directional borderRadius** lets you round individual corners:
+
+```json
+{
+  "borderRadiusTopLeft": 16,
+  "borderRadiusTopRight": 16,
+  "borderRadiusBottomLeft": 0,
+  "borderRadiusBottomRight": 0
+}
+```
+
+Each directional borderRadius has the same max 9999 constraint as `borderRadius`.
 
 ### 3.7 Shadow
 
@@ -318,16 +471,21 @@ Types: `"linear"` (requires `direction`) or `"radial"`.
 |----------|--------|-------------|
 | `opacity` | number | 0–1 |
 | `overflow` | `"visible"` \| `"hidden"` \| `"auto"` | see overflow rules below |
-| `position` | `"static"` \| `"relative"` | `"absolute"` only in Stack (not in Phase 1) |
+| `position` | `"static"` \| `"relative"` \| `"absolute"` | `"absolute"` is allowed inside Stack only |
+| `top`, `right`, `bottom`, `left` | number or length string | only meaningful with `position: "absolute"` |
 | `zIndex` | number | 0–100 |
 
 **Overflow rules:**
 - Max 2 elements with `overflow: "auto"` per card
 - Nested `overflow: "auto"` is forbidden — if a parent has `auto`, its descendants cannot also use `auto`
 
+**Position rules:**
+- `position: "absolute"` is only allowed on direct children of a `Stack` component
+- Using `position: "absolute"` inside Box, Row, Column, or Grid is forbidden
+
 ### 3.11 Forbidden Properties
 
-These are **never allowed**: `backgroundImage`, `cursor`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `transition`, `clipPath`, `mask`.
+These are **never allowed**: `backgroundImage`, `cursor`, `listStyleImage`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `transition`, `clipPath`, `mask`.
 
 ### 3.12 Forbidden CSS Functions
 
@@ -341,13 +499,89 @@ The following CSS functions are **rejected in any string style value**:
 
 If any style string value contains these function prefixes, the card will fail validation.
 
+### 3.13 Grid Style Properties
+
+Grid-specific style properties are used on `Grid` containers and their children.
+
+**On the Grid container:**
+
+```json
+{
+  "type": "Grid",
+  "style": {
+    "gridTemplateColumns": "1fr 1fr 1fr",
+    "gridTemplateRows": "auto 1fr"
+  },
+  "children": [ ... ]
+}
+```
+
+**On Grid children** (to control placement):
+
+```json
+{
+  "type": "Box",
+  "style": {
+    "gridColumn": "1 / 3",
+    "gridRow": "1 / 2"
+  }
+}
+```
+
+| Property | Type | Dynamic |
+|----------|------|---------|
+| `gridTemplateColumns` | string | literal or $ref |
+| `gridTemplateRows` | string | literal or $ref |
+| `gridColumn` | string | literal or $ref |
+| `gridRow` | string | literal or $ref |
+
+All grid properties accept string values. Use standard CSS Grid track syntax (`"1fr 1fr"`, `"auto 1fr"`, `"repeat(3, 1fr)"`, etc.).
+
+### 3.14 Style Reuse ($style)
+
+Cards can define reusable named styles in the top-level `styles` field and reference them in any node via `$style` inside the `style` object.
+
+**Defining styles:**
+
+```json
+{
+  "styles": {
+    "heading": { "fontSize": 24, "color": "#ffffff", "fontWeight": "bold" },
+    "muted": { "fontSize": 12, "color": "#888888" }
+  }
+}
+```
+
+**Using styles:**
+
+```json
+{
+  "views": {
+    "Main": {
+      "type": "Text",
+      "props": { "content": "Title" },
+      "style": { "$style": "heading", "marginBottom": 8 }
+    }
+  }
+}
+```
+
+In this example, the Text node receives all properties from the `heading` style, plus the inline `marginBottom: 8`.
+
+**Rules:**
+- Style names must match `/^[A-Za-z][A-Za-z0-9_-]*$/`
+- Inline style properties override `$style` base values (inline wins)
+- `$style` cannot be used inside `styles` definitions (no circular references)
+- The merged result (base + inline) is validated against all style rules
+- A `$style` reference must point to a name that exists in the card's `styles` section
+
 ---
 
 ## 4. State Binding ($ref)
 
 Use `state` to define data, and `$ref` to bind it into props or style values.
 
-> **Phase 1:** Only `$ref` is supported for dynamic values. `$expr` (expressions like `"if $hp < 20 then 'red' else 'green'"`) passes schema validation but is **not evaluated at runtime** — it will render as empty. Use `$ref` with pre-computed state values instead.
+> **Important:** `$expr` is reserved for future use and **must not be used**. The schema accepts `$expr` for forward compatibility, but the renderer does not evaluate it — any `$expr` value will render as empty. Always use `$ref` with pre-computed state values instead.
 
 ### 4.1 Defining State
 
@@ -358,7 +592,11 @@ Use `state` to define data, and `$ref` to bind it into props or style values.
     "level": 15,
     "hp": 87,
     "maxHp": 100,
-    "bio": "Elite hacker since 2019."
+    "bio": "Elite hacker since 2019.",
+    "messages": [
+      { "text": "Hello", "reactions": ["thumbsup", "heart"] },
+      { "text": "World", "reactions": ["star"] }
+    ]
   }
 }
 ```
@@ -393,6 +631,84 @@ Use `{ "$ref": "$variableName" }` in props or style values:
 - Array index: digits only, max 9999
 - If the referenced value doesn't exist, it resolves to empty/undefined
 
+### 4.4 $ref in $style Context
+
+When using `$style`, the referenced style object is resolved first, then any inline properties (including `$ref` values) are applied on top. The `$ref` inside individual style properties works the same as elsewhere.
+
+```json
+{
+  "style": {
+    "$style": "heading",
+    "color": { "$ref": "$themeColor" }
+  }
+}
+```
+
+Here, `$themeColor` overrides whatever `color` was set in the `heading` style definition.
+
+### 4.5 For...in Loops
+
+Children of a layout component can be a **for-loop object** instead of an array. This renders a template once for each element in a state array.
+
+```json
+{
+  "type": "Column",
+  "style": { "gap": 8 },
+  "children": {
+    "for": "item",
+    "in": "$messages",
+    "template": {
+      "type": "Text",
+      "props": { "content": { "$ref": "$item.text" } }
+    }
+  }
+}
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `for` | Yes | Loop variable name (without `$`). Referenced as `$item` in the template. |
+| `in` | Yes | State path to an array (starts with `$`). |
+| `template` | Yes | A single node to render for each array element. |
+
+Inside the template, `$item` (or whatever you named the loop variable) refers to the current element, and `$index` refers to the current iteration index (0-based).
+
+**Loop constraints:**
+- Max 1000 iterations per loop
+- Max 2 levels of nested loops
+- Loop source must resolve to an array from state or loop-local variables (undefined is soft-skipped with empty render; non-array triggers an error)
+- All expanded nodes count toward the 10,000 node limit
+
+**Nested loop example:**
+
+```json
+{
+  "children": {
+    "for": "msg",
+    "in": "$messages",
+    "template": {
+      "type": "Column",
+      "children": [
+        { "type": "Text", "props": { "content": { "$ref": "$msg.text" } } },
+        {
+          "type": "Row",
+          "children": {
+            "for": "reaction",
+            "in": "$msg.reactions",
+            "template": {
+              "type": "Text",
+              "props": { "content": { "$ref": "$reaction" } }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+In this example, the outer loop iterates over `$messages`, and for each message, the inner loop iterates over that message's `reactions` array.
+
 ---
 
 ## 5. Constraints Summary
@@ -403,9 +719,13 @@ Use `{ "$ref": "$variableName" }` in props or style values:
 | Text content total | max 200 KB (sum of all Text content strings) |
 | Style objects total | max 100 KB (sum of all style objects) |
 | Total node count | max 10,000 |
+| Loop iterations | max 1000 per loop |
+| Nested loops | max 2 levels |
+| Stack nesting | max 3 levels |
 | fontSize | 8–72 px |
 | letterSpacing | -10–50 px |
 | borderRadius | max 9999 |
+| directional borderRadius | max 9999 each |
 | opacity | 0–1 |
 | zIndex | 0–100 |
 | transform scale | 0.1–1.5 |
@@ -485,10 +805,7 @@ Use `{ "$ref": "$variableName" }` in props or style values:
 ### 6.5 Divider Line
 
 ```json
-{
-  "type": "Box",
-  "style": { "height": 1, "backgroundColor": "#333" }
-}
+{ "type": "Divider", "props": { "color": "#333" } }
 ```
 
 ### 6.6 Chat Bubble (Other Person)
@@ -499,8 +816,8 @@ Use `{ "$ref": "$variableName" }` in props or style values:
   "style": { "gap": 8, "alignItems": "start" },
   "children": [
     {
-      "type": "Box",
-      "style": { "width": 36, "height": 36, "borderRadius": 12, "backgroundColor": "#ff9eaa", "minWidth": 36 }
+      "type": "Avatar",
+      "props": { "src": "@assets/sender-avatar.png", "size": 36 }
     },
     {
       "type": "Column",
@@ -566,20 +883,157 @@ Use `{ "$ref": "$variableName" }` in props or style values:
 }
 ```
 
+### 6.8 For-Loop List Rendering
+
+Render a list of messages from state using a `for...in` loop:
+
+```json
+{
+  "type": "Column",
+  "style": { "gap": 8, "padding": 12 },
+  "children": {
+    "for": "msg",
+    "in": "$messages",
+    "template": {
+      "type": "Row",
+      "style": { "gap": 8, "alignItems": "center" },
+      "children": [
+        {
+          "type": "Avatar",
+          "props": { "src": { "$ref": "$msg.avatar" }, "size": 32 }
+        },
+        {
+          "type": "Column",
+          "style": { "gap": 2 },
+          "children": [
+            {
+              "type": "Text",
+              "props": { "content": { "$ref": "$msg.sender" } },
+              "style": { "fontSize": 13, "fontWeight": "bold", "color": "#ffffff" }
+            },
+            {
+              "type": "Text",
+              "props": { "content": { "$ref": "$msg.text" } },
+              "style": { "fontSize": 12, "color": "#aaaaaa" }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+### 6.9 Grid Layout
+
+A 3-column grid of items:
+
+```json
+{
+  "type": "Grid",
+  "style": {
+    "gridTemplateColumns": "1fr 1fr 1fr",
+    "gap": 12,
+    "padding": 16
+  },
+  "children": [
+    {
+      "type": "Box",
+      "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
+      "children": [
+        { "type": "Text", "props": { "content": "Item 1" }, "style": { "color": "#fff" } }
+      ]
+    },
+    {
+      "type": "Box",
+      "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
+      "children": [
+        { "type": "Text", "props": { "content": "Item 2" }, "style": { "color": "#fff" } }
+      ]
+    },
+    {
+      "type": "Box",
+      "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
+      "children": [
+        { "type": "Text", "props": { "content": "Item 3" }, "style": { "color": "#fff" } }
+      ]
+    }
+  ]
+}
+```
+
+### 6.10 Progress Indicator
+
+```json
+{
+  "type": "Column",
+  "style": { "gap": 4 },
+  "children": [
+    {
+      "type": "Row",
+      "style": { "justifyContent": "space-between" },
+      "children": [
+        { "type": "Text", "props": { "content": "HP" }, "style": { "fontSize": 12, "color": "#555570" } },
+        { "type": "Text", "props": { "content": { "$ref": "$hpLabel" } }, "style": { "fontSize": 12, "color": "#00ff88" } }
+      ]
+    },
+    {
+      "type": "ProgressBar",
+      "props": { "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" }
+    }
+  ]
+}
+```
+
+### 6.11 Styled Badge List
+
+Using `$style` for consistent badge styling:
+
+```json
+{
+  "styles": {
+    "tagBadge": { "fontSize": 11, "color": "#ffffff" }
+  },
+  "views": {
+    "Main": {
+      "type": "Row",
+      "style": { "gap": 8 },
+      "children": [
+        { "type": "Badge", "props": { "label": "Hacker", "color": "#ff0066" }, "style": { "$style": "tagBadge" } },
+        { "type": "Badge", "props": { "label": "Elite", "color": "#00f0ff" }, "style": { "$style": "tagBadge" } },
+        { "type": "Badge", "props": { "label": "Verified", "color": "#00ff88" }, "style": { "$style": "tagBadge" } }
+      ]
+    }
+  }
+}
+```
+
 ---
 
 ## 7. Complete Example — Cyberpunk Profile Card
 
 ```json
 {
-  "meta": { "name": "cyberpunk-profile", "version": "1.0.0" },
+  "meta": { "name": "cyberpunk-profile", "version": "2.0.0" },
   "state": {
     "username": "NETRUNNER_42",
     "title": "Elite Hacker",
     "level": "LV.42",
-    "hp": "87 / 100",
+    "hp": 87,
+    "maxHp": 100,
+    "hpLabel": "87 / 100",
     "credits": "12,450 EC",
-    "bio": "Jacking into the net since 2019. Specializing in ICE-breaking and data extraction."
+    "bio": "Jacking into the net since 2019. Specializing in ICE-breaking and data extraction.",
+    "skills": [
+      { "name": "ICE Breaker", "level": "MAX" },
+      { "name": "Stealth", "level": "8" },
+      { "name": "Decryption", "level": "6" }
+    ]
+  },
+  "styles": {
+    "statValue": { "fontSize": 18, "fontWeight": "bold" },
+    "statLabel": { "fontSize": 10, "color": "#555570" },
+    "skillText": { "fontSize": 13, "color": "#ccccdd" }
   },
   "views": {
     "Main": {
@@ -596,13 +1050,8 @@ Use `{ "$ref": "$variableName" }` in props or style values:
           "style": { "gap": 16, "alignItems": "center", "marginBottom": 16 },
           "children": [
             {
-              "type": "Box",
-              "style": {
-                "width": 56, "height": 56,
-                "borderRadius": 9999,
-                "backgroundColor": "#00f0ff",
-                "opacity": 0.9
-              }
+              "type": "Avatar",
+              "props": { "src": "@assets/avatar.png", "size": 56 }
             },
             {
               "type": "Column",
@@ -622,10 +1071,8 @@ Use `{ "$ref": "$variableName" }` in props or style values:
             }
           ]
         },
-        {
-          "type": "Box",
-          "style": { "height": 1, "backgroundColor": "#1a1a2e", "marginBottom": 16 }
-        },
+        { "type": "Divider", "props": { "color": "#1a1a2e" } },
+        { "type": "Spacer", "props": { "size": 16 } },
         {
           "type": "Row",
           "style": { "justifyContent": "space-between", "marginBottom": 16 },
@@ -637,12 +1084,12 @@ Use `{ "$ref": "$variableName" }` in props or style values:
                 {
                   "type": "Text",
                   "props": { "content": { "$ref": "$level" } },
-                  "style": { "fontSize": 18, "color": "#ffcc00" }
+                  "style": { "$style": "statValue", "color": "#ffcc00" }
                 },
                 {
                   "type": "Text",
                   "props": { "content": "LEVEL" },
-                  "style": { "fontSize": 10, "color": "#555570" }
+                  "style": { "$style": "statLabel" }
                 }
               ]
             },
@@ -652,13 +1099,13 @@ Use `{ "$ref": "$variableName" }` in props or style values:
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$hp" } },
-                  "style": { "fontSize": 18, "color": "#00ff88" }
+                  "props": { "content": { "$ref": "$hpLabel" } },
+                  "style": { "$style": "statValue", "color": "#00ff88" }
                 },
                 {
                   "type": "Text",
                   "props": { "content": "HP" },
-                  "style": { "fontSize": 10, "color": "#555570" }
+                  "style": { "$style": "statLabel" }
                 }
               ]
             },
@@ -669,20 +1116,29 @@ Use `{ "$ref": "$variableName" }` in props or style values:
                 {
                   "type": "Text",
                   "props": { "content": { "$ref": "$credits" } },
-                  "style": { "fontSize": 18, "color": "#ff6600" }
+                  "style": { "$style": "statValue", "color": "#ff6600" }
                 },
                 {
                   "type": "Text",
                   "props": { "content": "CREDITS" },
-                  "style": { "fontSize": 10, "color": "#555570" }
+                  "style": { "$style": "statLabel" }
                 }
               ]
             }
           ]
         },
         {
+          "type": "ProgressBar",
+          "props": {
+            "value": { "$ref": "$hp" },
+            "max": { "$ref": "$maxHp" },
+            "color": "#00ff88"
+          },
+          "style": { "marginBottom": 16 }
+        },
+        {
           "type": "Box",
-          "style": { "backgroundColor": "#12121f", "padding": 12, "borderRadius": 8 },
+          "style": { "backgroundColor": "#12121f", "padding": 12, "borderRadius": 8, "marginBottom": 16 },
           "children": [
             {
               "type": "Text",
@@ -690,6 +1146,36 @@ Use `{ "$ref": "$variableName" }` in props or style values:
               "style": { "fontSize": 12, "color": "#8888aa", "lineHeight": 18 }
             }
           ]
+        },
+        { "type": "Divider", "props": { "color": "#1a1a2e" } },
+        { "type": "Spacer", "props": { "size": 12 } },
+        {
+          "type": "Text",
+          "props": { "content": "SKILLS" },
+          "style": { "$style": "statLabel", "marginBottom": 8, "letterSpacing": 2 }
+        },
+        {
+          "type": "Column",
+          "style": { "gap": 6 },
+          "children": {
+            "for": "skill",
+            "in": "$skills",
+            "template": {
+              "type": "Row",
+              "style": { "justifyContent": "space-between" },
+              "children": [
+                {
+                  "type": "Text",
+                  "props": { "content": { "$ref": "$skill.name" } },
+                  "style": { "$style": "skillText" }
+                },
+                {
+                  "type": "Badge",
+                  "props": { "label": { "$ref": "$skill.level" }, "color": "#00f0ff" }
+                }
+              ]
+            }
+          }
         }
       ]
     }
@@ -703,14 +1189,26 @@ Use `{ "$ref": "$variableName" }` in props or style values:
 
 Before outputting a card, verify:
 
+**Structure:**
 - [ ] `meta` has `name` and `version` (both strings)
 - [ ] `views` has at least one view (usually `"Main"`)
 - [ ] Each view root is a valid node with a `type` field
-- [ ] Layout nodes (`Box`, `Row`, `Column`) use `children` (array)
-- [ ] Content nodes (`Text`, `Image`) use `props` (object)
+
+**Components:**
+- [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array or for-loop object)
+- [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use `props` (object)
+- [ ] Interaction nodes (`Button`, `Toggle`) use `props` (object)
 - [ ] `Text.props.content` is present
 - [ ] `Image.props.src` starts with `@assets/` — no external URLs
-- [ ] Dynamic values use `$ref` only (not `$expr` — Phase 1 does not evaluate expressions)
+- [ ] `Avatar.props.src` starts with `@assets/` — no external URLs
+- [ ] `Icon.name` is a static string (no $ref, no $expr)
+- [ ] `Button.action` and `Toggle.onToggle` are static strings
+
+**Dynamic values:**
+- [ ] Dynamic values use `$ref` only (`$expr` is reserved for future use — do not use)
+- [ ] State values referenced by `$ref` exist in the `state` object
+
+**Styles:**
 - [ ] Alignment uses `"start"` / `"end"`, NOT `"flex-start"` / `"flex-end"`
 - [ ] `fontSize` is between 8 and 72
 - [ ] `opacity` is between 0 and 1
@@ -720,4 +1218,19 @@ Before outputting a card, verify:
 - [ ] `assets` values (if any) all start with `@assets/` and contain no `../`
 - [ ] Static-only style properties use literal values (no `$ref`/`$expr` on position, border, transform, etc.)
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
-- [ ] State values referenced by `$ref` exist in the `state` object
+- [ ] Grid properties use string values
+
+**Style reuse:**
+- [ ] `$style` references exist in the card's `styles` section
+- [ ] Style names match `/^[A-Za-z][A-Za-z0-9_-]*$/`
+- [ ] No `$style` inside `styles` definitions (no circular references)
+
+**Layout:**
+- [ ] `Stack` is used for absolute positioning (not other containers)
+- [ ] `position: "absolute"` only appears on direct children of `Stack`
+
+**Loops:**
+- [ ] `for...in` loop sources resolve to arrays (from state or loop-local variables)
+- [ ] Loop variable names don't start with `$` in the `for` field
+- [ ] Loop nesting does not exceed 2 levels
+- [ ] Loop iterations stay within the 1000-per-loop limit
