@@ -189,4 +189,4 @@ Schema validation fails fast. All other checks run and accumulate errors.
 
 ## License
 
-Private.
+[MIT](./LICENSE)
