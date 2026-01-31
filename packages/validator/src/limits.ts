@@ -301,12 +301,12 @@ export function validateLimits(
         } else {
           const source = resolveRefFromState(inValue, card.state);
           if (source === undefined) {
-            // Single-segment path (e.g. "$items") must be a top-level state key.
-            // If missing, it's likely a typo → report error.
-            // Dotted paths (e.g. "$item.reactions") may reference nested/locals
-            // data not present in static state → skip.
+            // Single-segment path (e.g. "$items") at top-level (loopDepth 0)
+            // must be a state key. If missing, likely a typo → report error.
+            // Dotted paths or paths inside nested loops may reference
+            // locals variables → skip.
             const pathAfterDollar = inValue.slice(1);
-            if (!pathAfterDollar.includes('.')) {
+            if (!pathAfterDollar.includes('.') && context.loopDepth === 0) {
               errors.push(
                 createError(
                   'LOOP_SOURCE_MISSING',

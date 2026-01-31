@@ -2111,4 +2111,32 @@ describe('validateLimits — loop source resolution policy', () => {
     // Dotted path → may be locals variable → skip
     expect(result.valid).toBe(true);
   });
+
+  it('skips single-segment loop source inside nested loop (locals variable)', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      state: { messages: [{ reactions: ['👍'] }] },
+      views: {
+        Main: {
+          type: 'Box',
+          children: {
+            for: 'msg',
+            in: '$messages',
+            template: {
+              type: 'Box',
+              children: {
+                for: 'reaction',
+                in: '$msg',
+                template: { type: 'Text', props: { content: 'r' } },
+              },
+            },
+          },
+        },
+      },
+    };
+    const result = validate(card);
+    // $msg is a loop variable (single-segment but loopDepth > 0) → skip
+    const missingErrors = result.errors.filter((e) => e.code === 'LOOP_SOURCE_MISSING');
+    expect(missingErrors).toHaveLength(0);
+  });
 });
