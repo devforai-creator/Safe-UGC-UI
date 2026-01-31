@@ -1075,7 +1075,7 @@ describe('validateLimits', () => {
     expect(stackErrors).toHaveLength(0);
   });
 
-  it('reports LOOP_SOURCE_MISSING when state key does not exist', () => {
+  it('skips loop validation when card.state is absent (may be provided at runtime)', () => {
     const views = makeViews({
       type: 'Box',
       children: {
@@ -1084,9 +1084,9 @@ describe('validateLimits', () => {
         template: { type: 'Text', props: { content: 'hi' } },
       },
     });
-    // No state at all
+    // No state at all — should skip, not error
     const errors = validateLimits({ views });
-    expect(codes(errors)).toContain('LOOP_SOURCE_MISSING');
+    expect(errors).toHaveLength(0);
   });
 
   it('reports LOOP_SOURCE_NOT_ARRAY when state value is not array', () => {
@@ -2046,5 +2046,30 @@ describe('validate — card.styles integration', () => {
     const result = validate(card);
     expect(result.valid).toBe(false);
     expect(codes(result.errors)).toContain('LOOP_SOURCE_NOT_ARRAY');
+  });
+});
+
+// ===========================================================================
+// P2-8. Review feedback tests
+// ===========================================================================
+
+describe('validateLimits — absent state skip', () => {
+  it('does not error when card.state is absent and loop references state', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          children: {
+            for: 'item',
+            in: '$items',
+            template: { type: 'Text', props: { content: 'hi' } },
+          },
+        },
+      },
+    };
+    const result = validate(card);
+    // Should pass validation — no LOOP_SOURCE_MISSING since state may come at runtime
+    expect(result.valid).toBe(true);
   });
 });

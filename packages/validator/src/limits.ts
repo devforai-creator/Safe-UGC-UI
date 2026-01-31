@@ -297,14 +297,7 @@ export function validateLimits(
 
       if (typeof inValue === 'string' && inValue.startsWith('$')) {
         if (card.state == null) {
-          // No state at all — skip validation (may be resolved at runtime)
-          errors.push(
-            createError(
-              'LOOP_SOURCE_MISSING',
-              `Loop source "${inValue}" not found in card state`,
-              `${context.path}.children`,
-            ),
-          );
+          // No state — loop source may be provided at runtime, skip validation
         } else {
           const source = resolveRefFromState(inValue, card.state);
           if (source === undefined) {

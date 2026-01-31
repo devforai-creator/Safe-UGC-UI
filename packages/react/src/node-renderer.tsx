@@ -100,14 +100,20 @@ function isForLoop(obj: unknown): obj is ForLoopLike {
 }
 
 function utf8ByteLength(str: string): number {
-  // Fast approximation using TextEncoder would be better but this works
   let bytes = 0;
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
-    if (code <= 0x7f) bytes += 1;
-    else if (code <= 0x7ff) bytes += 2;
-    else if (code <= 0xffff) bytes += 3;
-    else bytes += 4;
+    if (code <= 0x7f) {
+      bytes += 1;
+    } else if (code <= 0x7ff) {
+      bytes += 2;
+    } else if (code >= 0xd800 && code <= 0xdbff) {
+      // Surrogate pair → 4 UTF-8 bytes
+      bytes += 4;
+      i++; // skip low surrogate
+    } else {
+      bytes += 3;
+    }
   }
   return bytes;
 }
@@ -123,7 +129,8 @@ function mergeStyleWithCardStyles(
 ): Record<string, unknown> | undefined {
   if (!nodeStyle) return undefined;
 
-  const styleName = nodeStyle.$style;
+  const rawStyleName = nodeStyle.$style;
+  const styleName = typeof rawStyleName === 'string' ? rawStyleName.trim() : rawStyleName;
   if (!styleName || typeof styleName !== 'string' || !cardStyles) {
     // Return style without $style key if present
     if (nodeStyle.$style !== undefined) {
@@ -161,61 +168,52 @@ export function renderNode(
   const n = node as UGCNodeLike;
   if (!n.type) return null;
 
-  // --- Pre-check 1: Node count ---
+  // --- Compute all deltas before committing any ---
+  const mergedRawStyle = mergeStyleWithCardStyles(n.style, ctx.cardStyles);
+  const props = n.props ?? {};
+  const rv = (val: unknown) => resolveValue(val, ctx.state, ctx.locals);
+
+  const styleDelta = mergedRawStyle ? utf8ByteLength(JSON.stringify(mergedRawStyle)) : 0;
+  const overflowDelta = mergedRawStyle?.overflow === 'auto' ? 1 : 0;
+
+  // Text content: resolve once, reuse in render
+  let resolvedTextContent: string | undefined;
+  let textDelta = 0;
+  if (n.type === 'Text') {
+    const raw = rv(props.content);
+    resolvedTextContent = typeof raw === 'string' ? raw : '';
+    textDelta = utf8ByteLength(resolvedTextContent);
+  }
+
+  // --- Batch limit checks (all-or-nothing) ---
   if (ctx.limits.nodeCount + 1 > MAX_NODE_COUNT) {
-    ctx.onError?.([{
-      code: 'RUNTIME_NODE_LIMIT',
-      message: `Node count exceeds maximum of ${MAX_NODE_COUNT}`,
-      path: String(key),
-    }]);
+    ctx.onError?.([{ code: 'RUNTIME_NODE_LIMIT', message: `Node count exceeds maximum of ${MAX_NODE_COUNT}`, path: String(key) }]);
+    return null;
+  }
+  if (ctx.limits.styleBytes + styleDelta > STYLE_OBJECTS_TOTAL_MAX_BYTES) {
+    ctx.onError?.([{ code: 'RUNTIME_STYLE_LIMIT', message: `Style bytes exceed maximum of ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`, path: String(key) }]);
+    return null;
+  }
+  if (ctx.limits.overflowAutoCount + overflowDelta > MAX_OVERFLOW_AUTO_COUNT) {
+    ctx.onError?.([{ code: 'RUNTIME_OVERFLOW_LIMIT', message: `Overflow auto count exceeds maximum of ${MAX_OVERFLOW_AUTO_COUNT}`, path: String(key) }]);
+    return null;
+  }
+  if (ctx.limits.textBytes + textDelta > TEXT_CONTENT_TOTAL_MAX_BYTES) {
+    ctx.onError?.([{ code: 'RUNTIME_TEXT_LIMIT', message: `Text bytes exceed maximum of ${TEXT_CONTENT_TOTAL_MAX_BYTES}`, path: String(key) }]);
     return null;
   }
 
-  // --- Merge $style with inline style ---
-  const mergedRawStyle = mergeStyleWithCardStyles(n.style, ctx.cardStyles);
-
-  // --- Pre-check 2: Style bytes ---
-  if (mergedRawStyle) {
-    const styleDelta = utf8ByteLength(JSON.stringify(mergedRawStyle));
-    if (ctx.limits.styleBytes + styleDelta > STYLE_OBJECTS_TOTAL_MAX_BYTES) {
-      ctx.onError?.([{
-        code: 'RUNTIME_STYLE_LIMIT',
-        message: `Style bytes exceed maximum of ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`,
-        path: String(key),
-      }]);
-      return null;
-    }
-    ctx.limits.styleBytes += styleDelta;
-  }
-
-  // --- Pre-check 3: Overflow auto ---
-  if (mergedRawStyle) {
-    const overflowVal = mergedRawStyle.overflow;
-    if (overflowVal === 'auto') {
-      if (ctx.limits.overflowAutoCount + 1 > MAX_OVERFLOW_AUTO_COUNT) {
-        ctx.onError?.([{
-          code: 'RUNTIME_OVERFLOW_LIMIT',
-          message: `Overflow auto count exceeds maximum of ${MAX_OVERFLOW_AUTO_COUNT}`,
-          path: String(key),
-        }]);
-        return null;
-      }
-      ctx.limits.overflowAutoCount += 1;
-    }
-  }
-
-  // Increment node count after all pre-checks pass
+  // --- All checks passed: commit all deltas at once ---
   ctx.limits.nodeCount += 1;
+  ctx.limits.styleBytes += styleDelta;
+  ctx.limits.overflowAutoCount += overflowDelta;
+  ctx.limits.textBytes += textDelta;
 
   // Resolve style to CSS
   const cssStyle = mapStyle(mergedRawStyle, ctx.state, ctx.locals);
 
   // Render children recursively
   const childElements = renderChildren(n.children, ctx);
-
-  // Resolve props helper
-  const props = n.props ?? {};
-  const rv = (val: unknown) => resolveValue(val, ctx.state, ctx.locals);
 
   switch (n.type) {
     case 'Box':
@@ -233,22 +231,8 @@ export function renderNode(
     case 'Grid':
       return <Grid key={key} style={cssStyle}>{childElements}</Grid>;
 
-    case 'Text': {
-      const resolvedContent = rv(props.content);
-      const content = typeof resolvedContent === 'string' ? resolvedContent : '';
-      // Pre-check 4: Text bytes
-      const textDelta = utf8ByteLength(content);
-      if (ctx.limits.textBytes + textDelta > TEXT_CONTENT_TOTAL_MAX_BYTES) {
-        ctx.onError?.([{
-          code: 'RUNTIME_TEXT_LIMIT',
-          message: `Text bytes exceed maximum of ${TEXT_CONTENT_TOTAL_MAX_BYTES}`,
-          path: String(key),
-        }]);
-        return null;
-      }
-      ctx.limits.textBytes += textDelta;
-      return <Text key={key} content={content} style={cssStyle} />;
-    }
+    case 'Text':
+      return <Text key={key} content={resolvedTextContent!} style={cssStyle} />;
 
     case 'Image': {
       let src = rv(props.src);
@@ -406,7 +390,14 @@ function renderForLoop(
 ): ReactNode[] {
   // Resolve the source array from state (or locals)
   const source = resolveRef(loop.in, ctx.state, ctx.locals);
-  if (!Array.isArray(source)) return [];
+  if (!Array.isArray(source)) {
+    ctx.onError?.([{
+      code: 'RUNTIME_LOOP_SOURCE_INVALID',
+      message: `Loop source "${loop.in}" is not an array`,
+      path: `for(${loop.for} in ${loop.in})`,
+    }]);
+    return [];
+  }
 
   // Cap iterations
   const maxIter = Math.min(source.length, MAX_LOOP_ITERATIONS);

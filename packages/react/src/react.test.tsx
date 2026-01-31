@@ -1071,3 +1071,117 @@ describe('UGCRenderer with new props', () => {
     expect(boxDiv).not.toBeNull();
   });
 });
+
+// ===========================================================================
+// Review feedback tests
+// ===========================================================================
+
+describe('Review feedback fixes', () => {
+  it('$style with leading/trailing whitespace is trimmed and applied', () => {
+    const root = {
+      type: 'Box',
+      style: { $style: '  heading  ', color: '#000' },
+      children: [],
+    };
+    const state = {};
+    const cardStyles = { heading: { fontSize: 24 } };
+    const { container } = render(
+      <>{renderTree(root, state, {}, cardStyles)}</>,
+    );
+    const div = container.querySelector('div');
+    // fontSize from cardStyles should be applied after trimming
+    expect(div?.style.fontSize).toBe('24px');
+  });
+
+  it('ProgressBar with max=0 renders 0% width (not NaN)', () => {
+    const root = {
+      type: 'ProgressBar',
+      props: { value: 0, max: 0 },
+    };
+    const { container } = render(
+      <>{renderTree(root, {}, {})}</>,
+    );
+    const inner = container.querySelector('div > div');
+    // jsdom normalizes "0%" to "" for width, so check it's not NaN
+    expect(inner?.style.width).not.toContain('NaN');
+  });
+
+  it('ProgressBar with max=0 and value=5 renders 0% width', () => {
+    const root = {
+      type: 'ProgressBar',
+      props: { value: 5, max: 0 },
+    };
+    const { container } = render(
+      <>{renderTree(root, {}, {})}</>,
+    );
+    const inner = container.querySelector('div > div');
+    // jsdom normalizes "0%" to "" for width, so check it's not NaN
+    expect(inner?.style.width).not.toContain('NaN');
+  });
+
+  it('Divider with thickness="2px" does not double-append px', () => {
+    const root = {
+      type: 'Divider',
+      props: { thickness: '2px' },
+    };
+    const { container } = render(
+      <>{renderTree(root, {}, {})}</>,
+    );
+    const div = container.querySelector('div');
+    expect(div?.style.borderTop).toContain('2px solid');
+  });
+
+  it('Divider with numeric string thickness="2" appends px', () => {
+    const root = {
+      type: 'Divider',
+      props: { thickness: '2' },
+    };
+    const { container } = render(
+      <>{renderTree(root, {}, {})}</>,
+    );
+    const div = container.querySelector('div');
+    expect(div?.style.borderTop).toContain('2px solid');
+  });
+
+  it('renderForLoop calls onError when loop source is not an array', () => {
+    const onError = vi.fn();
+    const root = {
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { type: 'Text', props: { content: 'hi' } },
+      },
+    };
+    const state = { items: 'not-an-array' };
+    render(
+      <>{renderTree(root, state, {}, undefined, undefined, undefined, onError)}</>,
+    );
+    expect(onError).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'RUNTIME_LOOP_SOURCE_INVALID' }),
+      ]),
+    );
+  });
+
+  it('renderForLoop does not call onError when source is undefined (absent state)', () => {
+    const onError = vi.fn();
+    const root = {
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { type: 'Text', props: { content: 'hi' } },
+      },
+    };
+    render(
+      <>{renderTree(root, {}, {}, undefined, undefined, undefined, onError)}</>,
+    );
+    // resolveRef for "$items" returns undefined → not an array → onError called
+    expect(onError).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'RUNTIME_LOOP_SOURCE_INVALID' }),
+      ]),
+    );
+  });
+});
