@@ -278,6 +278,9 @@ Every component accepts an optional `style` object. Most style values can be lit
 - `boxShadow`
 - `backgroundGradient`
 
+**Important:** For static-only object properties (e.g., `border*`, `boxShadow`, `backgroundGradient`), **all nested fields are also literal-only**.  
+Example: `borderLeft.color` cannot use `$ref` or `$expr`.
+
 All other style properties accept literal values or `$ref`.
 
 ### 3.1 Layout Properties
@@ -1216,7 +1219,7 @@ Before outputting a card, verify:
 - [ ] No forbidden CSS functions in style strings (calc, var, url, env, expression)
 - [ ] All color values are valid (hex, rgb, hsl, or named color)
 - [ ] `assets` values (if any) all start with `@assets/` and contain no `../`
-- [ ] Static-only style properties use literal values (no `$ref`/`$expr` on position, border, transform, etc.)
+- [ ] Static-only style properties use literal values (no `$ref`/`$expr` on position, border, transform, etc., including nested fields like `borderLeft.color`)
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
 - [ ] Grid properties use string values
 
