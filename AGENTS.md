@@ -34,6 +34,12 @@ This repository hosts Safe UGC UI, a pnpm workspace with TypeScript packages for
 - If demo behavior changes, include a screenshot or GIF.
 - Update specs when behavior changes (`safe-ugc-ui-card-spec.md`, `safe-ugc-ui-spec-v0.3.md`).
 
+## npm Packages
+- Published under `@safe-ugc-ui` scope on npmjs.com.
+- Packages: `@safe-ugc-ui/types`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` (all v0.1.0).
+- `workspace:*` dependencies are resolved to real versions by pnpm at publish time.
+- To publish a new version: bump versions, `pnpm build`, `pnpm -r publish --access public --no-git-checks`.
+
 ## Specs & Security Notes
 - Follow the card spec in `safe-ugc-ui-card-spec.md` for current behavior (Phase 2).
 - Treat JSON Schema as structural validation only; security/limits live in the validator.

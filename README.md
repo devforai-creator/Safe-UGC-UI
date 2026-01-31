@@ -38,6 +38,16 @@ demo ────┬── react
          └── validator
 ```
 
+## Install
+
+```bash
+npm install @safe-ugc-ui/react
+# or
+pnpm add @safe-ugc-ui/react
+```
+
+This pulls in `@safe-ugc-ui/types` and `@safe-ugc-ui/validator` as dependencies.
+
 ## Quick start
 
 ```bash
@@ -191,8 +201,8 @@ Schema validation fails fast. All other checks run and accumulate errors.
 | Phase | Scope |
 |-------|-------|
 | **Phase 1 (done)** | Box, Row, Column, Text, Image, `$ref`, validation, React renderer |
-| **Phase 2 (done)** | 11 components, `for...in` loops, style reuse (`$style`), Grid, directional borderRadius |
-| Phase 3 | npm publish, icon set bundling, editor tooling, themes |
+| **Phase 2 (done)** | 11 components, `for...in` loops, style reuse (`$style`), Grid, directional borderRadius, npm publish |
+| Phase 3 | icon set bundling, editor tooling, themes |
 | Future | `$expr` expression engine, interaction events (Button action, Toggle), CharLang text syntax |
 
 ## License

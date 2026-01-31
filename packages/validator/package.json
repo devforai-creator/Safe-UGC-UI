@@ -1,6 +1,13 @@
 {
   "name": "@safe-ugc-ui/validator",
   "version": "0.1.0",
+  "description": "Security validator for Safe UGC UI card JSON",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devforai-creator/Safe-UGC-UI.git",
+    "directory": "packages/validator"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

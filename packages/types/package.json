@@ -1,6 +1,13 @@
 {
   "name": "@safe-ugc-ui/types",
   "version": "0.1.0",
+  "description": "Type definitions and Zod schemas for Safe UGC UI cards",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devforai-creator/Safe-UGC-UI.git",
+    "directory": "packages/types"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
