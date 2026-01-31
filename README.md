@@ -121,6 +121,8 @@ For full details, see:
 
 ## Security model
 
+See `SECURITY.md` for reporting and scope details.
+
 The validation pipeline enforces:
 
 - **No untrusted external URLs** — images use `@assets/` paths resolved to host-controlled CDN URLs; user-specified external URLs are blocked
