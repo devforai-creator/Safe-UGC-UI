@@ -140,9 +140,8 @@ function countTemplateMetrics(
   result.nodes = 1;
 
   // Text bytes
-  if (node.type === 'Text' && node.props != null) {
-    const props = node.props as Record<string, unknown>;
-    const content = props.content;
+  if (node.type === 'Text') {
+    const content = (node as Record<string, unknown>).content;
     if (typeof content === 'string' && !isRef(content) && !isExpr(content)) {
       result.textBytes = utf8ByteLength(content);
     }
@@ -250,8 +249,8 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     // 2. Text content total bytes
     // -----------------------------------------------------------------------
-    if (node.type === 'Text' && node.props != null) {
-      const content = (node.props as Record<string, unknown>).content;
+    if (node.type === 'Text') {
+      const content = (node as Record<string, unknown>).content;
       if (typeof content === 'string' && !isRef(content) && !isExpr(content)) {
         textContentBytes += utf8ByteLength(content);
       }

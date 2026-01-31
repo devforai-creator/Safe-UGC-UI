@@ -70,54 +70,51 @@ const STATIC_ONLY_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// Per-node prop validation
+// Per-node field validation
 // ---------------------------------------------------------------------------
 
 /**
- * Validate the `props` of a node according to the value type table.
+ * Validate component fields according to the value type table.
  */
-function validateNodeProps(
+function validateNodeFields(
   node: TraversableNode,
   ctx: TraversalContext,
   errors: ValidationError[],
 ): void {
-  const props = node.props;
-  if (!props) {
-    return;
-  }
-
   const nodeType = node.type;
 
   // Image.src / Avatar.src — $ref allowed, $expr forbidden
-  if ((nodeType === 'Image' || nodeType === 'Avatar') && props.src !== undefined) {
-    if (isExpr(props.src)) {
+  if (nodeType === 'Image' || nodeType === 'Avatar') {
+    const src = (node as Record<string, unknown>).src;
+    if (src !== undefined && isExpr(src)) {
       errors.push(
         createError(
           'EXPR_NOT_ALLOWED',
           `${nodeType}.src does not allow $expr bindings.`,
-          `${ctx.path}.props.src`,
+          `${ctx.path}.src`,
         ),
       );
     }
   }
 
   // Icon.name — neither $ref nor $expr allowed
-  if (nodeType === 'Icon' && props.name !== undefined) {
-    if (isRef(props.name)) {
+  if (nodeType === 'Icon') {
+    const name = (node as Record<string, unknown>).name;
+    if (name !== undefined && isRef(name)) {
       errors.push(
         createError(
           'REF_NOT_ALLOWED',
           'Icon.name does not allow $ref bindings.',
-          `${ctx.path}.props.name`,
+          `${ctx.path}.name`,
         ),
       );
     }
-    if (isExpr(props.name)) {
+    if (name !== undefined && isExpr(name)) {
       errors.push(
         createError(
           'EXPR_NOT_ALLOWED',
           'Icon.name does not allow $expr bindings.',
-          `${ctx.path}.props.name`,
+          `${ctx.path}.name`,
         ),
       );
     }
@@ -165,7 +162,7 @@ function validateNodeStyle(
 // ---------------------------------------------------------------------------
 
 /**
- * Walk all nodes in the card and validate that each property's value
+ * Walk all nodes in the card and validate that each field's value
  * respects its allowed value types ($ref / $expr permissions).
  *
  * @param views - The `views` object from a UGCCard.
@@ -177,7 +174,7 @@ export function validateValueTypes(
   const errors: ValidationError[] = [];
 
   traverseCard(views, (node: TraversableNode, ctx: TraversalContext) => {
-    validateNodeProps(node, ctx, errors);
+    validateNodeFields(node, ctx, errors);
     validateNodeStyle(node, ctx, errors);
   });
 

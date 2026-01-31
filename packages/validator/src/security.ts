@@ -2,7 +2,7 @@
  * @safe-ugc-ui/validator — Security Validation
  *
  * Enforces security rules from spec sections 3 and 8:
- *   - External URL blocking on Image/Avatar `src` props (literal and $ref)
+ *   - External URL blocking on Image/Avatar `src` fields (literal and $ref)
  *   - Asset path validation (`@assets/` prefix, no traversal)
  *   - cardAssets value validation
  *   - Forbidden CSS `url()` function in style string values
@@ -217,7 +217,7 @@ function checkSrcValue(
     errors.push(
       createError(
         'EXTERNAL_URL',
-        `External URLs are not allowed in ${type}.props.src. Got "${resolved}".`,
+        `External URLs are not allowed in ${type}.src. Got "${resolved}".`,
         errorPath,
       ),
     );
@@ -299,16 +299,21 @@ export function validateSecurity(card: {
 
   traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
     const { path } = context;
-    const { props, style, type } = node;
+    const { style, type } = node;
+    const nodeFields = { ...node } as Record<string, unknown>;
+    delete nodeFields.type;
+    delete nodeFields.style;
+    delete nodeFields.children;
+    delete nodeFields.condition;
 
     // -----------------------------------------------------------------
     // 1. External URL blocking — Image and Avatar `src`
     // -----------------------------------------------------------------
-    if ((type === 'Image' || type === 'Avatar') && props) {
-      const src = props.src;
+    if (type === 'Image' || type === 'Avatar') {
+      const src = (node as Record<string, unknown>).src;
       if (typeof src === 'string') {
         // Literal string src
-        checkSrcValue(src, type, `${path}.props.src`, errors);
+        checkSrcValue(src, type, `${path}.src`, errors);
       } else if (isRef(src)) {
         // $ref src — resolve from state if available
         if (state) {
@@ -317,7 +322,7 @@ export function validateSecurity(card: {
             state,
           );
           if (typeof resolved === 'string') {
-            checkSrcValue(resolved, type, `${path}.props.src`, errors);
+            checkSrcValue(resolved, type, `${path}.src`, errors);
           }
           // If resolution fails (undefined), skip — may be a loop-local variable
         }
@@ -413,11 +418,9 @@ export function validateSecurity(card: {
     }
 
     // -----------------------------------------------------------------
-    // 5. Prototype pollution check on $ref values in props and style
+    // 5. Prototype pollution check on $ref values in node fields and style
     // -----------------------------------------------------------------
-    if (props) {
-      scanForRefs(props, `${path}.props`, errors);
-    }
+    scanForRefs(nodeFields, path, errors);
     if (style) {
       scanForRefs(style, `${path}.style`, errors);
     }

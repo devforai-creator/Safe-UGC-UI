@@ -18,6 +18,7 @@ Layout: `Box`, `Row`, `Column`, `Stack`, `Grid` (use `children`)
 Content: `Text`, `Image`
 Display: `ProgressBar`, `Avatar`, `Icon`, `Badge`, `Chip`, `Divider`, `Spacer`
 Interaction: `Button`, `Toggle`
+**All component fields are top-level** — do not use a `props` wrapper.
 
 ## 3) Dynamic Values
 - Use `$ref` only: `{ "$ref": "$stateKey" }`

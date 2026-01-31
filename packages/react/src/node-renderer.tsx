@@ -8,8 +8,8 @@
  * For each node:
  *   1. Pre-check runtime limits (node count, style bytes, overflow, text bytes)
  *   2. Merge $style with inline styles
- *   3. Resolve $ref values in props using state-resolver (with locals)
- *   4. Map style props to React CSSProperties using style-mapper
+ *   3. Resolve $ref values in node fields using state-resolver (with locals)
+ *   4. Map style fields to React CSSProperties using style-mapper
  *   5. Resolve asset paths for Image/Avatar src using asset-resolver
  *   6. Render the appropriate component
  *   7. Recursively render children (arrays and for-loops)
@@ -55,10 +55,10 @@ import { Toggle } from './components/Toggle.js';
  */
 interface UGCNodeLike {
   type: string;
-  props?: Record<string, unknown>;
   style?: Record<string, unknown>;
   children?: unknown;
   condition?: unknown;
+  [key: string]: unknown;
 }
 
 interface ForLoopLike {
@@ -170,7 +170,6 @@ export function renderNode(
 
   // --- Compute all deltas before committing any ---
   const mergedRawStyle = mergeStyleWithCardStyles(n.style, ctx.cardStyles);
-  const props = n.props ?? {};
   const rv = (val: unknown) => resolveValue(val, ctx.state, ctx.locals);
 
   const styleDelta = mergedRawStyle ? utf8ByteLength(JSON.stringify(mergedRawStyle)) : 0;
@@ -180,7 +179,7 @@ export function renderNode(
   let resolvedTextContent: string | undefined;
   let textDelta = 0;
   if (n.type === 'Text') {
-    const raw = rv(props.content);
+    const raw = rv((n as Record<string, unknown>).content);
     resolvedTextContent = typeof raw === 'string' ? raw : '';
     textDelta = utf8ByteLength(resolvedTextContent);
   }
@@ -235,38 +234,39 @@ export function renderNode(
       return <Text key={key} content={resolvedTextContent!} style={cssStyle} />;
 
     case 'Image': {
-      let src = rv(props.src);
+      let src = rv((n as Record<string, unknown>).src);
       if (typeof src !== 'string' || !src) return null;
       if (!src.startsWith('@assets/')) return null;
       if (src.includes('../')) return null;
       const resolved = resolveAsset(src, ctx.assets);
       if (!resolved) return null;
       if (typeof resolved === 'string' && resolved.trim().toLowerCase().startsWith('javascript:')) return null;
-      const resolvedAlt = rv(props.alt);
+      const resolvedAlt = rv((n as Record<string, unknown>).alt);
       const alt = typeof resolvedAlt === 'string' ? resolvedAlt : undefined;
       return <Image key={key} src={resolved} alt={alt} style={cssStyle} />;
     }
 
     case 'Avatar': {
-      let src = rv(props.src);
+      let src = rv((n as Record<string, unknown>).src);
       if (typeof src !== 'string' || !src) return null;
       if (!src.startsWith('@assets/')) return null;
       if (src.includes('../')) return null;
       const resolved = resolveAsset(src, ctx.assets);
       if (!resolved) return null;
       if (typeof resolved === 'string' && resolved.trim().toLowerCase().startsWith('javascript:')) return null;
-      const resolvedSize = rv(props.size);
+      const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;
       return <Avatar key={key} src={resolved} size={size} style={cssStyle} />;
     }
 
     case 'Icon': {
-      const name = typeof props.name === 'string' ? props.name : '';
-      const resolvedSize = rv(props.size);
+      const nameVal = (n as Record<string, unknown>).name;
+      const name = typeof nameVal === 'string' ? nameVal : '';
+      const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;
-      const resolvedColor = rv(props.color);
+      const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return (
         <Icon
@@ -281,51 +281,52 @@ export function renderNode(
     }
 
     case 'Spacer': {
-      const resolvedSize = rv(props.size);
+      const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;
       return <Spacer key={key} size={size} style={cssStyle} />;
     }
 
     case 'Divider': {
-      const resolvedColor = rv(props.color);
+      const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      const resolvedThickness = rv(props.thickness);
+      const resolvedThickness = rv((n as Record<string, unknown>).thickness);
       const thickness = typeof resolvedThickness === 'number' || typeof resolvedThickness === 'string'
         ? resolvedThickness : undefined;
       return <Divider key={key} color={color} thickness={thickness} style={cssStyle} />;
     }
 
     case 'ProgressBar': {
-      const resolvedValue = rv(props.value);
+      const resolvedValue = rv((n as Record<string, unknown>).value);
       const value = typeof resolvedValue === 'number' ? resolvedValue : 0;
-      const resolvedMax = rv(props.max);
+      const resolvedMax = rv((n as Record<string, unknown>).max);
       const max = typeof resolvedMax === 'number' ? resolvedMax : 100;
-      const resolvedColor = rv(props.color);
+      const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return <ProgressBar key={key} value={value} max={max} color={color} style={cssStyle} />;
     }
 
     case 'Badge': {
-      const resolvedLabel = rv(props.label);
+      const resolvedLabel = rv((n as Record<string, unknown>).label);
       const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
-      const resolvedColor = rv(props.color);
+      const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return <Badge key={key} label={label} color={color} style={cssStyle} />;
     }
 
     case 'Chip': {
-      const resolvedLabel = rv(props.label);
+      const resolvedLabel = rv((n as Record<string, unknown>).label);
       const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
-      const resolvedColor = rv(props.color);
+      const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return <Chip key={key} label={label} color={color} style={cssStyle} />;
     }
 
     case 'Button': {
-      const resolvedLabel = rv(props.label);
+      const resolvedLabel = rv((n as Record<string, unknown>).label);
       const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
-      const action = typeof props.action === 'string' ? props.action : '';
+      const actionVal = (n as Record<string, unknown>).action;
+      const action = typeof actionVal === 'string' ? actionVal : '';
       return (
         <Button
           key={key}
@@ -338,9 +339,10 @@ export function renderNode(
     }
 
     case 'Toggle': {
-      const resolvedValue = rv(props.value);
+      const resolvedValue = rv((n as Record<string, unknown>).value);
       const value = typeof resolvedValue === 'boolean' ? resolvedValue : false;
-      const onToggle = typeof props.onToggle === 'string' ? props.onToggle : '';
+      const onToggleVal = (n as Record<string, unknown>).onToggle;
+      const onToggle = typeof onToggleVal === 'string' ? onToggleVal : '';
       return (
         <Toggle
           key={key}

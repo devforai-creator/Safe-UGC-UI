@@ -567,7 +567,7 @@ function validateExpr(exprValue: string, path: string): ValidationError[] {
  * Validates all $expr and $ref values found in the card's views.
  *
  * Uses tree traversal to visit every node, then deep-scans each node's
- * `props` and `style` (and `condition`) for dynamic values.
+ * flattened node fields and `style` (and `condition`) for dynamic values.
  *
  * @param views - The `views` object from a UGCCard.
  * @returns An array of validation errors (empty if all constraints pass).
@@ -578,16 +578,19 @@ export function validateExprConstraints(
   const errors: ValidationError[] = [];
 
   traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
-    // Scan props
-    if (node.props) {
-      scanForDynamicValues(node.props, `${context.path}.props`, (value, valuePath) => {
-        if (isRef(value)) {
-          errors.push(...validateRef(value.$ref, valuePath));
-        } else if (isExpr(value)) {
-          errors.push(...validateExpr(value.$expr, valuePath));
-        }
-      });
-    }
+    // Scan node fields (excluding style/children/type/condition)
+    const nodeFields = { ...node } as Record<string, unknown>;
+    delete nodeFields.type;
+    delete nodeFields.style;
+    delete nodeFields.children;
+    delete nodeFields.condition;
+    scanForDynamicValues(nodeFields, context.path, (value, valuePath) => {
+      if (isRef(value)) {
+        errors.push(...validateRef(value.$ref, valuePath));
+      } else if (isExpr(value)) {
+        errors.push(...validateExpr(value.$expr, valuePath));
+      }
+    });
 
     // Scan style
     if (node.style) {

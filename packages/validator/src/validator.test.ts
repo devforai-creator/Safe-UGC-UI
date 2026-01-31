@@ -119,14 +119,14 @@ describe('validateNodes', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('accepts a valid Text node with content prop', () => {
-    const views = makeViews({ type: 'Text', props: { content: 'Hello' } });
+  it('accepts a valid Text node with content field', () => {
+    const views = makeViews({ type: 'Text',  content: 'Hello'  });
     const errors = validateNodes(views);
     expect(errors).toHaveLength(0);
   });
 
-  it('accepts a valid Image node with src prop', () => {
-    const views = makeViews({ type: 'Image', props: { src: '@assets/logo.png' } });
+  it('accepts a valid Image node with src field', () => {
+    const views = makeViews({ type: 'Image',  src: '@assets/logo.png'  });
     const errors = validateNodes(views);
     expect(errors).toHaveLength(0);
   });
@@ -139,23 +139,23 @@ describe('validateNodes', () => {
     expect(errors[0].message).toContain('Banana');
   });
 
-  it('rejects a Text node without content prop', () => {
+  it('rejects a Text node without content field', () => {
     const views = makeViews({ type: 'Text' });
-    const errors = validateNodes(views);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(codes(errors)).toContain('MISSING_FIELD');
-    expect(errors.some((e) => e.path.includes('props'))).toBe(true);
-  });
-
-  it('rejects a Text node with props object but missing content', () => {
-    const views = makeViews({ type: 'Text', props: { somethingElse: 'hi' } });
     const errors = validateNodes(views);
     expect(errors.length).toBeGreaterThan(0);
     expect(codes(errors)).toContain('MISSING_FIELD');
     expect(errors.some((e) => e.path.includes('content'))).toBe(true);
   });
 
-  it('rejects an Image node without src prop', () => {
+  it('rejects a Text node missing content even if other fields exist', () => {
+    const views = makeViews({ type: 'Text',  somethingElse: 'hi'  });
+    const errors = validateNodes(views);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(codes(errors)).toContain('MISSING_FIELD');
+    expect(errors.some((e) => e.path.includes('content'))).toBe(true);
+  });
+
+  it('rejects an Image node without src field', () => {
     const views = makeViews({ type: 'Image' });
     const errors = validateNodes(views);
     expect(errors.length).toBeGreaterThan(0);
@@ -168,7 +168,7 @@ describe('validateNodes', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const errors = validateNodes(views);
@@ -181,7 +181,7 @@ describe('validateNodes', () => {
       children: {
         for: 'item',
         in: 'items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const errors = validateNodes(views);
@@ -196,7 +196,7 @@ describe('validateNodes', () => {
       children: {
         for: 123,
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const errors = validateNodes(views);
@@ -264,7 +264,7 @@ describe('validateValueTypes', () => {
   it('rejects $expr on Image.src', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $expr: '$url + ".png"' } },
+       src: { $expr: '$url + ".png"' } ,
     });
     const errors = validateValueTypes(views);
     expect(errors.length).toBeGreaterThan(0);
@@ -274,7 +274,7 @@ describe('validateValueTypes', () => {
   it('rejects $ref on Icon.name', () => {
     const views = makeViews({
       type: 'Icon',
-      props: { name: { $ref: '$x' } },
+       name: { $ref: '$x' } ,
     });
     const errors = validateValueTypes(views);
     expect(errors.length).toBeGreaterThan(0);
@@ -284,7 +284,7 @@ describe('validateValueTypes', () => {
   it('rejects $expr on Icon.name', () => {
     const views = makeViews({
       type: 'Icon',
-      props: { name: { $expr: '$iconName' } },
+       name: { $expr: '$iconName' } ,
     });
     const errors = validateValueTypes(views);
     expect(codes(errors)).toContain('EXPR_NOT_ALLOWED');
@@ -293,7 +293,7 @@ describe('validateValueTypes', () => {
   it('allows $ref on Text.content', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: '$x' } },
+       content: { $ref: '$x' } ,
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
@@ -302,7 +302,7 @@ describe('validateValueTypes', () => {
   it('allows $expr on Text.content', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$name' } },
+       content: { $expr: '$name' } ,
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
@@ -311,7 +311,7 @@ describe('validateValueTypes', () => {
   it('allows $ref on Image.src', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $ref: '$imgPath' } },
+       src: { $ref: '$imgPath' } ,
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
@@ -706,7 +706,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with https:// URL', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: 'https://evil.com/img.png' },
+       src: 'https://evil.com/img.png' ,
     });
     const errors = validateSecurity({ views });
     expect(errors.length).toBeGreaterThan(0);
@@ -716,7 +716,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with http:// URL', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: 'http://evil.com/img.png' },
+       src: 'http://evil.com/img.png' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -725,7 +725,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with javascript: protocol', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: 'javascript:alert(1)' },
+       src: 'javascript:alert(1)' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -734,7 +734,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with data: protocol', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: 'data:image/png;base64,abc' },
+       src: 'data:image/png;base64,abc' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -743,7 +743,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with protocol-relative URL', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: '//evil.com/img.png' },
+       src: '//evil.com/img.png' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -752,7 +752,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with path traversal (no @assets/)', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: '../../../etc/passwd' },
+       src: '../../../etc/passwd' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('INVALID_ASSET_PATH');
@@ -761,7 +761,7 @@ describe('validateSecurity', () => {
   it('rejects Image src @assets/../secret (path traversal)', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: '@assets/../secret' },
+       src: '@assets/../secret' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('ASSET_PATH_TRAVERSAL');
@@ -770,7 +770,7 @@ describe('validateSecurity', () => {
   it('accepts Image src @assets/avatar.png', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: '@assets/avatar.png' },
+       src: '@assets/avatar.png' ,
     });
     const errors = validateSecurity({ views });
     const srcErrors = errors.filter(
@@ -843,7 +843,7 @@ describe('validateSecurity', () => {
   it('rejects $ref with __proto__', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: '$state.__proto__' } },
+       content: { $ref: '$state.__proto__' } ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -852,7 +852,7 @@ describe('validateSecurity', () => {
   it('rejects $ref with constructor', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: '$state.constructor' } },
+       content: { $ref: '$state.constructor' } ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -861,7 +861,7 @@ describe('validateSecurity', () => {
   it('rejects $ref with prototype', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: '$state.prototype' } },
+       content: { $ref: '$state.prototype' } ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -870,7 +870,7 @@ describe('validateSecurity', () => {
   it('accepts $ref without prototype pollution segments', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: '$state.name' } },
+       content: { $ref: '$state.name' } ,
     });
     const errors = validateSecurity({ views });
     const pollutionErrors = errors.filter((e) => e.code === 'PROTOTYPE_POLLUTION');
@@ -882,7 +882,7 @@ describe('validateSecurity', () => {
   it('rejects Image src $ref resolving to external URL via state', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $ref: '$img' } },
+       src: { $ref: '$img' } ,
     });
     const state = { img: 'https://evil.com/payload.png' };
     const errors = validateSecurity({ views, state });
@@ -892,7 +892,7 @@ describe('validateSecurity', () => {
   it('accepts Image src $ref resolving to valid @assets/ path', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $ref: '$img' } },
+       src: { $ref: '$img' } ,
     });
     const state = { img: '@assets/logo.png' };
     const errors = validateSecurity({ views, state });
@@ -905,7 +905,7 @@ describe('validateSecurity', () => {
   it('rejects Image src $ref resolving to path traversal', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $ref: '$img' } },
+       src: { $ref: '$img' } ,
     });
     const state = { img: '@assets/../secret' };
     const errors = validateSecurity({ views, state });
@@ -915,7 +915,7 @@ describe('validateSecurity', () => {
   it('skips Image src $ref when state key does not exist (loop-local)', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $ref: '$item.img' } },
+       src: { $ref: '$item.img' } ,
     });
     const state = { unrelated: 'value' };
     const errors = validateSecurity({ views, state });
@@ -929,7 +929,7 @@ describe('validateSecurity', () => {
   it('rejects Image src literal "logo.png" without @assets/ prefix', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: 'logo.png' },
+       src: 'logo.png' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('INVALID_ASSET_PATH');
@@ -966,7 +966,7 @@ describe('validateSecurity', () => {
   it('rejects URL with leading whitespace', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: '  https://evil.com/img.png' },
+       src: '  https://evil.com/img.png' ,
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -975,7 +975,7 @@ describe('validateSecurity', () => {
   it('rejects $ref resolving to URL with leading whitespace', () => {
     const views = makeViews({
       type: 'Image',
-      props: { src: { $ref: '$img' } },
+       src: { $ref: '$img' } ,
     });
     const state = { img: '  https://evil.com/img.png' };
     const errors = validateSecurity({ views, state });
@@ -992,8 +992,8 @@ describe('validateLimits', () => {
     const views = makeViews({
       type: 'Box',
       children: [
-        { type: 'Text', props: { content: 'Hello' } },
-        { type: 'Text', props: { content: 'World' } },
+        { type: 'Text',  content: 'Hello'  },
+        { type: 'Text',  content: 'World'  },
       ],
     });
     const errors = validateLimits({ views });
@@ -1081,7 +1081,7 @@ describe('validateLimits', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     // No state at all — should skip, not error
@@ -1095,7 +1095,7 @@ describe('validateLimits', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const errors = validateLimits({ views, state: { items: 'not an array' } });
@@ -1108,7 +1108,7 @@ describe('validateLimits', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const errors = validateLimits({ views, state: { items: [1, 2, 3] } });
@@ -1127,7 +1127,7 @@ describe('validateExprConstraints', () => {
   it('accepts a simple expression', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$hp + 10' } },
+       content: { $expr: '$hp + 10' } ,
     });
     const errors = validateExprConstraints(views);
     expect(errors).toHaveLength(0);
@@ -1136,7 +1136,7 @@ describe('validateExprConstraints', () => {
   it('accepts if/then/else expression', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: "if $x > 0 then 'positive' else 'negative'" } },
+       content: { $expr: "if $x > 0 then 'positive' else 'negative'" } ,
     });
     const errors = validateExprConstraints(views);
     expect(errors).toHaveLength(0);
@@ -1146,7 +1146,7 @@ describe('validateExprConstraints', () => {
     const longExpr = '$x ' + '+ 1 '.repeat(200); // well over 500 chars
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: longExpr } },
+       content: { $expr: longExpr } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_TOO_LONG');
@@ -1156,7 +1156,7 @@ describe('validateExprConstraints', () => {
     const longRef = '$' + 'a'.repeat(600);
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: longRef } },
+       content: { $ref: longRef } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('REF_TOO_LONG');
@@ -1165,7 +1165,7 @@ describe('validateExprConstraints', () => {
   it('rejects forbidden operator ===', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a === $b' } },
+       content: { $expr: '$a === $b' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1175,7 +1175,7 @@ describe('validateExprConstraints', () => {
   it('rejects forbidden operator !==', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a !== $b' } },
+       content: { $expr: '$a !== $b' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1185,7 +1185,7 @@ describe('validateExprConstraints', () => {
   it('rejects forbidden operator &&', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a && $b' } },
+       content: { $expr: '$a && $b' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1195,7 +1195,7 @@ describe('validateExprConstraints', () => {
   it('rejects forbidden operator ||', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a || $b' } },
+       content: { $expr: '$a || $b' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1205,7 +1205,7 @@ describe('validateExprConstraints', () => {
   it('rejects forbidden keyword "function"', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: 'function' } },
+       content: { $expr: 'function' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1215,7 +1215,7 @@ describe('validateExprConstraints', () => {
   it('rejects forbidden keyword "new"', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: 'new $obj' } },
+       content: { $expr: 'new $obj' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1224,7 +1224,7 @@ describe('validateExprConstraints', () => {
   it('rejects function call pattern (identifier followed by open paren)', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: 'foo($x)' } },
+       content: { $expr: 'foo($x)' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FUNCTION_CALL');
@@ -1240,7 +1240,7 @@ describe('validateExprConstraints', () => {
     const expr = parts.join(' '); // "$a + 1 + 1 + 1 ..." -> 1 + 30*2 = 61 tokens
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: expr } },
+       content: { $expr: expr } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_TOO_MANY_TOKENS');
@@ -1250,7 +1250,7 @@ describe('validateExprConstraints', () => {
     // A simple expression well under 50 tokens
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a + $b - $c * 2' } },
+       content: { $expr: '$a + $b - $c * 2' } ,
     });
     const errors = validateExprConstraints(views);
     const tokenErrors = errors.filter((e) => e.code === 'EXPR_TOO_MANY_TOKENS');
@@ -1260,7 +1260,7 @@ describe('validateExprConstraints', () => {
   it('accepts "and" / "or" / "not" keywords (not forbidden)', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a and $b or not $c' } },
+       content: { $expr: '$a and $b or not $c' } ,
     });
     const errors = validateExprConstraints(views);
     const forbiddenErrors = errors.filter((e) => e.code === 'EXPR_FORBIDDEN_TOKEN');
@@ -1270,7 +1270,7 @@ describe('validateExprConstraints', () => {
   it('accepts comparison operators == and !=', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$a == 1' } },
+       content: { $expr: '$a == 1' } ,
     });
     const errors = validateExprConstraints(views);
     const forbiddenErrors = errors.filter((e) => e.code === 'EXPR_FORBIDDEN_TOKEN');
@@ -1280,7 +1280,7 @@ describe('validateExprConstraints', () => {
   it('validates $ref prototype pollution segments', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $ref: '$obj.__proto__' } },
+       content: { $ref: '$obj.__proto__' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -1291,7 +1291,7 @@ describe('validateExprConstraints', () => {
   it('rejects bare identifier without $ prefix', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: 'foo + 1' } },
+       content: { $expr: 'foo + 1' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
@@ -1301,7 +1301,7 @@ describe('validateExprConstraints', () => {
   it('accepts $-prefixed identifier', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$foo + 1' } },
+       content: { $expr: '$foo + 1' } ,
     });
     const errors = validateExprConstraints(views);
     const bareErrors = errors.filter(
@@ -1315,7 +1315,7 @@ describe('validateExprConstraints', () => {
   it('rejects number literal with > 10 fractional digits', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$x + 3.12345678901' } },
+       content: { $expr: '$x + 3.12345678901' } ,
     });
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('EXPR_INVALID_TOKEN');
@@ -1325,7 +1325,7 @@ describe('validateExprConstraints', () => {
   it('accepts number literal with exactly 10 fractional digits', () => {
     const views = makeViews({
       type: 'Text',
-      props: { content: { $expr: '$x + 3.1234567890' } },
+       content: { $expr: '$x + 3.1234567890' } ,
     });
     const errors = validateExprConstraints(views);
     const fractErrors = errors.filter(
@@ -1342,7 +1342,7 @@ describe('validateExprConstraints', () => {
 describe('validate', () => {
   it('returns valid: true for a valid card', () => {
     const card = makeCard(
-      makeViews({ type: 'Box', children: [{ type: 'Text', props: { content: 'Hello' } }] }),
+      makeViews({ type: 'Box', children: [{ type: 'Text',  content: 'Hello'  }] }),
     );
     const result = validate(card);
     expect(result.valid).toBe(true);
@@ -1391,7 +1391,7 @@ describe('validate', () => {
       views: {
         Main: {
           type: 'Image',
-          props: { src: { $ref: '$img' } },
+           src: { $ref: '$img' } ,
         },
       },
       state: { img: 'https://evil.com/payload.png' },
@@ -1407,7 +1407,7 @@ describe('validate', () => {
       makeViews({
         type: 'Box',
         style: { backgroundImage: 'url(x)', zIndex: -5 },
-        children: [{ type: 'Text', props: { content: 'ok' } }],
+        children: [{ type: 'Text',  content: 'ok'  }],
       }),
     );
     const result = validate(card);
@@ -1420,7 +1420,7 @@ describe('validate', () => {
 describe('validateRaw', () => {
   it('returns valid: true for a valid JSON string', () => {
     const card = makeCard(
-      makeViews({ type: 'Box', children: [{ type: 'Text', props: { content: 'Hi' } }] }),
+      makeViews({ type: 'Box', children: [{ type: 'Text',  content: 'Hi'  }] }),
     );
     const result = validateRaw(JSON.stringify(card));
     expect(result.valid).toBe(true);
@@ -1758,8 +1758,8 @@ describe('validateLimits — for-loop validation', () => {
         template: {
           type: 'Box',
           children: [
-            { type: 'Text', props: { content: 'a' } },
-            { type: 'Text', props: { content: 'b' } },
+            { type: 'Text',  content: 'a'  },
+            { type: 'Text',  content: 'b'  },
           ],
         },
       },
@@ -1776,7 +1776,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$data.items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const state = { data: { items: [1, 2, 3] } };
@@ -1795,7 +1795,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$item.subItems',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const state = { unrelated: 'value' };
@@ -1811,7 +1811,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     const errors = validateLimits({ views, state: { items: 'not an array' } });
@@ -1824,7 +1824,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     });
     // MAX_LOOP_ITERATIONS is 1000, so 1001 should exceed
@@ -1850,7 +1850,7 @@ describe('validateLimits — for-loop validation', () => {
               children: {
                 for: 'c',
                 in: '$items',
-                template: { type: 'Text', props: { content: 'deep' } },
+                template: { type: 'Text',  content: 'deep'  },
               },
             },
           },
@@ -1874,7 +1874,7 @@ describe('validateLimits — loop expansion multiplier', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'x'.repeat(100) } },
+        template: { type: 'Text',  content: 'x'.repeat(100)  },
       },
     });
     const items = Array.from({ length: 100 }, (_, i) => i);
@@ -1897,16 +1897,16 @@ describe('validateLimits — loop expansion multiplier', () => {
         template: {
           type: 'Box',
           children: [
-            { type: 'Text', props: { content: '1' } },
-            { type: 'Text', props: { content: '2' } },
-            { type: 'Text', props: { content: '3' } },
-            { type: 'Text', props: { content: '4' } },
-            { type: 'Text', props: { content: '5' } },
-            { type: 'Text', props: { content: '6' } },
-            { type: 'Text', props: { content: '7' } },
-            { type: 'Text', props: { content: '8' } },
-            { type: 'Text', props: { content: '9' } },
-            { type: 'Text', props: { content: '10' } },
+            { type: 'Text',  content: '1'  },
+            { type: 'Text',  content: '2'  },
+            { type: 'Text',  content: '3'  },
+            { type: 'Text',  content: '4'  },
+            { type: 'Text',  content: '5'  },
+            { type: 'Text',  content: '6'  },
+            { type: 'Text',  content: '7'  },
+            { type: 'Text',  content: '8'  },
+            { type: 'Text',  content: '9'  },
+            { type: 'Text',  content: '10'  },
           ],
         },
       },
@@ -1966,7 +1966,7 @@ describe('validate — card.styles integration', () => {
         Main: {
           type: 'Box',
           style: { $style: 'myStyle' },
-          children: [{ type: 'Text', props: { content: 'Hello' } }],
+          children: [{ type: 'Text',  content: 'Hello'  }],
         },
       },
     };
@@ -2037,7 +2037,7 @@ describe('validate — card.styles integration', () => {
           children: {
             for: 'item',
             in: '$items',
-            template: { type: 'Text', props: { content: 'hi' } },
+            template: { type: 'Text',  content: 'hi'  },
           },
         },
       },
@@ -2063,7 +2063,7 @@ describe('validateLimits — loop source resolution policy', () => {
           children: {
             for: 'item',
             in: '$items',
-            template: { type: 'Text', props: { content: 'hi' } },
+            template: { type: 'Text',  content: 'hi'  },
           },
         },
       },
@@ -2082,7 +2082,7 @@ describe('validateLimits — loop source resolution policy', () => {
           children: {
             for: 'item',
             in: '$items',
-            template: { type: 'Text', props: { content: 'hi' } },
+            template: { type: 'Text',  content: 'hi'  },
           },
         },
       },
@@ -2102,7 +2102,7 @@ describe('validateLimits — loop source resolution policy', () => {
           children: {
             for: 'item',
             in: '$item.reactions',
-            template: { type: 'Text', props: { content: 'hi' } },
+            template: { type: 'Text',  content: 'hi'  },
           },
         },
       },
@@ -2127,7 +2127,7 @@ describe('validateLimits — loop source resolution policy', () => {
               children: {
                 for: 'reaction',
                 in: '$msg',
-                template: { type: 'Text', props: { content: 'r' } },
+                template: { type: 'Text',  content: 'r'  },
               },
             },
           },

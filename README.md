@@ -21,7 +21,7 @@ packages/
 
 | Package | Description |
 |---------|-------------|
-| `@safe-ugc-ui/types` | Zod schemas for card structure, node types, style props, and value types |
+| `@safe-ugc-ui/types` | Zod schemas for card structure, node types, style fields, and value types |
 | `@safe-ugc-ui/schema` | Generates JSON Schema from Zod definitions for editor integration |
 | `@safe-ugc-ui/validator` | Multi-stage validation: schema, node structure, value types, styles, security, limits, expressions |
 | `@safe-ugc-ui/react` | React components + state resolver + style mapper + asset resolver |
@@ -71,7 +71,7 @@ const card = {
       children: [
         {
           type: 'Text',
-          props: { content: { $ref: '$greeting' } },
+          content: { $ref: '$greeting' },
           style: { fontSize: 20, color: '#00f0ff' },
         },
       ],
@@ -101,7 +101,7 @@ A card is a JSON object:
       "children": [
         {
           "type": "Text",
-          "props": { "content": { "$ref": "$username" } }
+          "content": { "$ref": "$username" }
         }
       ]
     }
@@ -110,7 +110,7 @@ A card is a JSON object:
 ```
 
 - **Layout nodes** (Box, Row, Column) have `children`
-- **Content nodes** (Text, Image) have `props`
+- **Content nodes** (Text, Image) use top-level fields (no `props` wrapper)
 - **State binding** via `{ "$ref": "$variableName" }`
 - **Images** must use `@assets/` paths (no external URLs)
 
@@ -149,7 +149,7 @@ Schema validation fails fast. All other checks run and accumulate errors.
 │   │   └── src/
 │   │       ├── values.ts       Ref, Expr, Dynamic, Length, Color schemas
 │   │       ├── styles.ts       StyleProps schema (40+ properties)
-│   │       ├── props.ts        Component props schemas
+│   │       ├── props.ts        Component field schemas (legacy filename)
 │   │       ├── primitives.ts   16 node type schemas (discriminated union)
 │   │       ├── card.ts         Top-level card schema
 │   │       └── constants.ts    All numeric limits + enums
@@ -169,7 +169,7 @@ Schema validation fails fast. All other checks run and accumulate errors.
 │   ├── react/             React renderer
 │   │   └── src/
 │   │       ├── UGCRenderer.tsx    Public component
-│   │       ├── node-renderer.tsx  Recursive renderer (Phase 1 types)
+│   │       ├── node-renderer.tsx  Recursive renderer (Phase 2 types)
 │   │       ├── state-resolver.ts  $ref resolution with bracket notation
 │   │       ├── style-mapper.ts    StyleProps → CSSProperties
 │   │       ├── asset-resolver.ts  @assets/ → CDN URL mapping

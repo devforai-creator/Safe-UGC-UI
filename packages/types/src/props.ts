@@ -1,8 +1,8 @@
 /**
- * @safe-ugc-ui/types — Component Props
+ * @safe-ugc-ui/types — Component Fields
  *
- * Defines Zod schemas and inferred TypeScript types for each component's props.
- * Based on spec section 4.2 (component-specific props and value-type restrictions).
+ * Defines Zod schemas and inferred TypeScript types for each component's
+ * field set (formerly `props`). Based on spec section 4.2.
  *
  * Security-sensitive fields use restricted value types:
  *   - Image.src, Avatar.src  -> refOnly  (no $expr — prevents URL manipulation)
@@ -41,8 +41,6 @@ export type TextProps = z.infer<typeof textPropsSchema>;
 export const imagePropsSchema = z.object({
   src: refOnlySchema(assetPathSchema),
   alt: dynamicSchema(z.string()).optional(),
-  width: dynamicSchema(lengthSchema).optional(),
-  height: dynamicSchema(lengthSchema).optional(),
 });
 
 export type ImageProps = z.infer<typeof imagePropsSchema>;

@@ -374,7 +374,7 @@ describe('UGCRenderer', () => {
     views: {
       Main: {
         type: 'Box',
-        children: [{ type: 'Text', props: { content: 'Hello World' } }],
+        children: [{ type: 'Text',  content: 'Hello World'  }],
       },
     },
   };
@@ -407,8 +407,8 @@ describe('UGCRenderer', () => {
     const multiViewCard = {
       meta: { name: 'test', version: '1.0.0' },
       views: {
-        Main: { type: 'Text', props: { content: 'Main View' } },
-        Secondary: { type: 'Text', props: { content: 'Second View' } },
+        Main: { type: 'Text',  content: 'Main View'  },
+        Secondary: { type: 'Text',  content: 'Second View'  },
       },
     };
     render(<UGCRenderer card={multiViewCard as any} viewName="Secondary" />);
@@ -422,7 +422,7 @@ describe('UGCRenderer', () => {
       views: {
         Main: {
           type: 'Text',
-          props: { content: { $ref: '$greeting' } },
+           content: { $ref: '$greeting' } ,
         },
       },
     };
@@ -435,7 +435,7 @@ describe('UGCRenderer', () => {
       meta: { name: 'test', version: '1.0.0' },
       state: { msg: 'original' },
       views: {
-        Main: { type: 'Text', props: { content: { $ref: '$msg' } } },
+        Main: { type: 'Text',  content: { $ref: '$msg' }  },
       },
     };
     render(
@@ -448,8 +448,8 @@ describe('UGCRenderer', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
       views: {
-        First: { type: 'Text', props: { content: 'First View' } },
-        Second: { type: 'Text', props: { content: 'Second View' } },
+        First: { type: 'Text',  content: 'First View'  },
+        Second: { type: 'Text',  content: 'Second View'  },
       },
     };
     render(<UGCRenderer card={card as any} />);
@@ -506,7 +506,7 @@ describe('React security', () => {
             views: {
               Main: {
                 type: 'Text',
-                props: { content: '<script>alert(1)</script>' },
+                 content: '<script>alert(1)</script>' ,
               },
             },
           } as any
@@ -527,7 +527,7 @@ describe('React security', () => {
             views: {
               Main: {
                 type: 'Image',
-                props: { src: '@assets/missing.png' },
+                 src: '@assets/missing.png' ,
               },
             },
           } as any
@@ -544,7 +544,7 @@ describe('React security', () => {
       views: {
         Main: {
           type: 'Text',
-          props: { content: { $ref: '$__proto__.polluted' } },
+           content: { $ref: '$__proto__.polluted' } ,
         },
       },
     };
@@ -565,7 +565,7 @@ describe('React security', () => {
       views: {
         Main: {
           type: 'Text',
-          props: { content: '<img src=x onerror=alert(1)>' },
+           content: '<img src=x onerror=alert(1)>' ,
         },
       },
     };
@@ -592,7 +592,7 @@ describe('React security', () => {
 
 describe('renderTree', () => {
   it('renders a Text node', () => {
-    const node = { type: 'Text', props: { content: 'tree text' } };
+    const node = { type: 'Text',  content: 'tree text'  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toBe('tree text');
   });
@@ -601,8 +601,8 @@ describe('renderTree', () => {
     const node = {
       type: 'Box',
       children: [
-        { type: 'Text', props: { content: 'child 1' } },
-        { type: 'Text', props: { content: 'child 2' } },
+        { type: 'Text',  content: 'child 1'  },
+        { type: 'Text',  content: 'child 2'  },
       ],
     };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
@@ -611,7 +611,7 @@ describe('renderTree', () => {
   });
 
   it('renders null for unsupported node types', () => {
-    const node = { type: 'UnknownWidget', props: {} };
+    const node = { type: 'UnknownWidget',  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.innerHTML).toBe('');
   });
@@ -622,7 +622,7 @@ describe('renderTree', () => {
   });
 
   it('renders an Image node with resolved asset', () => {
-    const node = { type: 'Image', props: { src: '@assets/pic.png', alt: 'a picture' } };
+    const node = { type: 'Image',  src: '@assets/pic.png', alt: 'a picture'  };
     const assets = { '@assets/pic.png': 'https://cdn.example.com/pic.png' };
     const { container } = render(<>{renderTree(node, {}, assets)}</>);
     const img = container.querySelector('img');
@@ -634,7 +634,7 @@ describe('renderTree', () => {
   it('renders a Row node', () => {
     const node = {
       type: 'Row',
-      children: [{ type: 'Text', props: { content: 'in row' } }],
+      children: [{ type: 'Text',  content: 'in row'  }],
     };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('in row');
@@ -643,7 +643,7 @@ describe('renderTree', () => {
   it('renders a Column node', () => {
     const node = {
       type: 'Column',
-      children: [{ type: 'Text', props: { content: 'in column' } }],
+      children: [{ type: 'Text',  content: 'in column'  }],
     };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('in column');
@@ -652,7 +652,7 @@ describe('renderTree', () => {
   it('resolves $ref in Text content via state', () => {
     const node = {
       type: 'Text',
-      props: { content: { $ref: '$name' } },
+       content: { $ref: '$name' } ,
     };
     const { container } = render(<>{renderTree(node, { name: 'Dynamic' }, {})}</>);
     expect(container.textContent).toBe('Dynamic');
@@ -675,7 +675,7 @@ describe('renderTree', () => {
   it('blocks Image with $ref src resolving to external URL', () => {
     const node = {
       type: 'Image',
-      props: { src: { $ref: '$img' } },
+       src: { $ref: '$img' } ,
     };
     const state = { img: 'https://evil.com/img.png' };
     const { container } = render(<>{renderTree(node, state, {})}</>);
@@ -685,7 +685,7 @@ describe('renderTree', () => {
   it('renders Image with $ref src resolving to valid @assets/ path', () => {
     const node = {
       type: 'Image',
-      props: { src: { $ref: '$img' }, alt: 'test image' },
+       src: { $ref: '$img' }, alt: 'test image' ,
     };
     const state = { img: '@assets/logo.png' };
     const assets = { '@assets/logo.png': 'https://cdn.example.com/logo.png' };
@@ -698,7 +698,7 @@ describe('renderTree', () => {
   it('blocks Image with $ref src resolving to path traversal', () => {
     const node = {
       type: 'Image',
-      props: { src: { $ref: '$img' } },
+       src: { $ref: '$img' } ,
     };
     const state = { img: '@assets/../secret.png' };
     const assets = { '@assets/../secret.png': 'https://cdn.example.com/secret.png' };
@@ -711,7 +711,7 @@ describe('renderTree', () => {
   it('resolves $ref with array index in Text content', () => {
     const node = {
       type: 'Text',
-      props: { content: { $ref: '$items[0].name' } },
+       content: { $ref: '$items[0].name' } ,
     };
     const state = { items: [{ name: 'hi' }] };
     const { container } = render(<>{renderTree(node, state, {})}</>);
@@ -790,7 +790,7 @@ describe('For-loop rendering', () => {
         in: '$messages',
         template: {
           type: 'Text',
-          props: { content: { $ref: '$msg' } },
+           content: { $ref: '$msg' } ,
         },
       },
     };
@@ -811,7 +811,7 @@ describe('For-loop rendering', () => {
         in: '$messages',
         template: {
           type: 'Text',
-          props: { content: { $ref: '$msg' } },
+           content: { $ref: '$msg' } ,
         },
       },
     };
@@ -831,7 +831,7 @@ describe('For-loop rendering', () => {
         in: '$items',
         template: {
           type: 'Text',
-          props: { content: { $ref: '$item' } },
+           content: { $ref: '$item' } ,
         },
       },
     };
@@ -859,7 +859,7 @@ describe('New components rendering', () => {
   });
 
   it('Spacer renders with size prop', () => {
-    const node = { type: 'Spacer', props: { size: 16 } };
+    const node = { type: 'Spacer',  size: 16  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     const el = container.firstElementChild;
     expect(el).not.toBeNull();
@@ -876,7 +876,7 @@ describe('New components rendering', () => {
     const onAction = vi.fn();
     const node = {
       type: 'Button',
-      props: { label: 'Click Me', action: 'submit' },
+       label: 'Click Me', action: 'submit' ,
     };
     const { container } = render(
       <>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>,
@@ -891,7 +891,7 @@ describe('New components rendering', () => {
     const onAction = vi.fn();
     const node = {
       type: 'Toggle',
-      props: { value: false, onToggle: 'toggle-dark' },
+       value: false, onToggle: 'toggle-dark' ,
     };
     const { container } = render(
       <>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>,
@@ -903,20 +903,20 @@ describe('New components rendering', () => {
   });
 
   it('ProgressBar renders with value and max', () => {
-    const node = { type: 'ProgressBar', props: { value: 50, max: 100 } };
+    const node = { type: 'ProgressBar',  value: 50, max: 100  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     const el = container.firstElementChild;
     expect(el).not.toBeNull();
   });
 
   it('Badge renders with label', () => {
-    const node = { type: 'Badge', props: { label: 'New' } };
+    const node = { type: 'Badge',  label: 'New'  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('New');
   });
 
   it('Chip renders with label', () => {
-    const node = { type: 'Chip', props: { label: 'Tag' } };
+    const node = { type: 'Chip',  label: 'Tag'  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('Tag');
   });
@@ -924,7 +924,7 @@ describe('New components rendering', () => {
   it('Avatar renders with @assets/ src resolved from asset map', () => {
     const node = {
       type: 'Avatar',
-      props: { src: '@assets/avatar.png' },
+       src: '@assets/avatar.png' ,
     };
     const assets = { 'avatar.png': 'https://cdn.example.com/avatar.png' };
     const { container } = render(<>{renderTree(node, {}, assets)}</>);
@@ -935,7 +935,7 @@ describe('New components rendering', () => {
 
   it('Icon renders when iconResolver is provided', () => {
     const iconResolver = (name: string) => <span data-testid="icon">{name}</span>;
-    const node = { type: 'Icon', props: { name: 'star' } };
+    const node = { type: 'Icon',  name: 'star'  };
     const { container } = render(
       <>{renderTree(node, {}, {}, undefined, iconResolver)}</>,
     );
@@ -944,7 +944,7 @@ describe('New components rendering', () => {
   });
 
   it('Icon returns null when iconResolver is not provided', () => {
-    const node = { type: 'Icon', props: { name: 'star' } };
+    const node = { type: 'Icon',  name: 'star'  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.innerHTML).toBe('');
   });
@@ -988,7 +988,7 @@ describe('Runtime limits', () => {
     // Create a tree with > 10001 nodes via deeply nested for-loop
     const children: any[] = [];
     for (let i = 0; i < 10002; i++) {
-      children.push({ type: 'Text', props: { content: `node-${i}` } });
+      children.push({ type: 'Text',  content: `node-${i}`  });
     }
     const node = { type: 'Box', children };
     const onError = vi.fn();
@@ -1011,7 +1011,7 @@ describe('Runtime limits', () => {
         in: '$items',
         template: {
           type: 'Text',
-          props: { content: { $ref: '$item' } },
+           content: { $ref: '$item' } ,
         },
       },
     };
@@ -1026,12 +1026,12 @@ describe('Runtime limits', () => {
   });
 });
 
-describe('UGCRenderer with new props', () => {
+describe('UGCRenderer with new fields', () => {
   it('passes iconResolver prop through to renderer', () => {
     const iconResolver = (name: string) => <span data-testid="ugc-icon">{name}</span>;
     const card = {
       meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Icon', props: { name: 'heart' } } },
+      views: { Main: { type: 'Icon',  name: 'heart'  } },
     };
     render(<UGCRenderer card={card} iconResolver={iconResolver} />);
     expect(screen.getByTestId('ugc-icon')).not.toBeNull();
@@ -1042,7 +1042,7 @@ describe('UGCRenderer with new props', () => {
     const onAction = vi.fn();
     const card = {
       meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Button', props: { label: 'Act', action: 'click' } } },
+      views: { Main: { type: 'Button',  label: 'Act', action: 'click'  } },
     };
     const { container } = render(<UGCRenderer card={card} onAction={onAction} />);
     const btn = container.querySelector('button');
@@ -1096,7 +1096,7 @@ describe('Review feedback fixes', () => {
   it('ProgressBar with max=0 renders 0% width (not NaN)', () => {
     const root = {
       type: 'ProgressBar',
-      props: { value: 0, max: 0 },
+       value: 0, max: 0 ,
     };
     const { container } = render(
       <>{renderTree(root, {}, {})}</>,
@@ -1109,7 +1109,7 @@ describe('Review feedback fixes', () => {
   it('ProgressBar with max=0 and value=5 renders 0% width', () => {
     const root = {
       type: 'ProgressBar',
-      props: { value: 5, max: 0 },
+       value: 5, max: 0 ,
     };
     const { container } = render(
       <>{renderTree(root, {}, {})}</>,
@@ -1122,7 +1122,7 @@ describe('Review feedback fixes', () => {
   it('Divider with thickness="2px" does not double-append px', () => {
     const root = {
       type: 'Divider',
-      props: { thickness: '2px' },
+       thickness: '2px' ,
     };
     const { container } = render(
       <>{renderTree(root, {}, {})}</>,
@@ -1134,7 +1134,7 @@ describe('Review feedback fixes', () => {
   it('Divider with numeric string thickness="2" appends px', () => {
     const root = {
       type: 'Divider',
-      props: { thickness: '2' },
+       thickness: '2' ,
     };
     const { container } = render(
       <>{renderTree(root, {}, {})}</>,
@@ -1150,7 +1150,7 @@ describe('Review feedback fixes', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     };
     const state = { items: 'not-an-array' };
@@ -1171,7 +1171,7 @@ describe('Review feedback fixes', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text', props: { content: 'hi' } },
+        template: { type: 'Text',  content: 'hi'  },
       },
     };
     render(

@@ -52,9 +52,9 @@ export interface TraversalContext {
 export interface TraversableNode {
   type: string;
   children?: TraversableNode[] | ForLoopLike;
-  props?: Record<string, unknown>;
   style?: Record<string, unknown>;
   condition?: unknown;
+  [key: string]: unknown;
 }
 
 interface ForLoopLike {

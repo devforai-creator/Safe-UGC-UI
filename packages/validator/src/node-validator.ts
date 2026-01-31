@@ -5,8 +5,7 @@
  *
  * For every node encountered during traversal:
  *   1. Rejects unknown node types not in ALL_COMPONENT_TYPES.
- *   2. Checks that required props exist for each component type.
- *   3. Ensures the `props` object itself exists when the type requires props.
+ *   2. Checks that required fields exist for each component type.
  *   4. Validates ForLoop structure when children use `for`/`in`/`template`.
  */
 
@@ -20,15 +19,15 @@ import {
 } from './traverse.js';
 
 // ---------------------------------------------------------------------------
-// Required props per component type
+// Required fields per component type
 // ---------------------------------------------------------------------------
 
 /**
- * Mapping from component type to the list of required prop field names.
+ * Mapping from component type to the list of required field names.
  * Layout nodes (Box, Row, Column, Stack, Grid) and structural nodes
- * (Divider, Spacer) have no required props.
+ * (Divider, Spacer) have no required fields.
  */
-const REQUIRED_PROPS: Record<string, string[]> = {
+const REQUIRED_FIELDS: Record<string, string[]> = {
   Text: ['content'],
   Image: ['src'],
   ProgressBar: ['value', 'max'],
@@ -121,7 +120,7 @@ function validateForLoop(
 // ---------------------------------------------------------------------------
 
 /**
- * Validate a single node's type and required props.
+ * Validate a single node's type and required fields.
  */
 function validateNode(
   node: TraversableNode,
@@ -139,34 +138,23 @@ function validateNode(
         path,
       ),
     );
-    // Cannot validate props for an unknown type; return early.
+    // Cannot validate fields for an unknown type; return early.
     return errors;
   }
 
-  // 2 & 3. Required props validation
-  const requiredFields = REQUIRED_PROPS[node.type];
+  // 2. Required field validation
+  const requiredFields = REQUIRED_FIELDS[node.type];
   if (requiredFields && requiredFields.length > 0) {
-    // The node type requires props — check that `props` object exists.
-    if (!node.props || typeof node.props !== 'object') {
-      errors.push(
-        createError(
-          'MISSING_FIELD',
-          `"${node.type}" node is missing required "props" object.`,
-          `${path}.props`,
-        ),
-      );
-    } else {
-      // Check each required field inside props.
-      for (const field of requiredFields) {
-        if (!(field in node.props) || node.props[field] === undefined) {
-          errors.push(
-            createError(
-              'MISSING_FIELD',
-              `"${node.type}" node is missing required prop "${field}".`,
-              `${path}.props.${field}`,
-            ),
-          );
-        }
+    // Check each required field on the node itself (v2 flattening).
+    for (const field of requiredFields) {
+      if (!(field in node) || (node as Record<string, unknown>)[field] === undefined) {
+        errors.push(
+          createError(
+            'MISSING_FIELD',
+            `"${node.type}" node is missing required field "${field}".`,
+            `${path}.${field}`,
+          ),
+        );
       }
     }
   }
@@ -193,7 +181,7 @@ function validateNode(
  *
  * Uses `traverseCard()` to visit every node and checks:
  *   - Node type is a known component type.
- *   - Required props are present for the given component type.
+ *   - Required fields are present for the given component type.
  *   - ForLoop children have valid `for`, `in`, and `template` fields.
  *
  * @param views - The `views` object from a UGCCard.

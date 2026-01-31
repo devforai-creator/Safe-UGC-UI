@@ -38,12 +38,12 @@ export const SAMPLE_CYBERPUNK = {
               children: [
                 {
                   type: 'Text',
-                  props: { content: { $ref: '$username' } },
+                   content: { $ref: '$username' } ,
                   style: { fontSize: 20, color: '#00f0ff' },
                 },
                 {
                   type: 'Text',
-                  props: { content: { $ref: '$title' } },
+                   content: { $ref: '$title' } ,
                   style: { fontSize: 12, color: '#ff00aa', letterSpacing: 2 },
                 },
               ],
@@ -64,12 +64,12 @@ export const SAMPLE_CYBERPUNK = {
               children: [
                 {
                   type: 'Text',
-                  props: { content: { $ref: '$level' } },
+                   content: { $ref: '$level' } ,
                   style: { fontSize: 18, color: '#ffcc00' },
                 },
                 {
                   type: 'Text',
-                  props: { content: 'LEVEL' },
+                   content: 'LEVEL' ,
                   style: { fontSize: 10, color: '#555570' },
                 },
               ],
@@ -80,12 +80,12 @@ export const SAMPLE_CYBERPUNK = {
               children: [
                 {
                   type: 'Text',
-                  props: { content: { $ref: '$hp' } },
+                   content: { $ref: '$hp' } ,
                   style: { fontSize: 18, color: '#00ff88' },
                 },
                 {
                   type: 'Text',
-                  props: { content: 'HP' },
+                   content: 'HP' ,
                   style: { fontSize: 10, color: '#555570' },
                 },
               ],
@@ -96,12 +96,12 @@ export const SAMPLE_CYBERPUNK = {
               children: [
                 {
                   type: 'Text',
-                  props: { content: { $ref: '$credits' } },
+                   content: { $ref: '$credits' } ,
                   style: { fontSize: 18, color: '#ff6600' },
                 },
                 {
                   type: 'Text',
-                  props: { content: 'CREDITS' },
+                   content: 'CREDITS' ,
                   style: { fontSize: 10, color: '#555570' },
                 },
               ],
@@ -114,7 +114,7 @@ export const SAMPLE_CYBERPUNK = {
           children: [
             {
               type: 'Text',
-              props: { content: { $ref: '$bio' } },
+               content: { $ref: '$bio' } ,
               style: { fontSize: 12, color: '#8888aa', lineHeight: 18 },
             },
           ],
@@ -173,12 +173,12 @@ export const SAMPLE_KAKAO = {
                   children: [
                     {
                       type: 'Text',
-                      props: { content: { $ref: '$roomName' } },
+                       content: { $ref: '$roomName' } ,
                       style: { fontSize: 16, color: '#333333' },
                     },
                     {
                       type: 'Text',
-                      props: { content: { $ref: '$memberCount' } },
+                       content: { $ref: '$memberCount' } ,
                       style: { fontSize: 11, color: '#6b8299' },
                     },
                   ],
@@ -230,7 +230,7 @@ export const SAMPLE_KAKAO = {
                   children: [
                     {
                       type: 'Text',
-                      props: { content: { $ref: '$name1' } },
+                       content: { $ref: '$name1' } ,
                       style: { fontSize: 11, color: '#555555' },
                     },
                     {
@@ -248,14 +248,14 @@ export const SAMPLE_KAKAO = {
                           children: [
                             {
                               type: 'Text',
-                              props: { content: { $ref: '$msg1' } },
+                               content: { $ref: '$msg1' } ,
                               style: { fontSize: 13, color: '#333333', lineHeight: 18 },
                             },
                           ],
                         },
                         {
                           type: 'Text',
-                          props: { content: { $ref: '$time1' } },
+                           content: { $ref: '$time1' } ,
                           style: { fontSize: 10, color: '#8899aa' },
                         },
                       ],
@@ -286,7 +286,7 @@ export const SAMPLE_KAKAO = {
                   children: [
                     {
                       type: 'Text',
-                      props: { content: { $ref: '$name2' } },
+                       content: { $ref: '$name2' } ,
                       style: { fontSize: 11, color: '#555555' },
                     },
                     {
@@ -304,14 +304,14 @@ export const SAMPLE_KAKAO = {
                           children: [
                             {
                               type: 'Text',
-                              props: { content: { $ref: '$msg2' } },
+                               content: { $ref: '$msg2' } ,
                               style: { fontSize: 13, color: '#333333', lineHeight: 18 },
                             },
                           ],
                         },
                         {
                           type: 'Text',
-                          props: { content: { $ref: '$time2' } },
+                           content: { $ref: '$time2' } ,
                           style: { fontSize: 10, color: '#8899aa' },
                         },
                       ],
@@ -332,14 +332,14 @@ export const SAMPLE_KAKAO = {
                           children: [
                             {
                               type: 'Text',
-                              props: { content: { $ref: '$msg3' } },
+                               content: { $ref: '$msg3' } ,
                               style: { fontSize: 13, color: '#333333', lineHeight: 18 },
                             },
                           ],
                         },
                         {
                           type: 'Text',
-                          props: { content: { $ref: '$time3' } },
+                           content: { $ref: '$time3' } ,
                           style: { fontSize: 10, color: '#8899aa' },
                         },
                       ],
@@ -370,7 +370,7 @@ export const SAMPLE_KAKAO = {
                   children: [
                     {
                       type: 'Text',
-                      props: { content: { $ref: '$name3' } },
+                       content: { $ref: '$name3' } ,
                       style: { fontSize: 11, color: '#555555' },
                     },
                     {
@@ -388,14 +388,14 @@ export const SAMPLE_KAKAO = {
                           children: [
                             {
                               type: 'Text',
-                              props: { content: { $ref: '$msg4' } },
+                               content: { $ref: '$msg4' } ,
                               style: { fontSize: 13, color: '#333333', lineHeight: 18 },
                             },
                           ],
                         },
                         {
                           type: 'Text',
-                          props: { content: { $ref: '$time4' } },
+                           content: { $ref: '$time4' } ,
                           style: { fontSize: 10, color: '#8899aa' },
                         },
                       ],
@@ -412,7 +412,7 @@ export const SAMPLE_KAKAO = {
               children: [
                 {
                   type: 'Text',
-                  props: { content: { $ref: '$myTime' } },
+                   content: { $ref: '$myTime' } ,
                   style: { fontSize: 10, color: '#8899aa' },
                 },
                 {
@@ -426,7 +426,7 @@ export const SAMPLE_KAKAO = {
                   children: [
                     {
                       type: 'Text',
-                      props: { content: { $ref: '$myMsg' } },
+                       content: { $ref: '$myMsg' } ,
                       style: { fontSize: 13, color: '#333333', lineHeight: 18 },
                     },
                   ],
@@ -450,7 +450,7 @@ export const SAMPLE_KAKAO = {
           children: [
             {
               type: 'Text',
-              props: { content: 'Type a message...' },
+               content: 'Type a message...' ,
               style: { fontSize: 13, color: '#aaaaaa' },
             },
           ],

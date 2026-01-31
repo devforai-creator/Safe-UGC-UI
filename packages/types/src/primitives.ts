@@ -3,11 +3,11 @@
  *
  * Defines the component tree structure using Zod schemas with z.lazy() for
  * recursive types. Based on spec section 2 (primitive list) and section 4.2
- * (component props).
+ * (component field rules).
  *
  * Node categories:
  *   - Layout:      Box, Row, Column, Stack, Grid  (have children)
- *   - Content:     Text, Image                     (have props, no children)
+ *   - Content:     Text, Image                     (have fields, no children)
  *   - Display:     ProgressBar, Avatar, Icon, Badge, Chip, Divider, Spacer
  *   - Interaction: Button, Toggle
  *
@@ -169,7 +169,7 @@ export type GridNode = {
 };
 
 // ===========================================================================
-// 5. Content nodes — have props, no children
+// 5. Content nodes — have fields, no children
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
@@ -178,13 +178,13 @@ export type GridNode = {
 
 export const textNodeSchema = z.object({
   type: z.literal('Text'),
-  props: textPropsSchema,
+  ...textPropsSchema.shape,
   ...baseFields,
 });
 
 export type TextNode = {
   type: 'Text';
-  props: z.infer<typeof textPropsSchema>;
+} & z.infer<typeof textPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -195,13 +195,13 @@ export type TextNode = {
 
 export const imageNodeSchema = z.object({
   type: z.literal('Image'),
-  props: imagePropsSchema,
+  ...imagePropsSchema.shape,
   ...baseFields,
 });
 
 export type ImageNode = {
   type: 'Image';
-  props: z.infer<typeof imagePropsSchema>;
+} & z.infer<typeof imagePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -216,13 +216,13 @@ export type ImageNode = {
 
 export const progressBarNodeSchema = z.object({
   type: z.literal('ProgressBar'),
-  props: progressBarPropsSchema,
+  ...progressBarPropsSchema.shape,
   ...baseFields,
 });
 
 export type ProgressBarNode = {
   type: 'ProgressBar';
-  props: z.infer<typeof progressBarPropsSchema>;
+} & z.infer<typeof progressBarPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -233,13 +233,13 @@ export type ProgressBarNode = {
 
 export const avatarNodeSchema = z.object({
   type: z.literal('Avatar'),
-  props: avatarPropsSchema,
+  ...avatarPropsSchema.shape,
   ...baseFields,
 });
 
 export type AvatarNode = {
   type: 'Avatar';
-  props: z.infer<typeof avatarPropsSchema>;
+} & z.infer<typeof avatarPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -250,13 +250,13 @@ export type AvatarNode = {
 
 export const iconNodeSchema = z.object({
   type: z.literal('Icon'),
-  props: iconPropsSchema,
+  ...iconPropsSchema.shape,
   ...baseFields,
 });
 
 export type IconNode = {
   type: 'Icon';
-  props: z.infer<typeof iconPropsSchema>;
+} & z.infer<typeof iconPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -267,13 +267,13 @@ export type IconNode = {
 
 export const badgeNodeSchema = z.object({
   type: z.literal('Badge'),
-  props: badgePropsSchema,
+  ...badgePropsSchema.shape,
   ...baseFields,
 });
 
 export type BadgeNode = {
   type: 'Badge';
-  props: z.infer<typeof badgePropsSchema>;
+} & z.infer<typeof badgePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -284,13 +284,13 @@ export type BadgeNode = {
 
 export const chipNodeSchema = z.object({
   type: z.literal('Chip'),
-  props: chipPropsSchema,
+  ...chipPropsSchema.shape,
   ...baseFields,
 });
 
 export type ChipNode = {
   type: 'Chip';
-  props: z.infer<typeof chipPropsSchema>;
+} & z.infer<typeof chipPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -301,13 +301,13 @@ export type ChipNode = {
 
 export const dividerNodeSchema = z.object({
   type: z.literal('Divider'),
-  props: dividerPropsSchema.optional(),
+  ...dividerPropsSchema.shape,
   ...baseFields,
 });
 
 export type DividerNode = {
   type: 'Divider';
-  props?: z.infer<typeof dividerPropsSchema>;
+} & z.infer<typeof dividerPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -318,13 +318,13 @@ export type DividerNode = {
 
 export const spacerNodeSchema = z.object({
   type: z.literal('Spacer'),
-  props: spacerPropsSchema.optional(),
+  ...spacerPropsSchema.shape,
   ...baseFields,
 });
 
 export type SpacerNode = {
   type: 'Spacer';
-  props?: z.infer<typeof spacerPropsSchema>;
+} & z.infer<typeof spacerPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -339,13 +339,13 @@ export type SpacerNode = {
 
 export const buttonNodeSchema = z.object({
   type: z.literal('Button'),
-  props: buttonPropsSchema,
+  ...buttonPropsSchema.shape,
   ...baseFields,
 });
 
 export type ButtonNode = {
   type: 'Button';
-  props: z.infer<typeof buttonPropsSchema>;
+} & z.infer<typeof buttonPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };
@@ -356,13 +356,13 @@ export type ButtonNode = {
 
 export const toggleNodeSchema = z.object({
   type: z.literal('Toggle'),
-  props: togglePropsSchema,
+  ...togglePropsSchema.shape,
   ...baseFields,
 });
 
 export type ToggleNode = {
   type: 'Toggle';
-  props: z.infer<typeof togglePropsSchema>;
+} & z.infer<typeof togglePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
   condition?: z.infer<typeof exprSchema>;
 };

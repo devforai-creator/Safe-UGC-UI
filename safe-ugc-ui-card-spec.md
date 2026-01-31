@@ -101,7 +101,7 @@ CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to
 
 ### 2.2 Content Components
 
-Content components have `props` instead of `children`.
+Content components do not have `children`. Their fields live directly on the node.
 
 #### Text
 Displays text content.
@@ -109,12 +109,12 @@ Displays text content.
 ```json
 {
   "type": "Text",
-  "props": { "content": "Hello World" },
+   "content": "Hello World" ,
   "style": { "fontSize": 16, "color": "#ffffff" }
 }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `content` | Yes | string | literal or $ref |
 
@@ -124,17 +124,17 @@ Displays an image from local assets only.
 ```json
 {
   "type": "Image",
-  "props": { "src": "@assets/photo.png", "alt": "My photo" },
+   "src": "@assets/photo.png", "alt": "My photo" ,
   "style": { "width": 200, "borderRadius": 8 }
 }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `src` | Yes | AssetPath (`@assets/...`) | literal or $ref (no $expr) |
 | `alt` | No | string | literal or $ref |
 
-To control image dimensions, use `style.width` and `style.height` on the Image node. Do not use `props.width` or `props.height` — they exist in the schema but are ignored by the renderer.
+To control image dimensions, use `style.width` and `style.height` on the Image node. There are no `width` / `height` fields on Image nodes.
 
 **Image src rules:**
 - Must start with `@assets/`
@@ -148,11 +148,11 @@ Circular image, typically used for profile pictures. Follows the same `@assets/`
 ```json
 {
   "type": "Avatar",
-  "props": { "src": "@assets/avatar.png", "size": 56 }
+   "src": "@assets/avatar.png", "size": 56 
 }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `src` | Yes | AssetPath (`@assets/...`) | literal or $ref (no $expr) |
 | `size` | No | length | literal or $ref |
@@ -163,11 +163,11 @@ Platform-provided icon. The icon name must be a static string — no dynamic bin
 ```json
 {
   "type": "Icon",
-  "props": { "name": "heart", "size": 24, "color": "#ff0066" }
+   "name": "heart", "size": 24, "color": "#ff0066" 
 }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `name` | Yes | string | static only (no $ref, no $expr) |
 | `size` | No | length | literal or $ref |
@@ -177,10 +177,10 @@ Platform-provided icon. The icon name must be a static string — no dynamic bin
 Empty spacing element. Useful for adding fixed gaps or pushing siblings apart.
 
 ```json
-{ "type": "Spacer", "props": { "size": 16 } }
+{ "type": "Spacer",  "size": 16  }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `size` | No | length | literal or $ref |
 
@@ -188,10 +188,10 @@ Empty spacing element. Useful for adding fixed gaps or pushing siblings apart.
 Horizontal line separator.
 
 ```json
-{ "type": "Divider", "props": { "color": "#333", "thickness": 1 } }
+{ "type": "Divider",  "color": "#333", "thickness": 1  }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `color` | No | color | literal or $ref |
 | `thickness` | No | length | literal or $ref |
@@ -202,11 +202,11 @@ Progress indicator, rendered as a filled bar.
 ```json
 {
   "type": "ProgressBar",
-  "props": { "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" }
+   "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" 
 }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `value` | Yes | number | literal or $ref |
 | `max` | Yes | number | literal or $ref |
@@ -216,10 +216,10 @@ Progress indicator, rendered as a filled bar.
 Small label with a colored background. Good for status indicators, counts, or tags.
 
 ```json
-{ "type": "Badge", "props": { "label": "NEW", "color": "#ff0066" } }
+{ "type": "Badge",  "label": "NEW", "color": "#ff0066"  }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `label` | Yes | string | literal or $ref |
 | `color` | No | color | literal or $ref |
@@ -228,26 +228,26 @@ Small label with a colored background. Good for status indicators, counts, or ta
 Label with a border outline, similar to Badge but outlined rather than filled.
 
 ```json
-{ "type": "Chip", "props": { "label": "Hacker", "color": "#00f0ff" } }
+{ "type": "Chip",  "label": "Hacker", "color": "#00f0ff"  }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `label` | Yes | string | literal or $ref |
 | `color` | No | color | literal or $ref |
 
 ### 2.3 Interaction Components
 
-Interaction components have `props` and trigger callbacks.
+Interaction components use fields and trigger callbacks.
 
 #### Button
 Triggers an action callback when pressed. The `action` string identifies which callback to invoke.
 
 ```json
-{ "type": "Button", "props": { "label": "Accept", "action": "onAccept" } }
+{ "type": "Button",  "label": "Accept", "action": "onAccept"  }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `label` | Yes | string | literal or $ref |
 | `action` | Yes | string | static only |
@@ -256,10 +256,10 @@ Triggers an action callback when pressed. The `action` string identifies which c
 Boolean toggle switch that triggers a callback when flipped.
 
 ```json
-{ "type": "Toggle", "props": { "value": { "$ref": "$darkMode" }, "onToggle": "onToggleDarkMode" } }
+{ "type": "Toggle",  "value": { "$ref": "$darkMode" }, "onToggle": "onToggleDarkMode"  }
 ```
 
-| Prop | Required | Type | Dynamic |
+| Field | Required | Type | Dynamic |
 |------|----------|------|---------|
 | `value` | Yes | boolean | literal or $ref |
 | `onToggle` | Yes | string | static only |
@@ -562,7 +562,7 @@ Cards can define reusable named styles in the top-level `styles` field and refer
   "views": {
     "Main": {
       "type": "Text",
-      "props": { "content": "Title" },
+       "content": "Title" ,
       "style": { "$style": "heading", "marginBottom": 8 }
     }
   }
@@ -582,7 +582,7 @@ In this example, the Text node receives all properties from the `heading` style,
 
 ## 4. State Binding ($ref)
 
-Use `state` to define data, and `$ref` to bind it into props or style values.
+Use `state` to define data, and `$ref` to bind it into fields or style values.
 
 > **Important:** `$expr` is reserved for future use and **must not be used**. The schema accepts `$expr` for forward compatibility, but the renderer does not evaluate it — any `$expr` value will render as empty. Always use `$ref` with pre-computed state values instead.
 
@@ -608,12 +608,12 @@ State values can be strings, numbers, booleans, arrays, or nested objects.
 
 ### 4.2 Referencing State
 
-Use `{ "$ref": "$variableName" }` in props or style values:
+Use `{ "$ref": "$variableName" }` in fields or style values:
 
 ```json
 {
   "type": "Text",
-  "props": { "content": { "$ref": "$username" } }
+   "content": { "$ref": "$username" } 
 }
 ```
 
@@ -662,7 +662,7 @@ Children of a layout component can be a **for-loop object** instead of an array.
     "in": "$messages",
     "template": {
       "type": "Text",
-      "props": { "content": { "$ref": "$item.text" } }
+       "content": { "$ref": "$item.text" } 
     }
   }
 }
@@ -692,7 +692,7 @@ Inside the template, `$item` (or whatever you named the loop variable) refers to
     "template": {
       "type": "Column",
       "children": [
-        { "type": "Text", "props": { "content": { "$ref": "$msg.text" } } },
+        { "type": "Text",  "content": { "$ref": "$msg.text" }  },
         {
           "type": "Row",
           "children": {
@@ -700,7 +700,7 @@ Inside the template, `$item` (or whatever you named the loop variable) refers to
             "in": "$msg.reactions",
             "template": {
               "type": "Text",
-              "props": { "content": { "$ref": "$reaction" } }
+               "content": { "$ref": "$reaction" } 
             }
           }
         }
@@ -749,8 +749,8 @@ In this example, the outer loop iterates over `$messages`, and for each message,
   "type": "Row",
   "style": { "gap": 12, "alignItems": "center" },
   "children": [
-    { "type": "Text", "props": { "content": "Label" } },
-    { "type": "Text", "props": { "content": "Value" } }
+    { "type": "Text",  "content": "Label"  },
+    { "type": "Text",  "content": "Value"  }
   ]
 }
 ```
@@ -779,12 +779,12 @@ In this example, the outer loop iterates over `$messages`, and for each message,
   "children": [
     {
       "type": "Text",
-      "props": { "content": { "$ref": "$level" } },
+       "content": { "$ref": "$level" } ,
       "style": { "fontSize": 18, "color": "#ffcc00" }
     },
     {
       "type": "Text",
-      "props": { "content": "LEVEL" },
+       "content": "LEVEL" ,
       "style": { "fontSize": 10, "color": "#666" }
     }
   ]
@@ -808,7 +808,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 ### 6.5 Divider Line
 
 ```json
-{ "type": "Divider", "props": { "color": "#333" } }
+{ "type": "Divider",  "color": "#333"  }
 ```
 
 ### 6.6 Chat Bubble (Other Person)
@@ -820,7 +820,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
   "children": [
     {
       "type": "Avatar",
-      "props": { "src": "@assets/sender-avatar.png", "size": 36 }
+       "src": "@assets/sender-avatar.png", "size": 36 
     },
     {
       "type": "Column",
@@ -828,7 +828,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
       "children": [
         {
           "type": "Text",
-          "props": { "content": { "$ref": "$senderName" } },
+           "content": { "$ref": "$senderName" } ,
           "style": { "fontSize": 11, "color": "#555" }
         },
         {
@@ -841,14 +841,14 @@ In this example, the outer loop iterates over `$messages`, and for each message,
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$message" } },
+                   "content": { "$ref": "$message" } ,
                   "style": { "fontSize": 13, "color": "#333", "lineHeight": 18 }
                 }
               ]
             },
             {
               "type": "Text",
-              "props": { "content": { "$ref": "$time" } },
+               "content": { "$ref": "$time" } ,
               "style": { "fontSize": 10, "color": "#8899aa" }
             }
           ]
@@ -868,7 +868,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
   "children": [
     {
       "type": "Text",
-      "props": { "content": { "$ref": "$myTime" } },
+       "content": { "$ref": "$myTime" } ,
       "style": { "fontSize": 10, "color": "#8899aa" }
     },
     {
@@ -877,7 +877,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
       "children": [
         {
           "type": "Text",
-          "props": { "content": { "$ref": "$myMsg" } },
+           "content": { "$ref": "$myMsg" } ,
           "style": { "fontSize": 13, "color": "#333", "lineHeight": 18 }
         }
       ]
@@ -903,7 +903,7 @@ Render a list of messages from state using a `for...in` loop:
       "children": [
         {
           "type": "Avatar",
-          "props": { "src": { "$ref": "$msg.avatar" }, "size": 32 }
+           "src": { "$ref": "$msg.avatar" }, "size": 32 
         },
         {
           "type": "Column",
@@ -911,12 +911,12 @@ Render a list of messages from state using a `for...in` loop:
           "children": [
             {
               "type": "Text",
-              "props": { "content": { "$ref": "$msg.sender" } },
+               "content": { "$ref": "$msg.sender" } ,
               "style": { "fontSize": 13, "fontWeight": "bold", "color": "#ffffff" }
             },
             {
               "type": "Text",
-              "props": { "content": { "$ref": "$msg.text" } },
+               "content": { "$ref": "$msg.text" } ,
               "style": { "fontSize": 12, "color": "#aaaaaa" }
             }
           ]
@@ -944,21 +944,21 @@ A 3-column grid of items:
       "type": "Box",
       "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
       "children": [
-        { "type": "Text", "props": { "content": "Item 1" }, "style": { "color": "#fff" } }
+        { "type": "Text",  "content": "Item 1" , "style": { "color": "#fff" } }
       ]
     },
     {
       "type": "Box",
       "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
       "children": [
-        { "type": "Text", "props": { "content": "Item 2" }, "style": { "color": "#fff" } }
+        { "type": "Text",  "content": "Item 2" , "style": { "color": "#fff" } }
       ]
     },
     {
       "type": "Box",
       "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
       "children": [
-        { "type": "Text", "props": { "content": "Item 3" }, "style": { "color": "#fff" } }
+        { "type": "Text",  "content": "Item 3" , "style": { "color": "#fff" } }
       ]
     }
   ]
@@ -976,13 +976,13 @@ A 3-column grid of items:
       "type": "Row",
       "style": { "justifyContent": "space-between" },
       "children": [
-        { "type": "Text", "props": { "content": "HP" }, "style": { "fontSize": 12, "color": "#555570" } },
-        { "type": "Text", "props": { "content": { "$ref": "$hpLabel" } }, "style": { "fontSize": 12, "color": "#00ff88" } }
+        { "type": "Text",  "content": "HP" , "style": { "fontSize": 12, "color": "#555570" } },
+        { "type": "Text",  "content": { "$ref": "$hpLabel" } , "style": { "fontSize": 12, "color": "#00ff88" } }
       ]
     },
     {
       "type": "ProgressBar",
-      "props": { "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" }
+       "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" 
     }
   ]
 }
@@ -1002,9 +1002,9 @@ Using `$style` for consistent badge styling:
       "type": "Row",
       "style": { "gap": 8 },
       "children": [
-        { "type": "Badge", "props": { "label": "Hacker", "color": "#ff0066" }, "style": { "$style": "tagBadge" } },
-        { "type": "Badge", "props": { "label": "Elite", "color": "#00f0ff" }, "style": { "$style": "tagBadge" } },
-        { "type": "Badge", "props": { "label": "Verified", "color": "#00ff88" }, "style": { "$style": "tagBadge" } }
+        { "type": "Badge",  "label": "Hacker", "color": "#ff0066" , "style": { "$style": "tagBadge" } },
+        { "type": "Badge",  "label": "Elite", "color": "#00f0ff" , "style": { "$style": "tagBadge" } },
+        { "type": "Badge",  "label": "Verified", "color": "#00ff88" , "style": { "$style": "tagBadge" } }
       ]
     }
   }
@@ -1054,7 +1054,7 @@ Using `$style` for consistent badge styling:
           "children": [
             {
               "type": "Avatar",
-              "props": { "src": "@assets/avatar.png", "size": 56 }
+               "src": "@assets/avatar.png", "size": 56 
             },
             {
               "type": "Column",
@@ -1062,20 +1062,20 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$username" } },
+                   "content": { "$ref": "$username" } ,
                   "style": { "fontSize": 20, "color": "#00f0ff" }
                 },
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$title" } },
+                   "content": { "$ref": "$title" } ,
                   "style": { "fontSize": 12, "color": "#ff00aa", "letterSpacing": 2 }
                 }
               ]
             }
           ]
         },
-        { "type": "Divider", "props": { "color": "#1a1a2e" } },
-        { "type": "Spacer", "props": { "size": 16 } },
+        { "type": "Divider",  "color": "#1a1a2e"  },
+        { "type": "Spacer",  "size": 16  },
         {
           "type": "Row",
           "style": { "justifyContent": "space-between", "marginBottom": 16 },
@@ -1086,12 +1086,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$level" } },
+                   "content": { "$ref": "$level" } ,
                   "style": { "$style": "statValue", "color": "#ffcc00" }
                 },
                 {
                   "type": "Text",
-                  "props": { "content": "LEVEL" },
+                   "content": "LEVEL" ,
                   "style": { "$style": "statLabel" }
                 }
               ]
@@ -1102,12 +1102,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$hpLabel" } },
+                   "content": { "$ref": "$hpLabel" } ,
                   "style": { "$style": "statValue", "color": "#00ff88" }
                 },
                 {
                   "type": "Text",
-                  "props": { "content": "HP" },
+                   "content": "HP" ,
                   "style": { "$style": "statLabel" }
                 }
               ]
@@ -1118,12 +1118,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$credits" } },
+                   "content": { "$ref": "$credits" } ,
                   "style": { "$style": "statValue", "color": "#ff6600" }
                 },
                 {
                   "type": "Text",
-                  "props": { "content": "CREDITS" },
+                   "content": "CREDITS" ,
                   "style": { "$style": "statLabel" }
                 }
               ]
@@ -1132,11 +1132,11 @@ Using `$style` for consistent badge styling:
         },
         {
           "type": "ProgressBar",
-          "props": {
+          
             "value": { "$ref": "$hp" },
             "max": { "$ref": "$maxHp" },
             "color": "#00ff88"
-          },
+          ,
           "style": { "marginBottom": 16 }
         },
         {
@@ -1145,16 +1145,16 @@ Using `$style` for consistent badge styling:
           "children": [
             {
               "type": "Text",
-              "props": { "content": { "$ref": "$bio" } },
+               "content": { "$ref": "$bio" } ,
               "style": { "fontSize": 12, "color": "#8888aa", "lineHeight": 18 }
             }
           ]
         },
-        { "type": "Divider", "props": { "color": "#1a1a2e" } },
-        { "type": "Spacer", "props": { "size": 12 } },
+        { "type": "Divider",  "color": "#1a1a2e"  },
+        { "type": "Spacer",  "size": 12  },
         {
           "type": "Text",
-          "props": { "content": "SKILLS" },
+           "content": "SKILLS" ,
           "style": { "$style": "statLabel", "marginBottom": 8, "letterSpacing": 2 }
         },
         {
@@ -1169,12 +1169,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                  "props": { "content": { "$ref": "$skill.name" } },
+                   "content": { "$ref": "$skill.name" } ,
                   "style": { "$style": "skillText" }
                 },
                 {
                   "type": "Badge",
-                  "props": { "label": { "$ref": "$skill.level" }, "color": "#00f0ff" }
+                   "label": { "$ref": "$skill.level" }, "color": "#00f0ff" 
                 }
               ]
             }
@@ -1199,11 +1199,11 @@ Before outputting a card, verify:
 
 **Components:**
 - [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array or for-loop object)
-- [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use `props` (object)
-- [ ] Interaction nodes (`Button`, `Toggle`) use `props` (object)
-- [ ] `Text.props.content` is present
-- [ ] `Image.props.src` starts with `@assets/` — no external URLs
-- [ ] `Avatar.props.src` starts with `@assets/` — no external URLs
+- [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
+- [ ] Interaction nodes (`Button`, `Toggle`) use top-level fields (no `props` object)
+- [ ] `Text.content` is present
+- [ ] `Image.src` starts with `@assets/` — no external URLs
+- [ ] `Avatar.src` starts with `@assets/` — no external URLs
 - [ ] `Icon.name` is a static string (no $ref, no $expr)
 - [ ] `Button.action` and `Toggle.onToggle` are static strings
 

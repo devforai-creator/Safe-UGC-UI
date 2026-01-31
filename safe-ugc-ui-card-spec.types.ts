@@ -5,6 +5,7 @@
  * (safe-ugc-ui-card-spec.md) and is intentionally strict.
  *
  * NOTE: `$expr` is reserved and must not be used.
+ * NOTE: Component fields live directly on the node (no `props` wrapper).
  */
 
 // ---------------------------------------------------------------------------
@@ -92,7 +93,7 @@ export interface TransformObject {
 }
 
 /**
- * Style props.
+ * Style fields.
  *
  * Static-only properties must be **literal** (no $ref), and all nested fields
  * are also literal-only (e.g., borderLeft.color cannot be $ref).
@@ -176,63 +177,60 @@ export interface Style {
 }
 
 // ---------------------------------------------------------------------------
-// 3) Component props
+// 3) Component fields
 // ---------------------------------------------------------------------------
 
-export interface TextProps {
+export interface TextFields {
   content: Dynamic<string>;
 }
 
-export interface ImageProps {
+export interface ImageFields {
   src: Dynamic<AssetPath>; // no $expr, no external URLs
   alt?: Dynamic<string>;
-  /** NOTE: width/height exist in schema but are ignored by renderer. */
-  width?: Dynamic<Length>;
-  height?: Dynamic<Length>;
 }
 
-export interface ProgressBarProps {
+export interface ProgressBarFields {
   value: Dynamic<number>;
   max: Dynamic<number>;
   color?: Dynamic<Color>;
 }
 
-export interface AvatarProps {
+export interface AvatarFields {
   src: Dynamic<AssetPath>; // no $expr, no external URLs
   size?: Dynamic<Length>;
 }
 
-export interface IconProps {
+export interface IconFields {
   name: string; // static only
   size?: Dynamic<Length>;
   color?: Dynamic<Color>;
 }
 
-export interface BadgeProps {
+export interface BadgeFields {
   label: Dynamic<string>;
   color?: Dynamic<Color>;
 }
 
-export interface ChipProps {
+export interface ChipFields {
   label: Dynamic<string>;
   color?: Dynamic<Color>;
 }
 
-export interface DividerProps {
+export interface DividerFields {
   color?: Dynamic<Color>;
   thickness?: Dynamic<Length>;
 }
 
-export interface SpacerProps {
+export interface SpacerFields {
   size?: Dynamic<Length>;
 }
 
-export interface ButtonProps {
+export interface ButtonFields {
   label: Dynamic<string>;
   action: string; // static only
 }
 
-export interface ToggleProps {
+export interface ToggleFields {
   value: Dynamic<boolean>;
   onToggle: string; // static only
 }
@@ -265,49 +263,38 @@ export interface GridNode extends LayoutNode {
   type: 'Grid';
 }
 
-export interface TextNode extends BaseNode {
+export interface TextNode extends BaseNode, TextFields {
   type: 'Text';
-  props: TextProps;
 }
-export interface ImageNode extends BaseNode {
+export interface ImageNode extends BaseNode, ImageFields {
   type: 'Image';
-  props: ImageProps;
 }
-export interface ProgressBarNode extends BaseNode {
+export interface ProgressBarNode extends BaseNode, ProgressBarFields {
   type: 'ProgressBar';
-  props: ProgressBarProps;
 }
-export interface AvatarNode extends BaseNode {
+export interface AvatarNode extends BaseNode, AvatarFields {
   type: 'Avatar';
-  props: AvatarProps;
 }
-export interface IconNode extends BaseNode {
+export interface IconNode extends BaseNode, IconFields {
   type: 'Icon';
-  props: IconProps;
 }
-export interface BadgeNode extends BaseNode {
+export interface BadgeNode extends BaseNode, BadgeFields {
   type: 'Badge';
-  props: BadgeProps;
 }
-export interface ChipNode extends BaseNode {
+export interface ChipNode extends BaseNode, ChipFields {
   type: 'Chip';
-  props: ChipProps;
 }
-export interface DividerNode extends BaseNode {
+export interface DividerNode extends BaseNode, DividerFields {
   type: 'Divider';
-  props: DividerProps;
 }
-export interface SpacerNode extends BaseNode {
+export interface SpacerNode extends BaseNode, SpacerFields {
   type: 'Spacer';
-  props: SpacerProps;
 }
-export interface ButtonNode extends BaseNode {
+export interface ButtonNode extends BaseNode, ButtonFields {
   type: 'Button';
-  props: ButtonProps;
 }
-export interface ToggleNode extends BaseNode {
+export interface ToggleNode extends BaseNode, ToggleFields {
   type: 'Toggle';
-  props: ToggleProps;
 }
 
 export type UGCNode =
