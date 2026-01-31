@@ -78,7 +78,7 @@ Vertical layout (like `flexDirection: column`). Children are laid out top-to-bot
 ```
 
 #### Stack
-Vertical stacking container with `flexDirection: column`. Supports `position: "absolute"` on its direct children, making it useful for overlays and layered layouts.
+Overlay container that establishes a positioning context (`position: relative`) for direct children with `position: "absolute"`. Use it for layered layouts and overlays.
 
 ```json
 { "type": "Stack", "style": { ... }, "children": [ ... ] }

@@ -19,6 +19,7 @@ Content: `Text`, `Image`
 Display: `ProgressBar`, `Avatar`, `Icon`, `Badge`, `Chip`, `Divider`, `Spacer`
 Interaction: `Button`, `Toggle`
 **All component fields are top-level** — do not use a `props` wrapper.
+- `Stack` is the overlay container: absolute children are positioned relative to it.
 
 ## 3) Dynamic Values
 - Use `$ref` only: `{ "$ref": "$stateKey" }`
