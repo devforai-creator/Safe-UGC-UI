@@ -17,6 +17,7 @@ import {
   EXPR_MAX_REF_DEPTH,
   EXPR_MAX_ARRAY_INDEX,
   EXPR_MAX_STRING_LITERAL,
+  EXPR_MAX_FRACTIONAL_DIGITS,
   isRef,
   isExpr,
 } from '@safe-ugc-ui/types';
@@ -150,6 +151,20 @@ function tokenize(
         while (j < expr.length && /[0-9]/.test(expr[j])) j++;
       }
       const numStr = expr.slice(i, j);
+      // Check fractional digits
+      const dotIdx = numStr.indexOf('.');
+      if (dotIdx !== -1) {
+        const fractionalPart = numStr.slice(dotIdx + 1);
+        if (fractionalPart.length > EXPR_MAX_FRACTIONAL_DIGITS) {
+          errors.push(
+            createError(
+              'EXPR_INVALID_TOKEN',
+              `Number literal "${numStr}" at position ${i} has ${fractionalPart.length} fractional digits, maximum is ${EXPR_MAX_FRACTIONAL_DIGITS}.`,
+              path,
+            ),
+          );
+        }
+      }
       tokens.push({ type: 'number', value: numStr, position: i });
       i = j;
       continue;
@@ -246,6 +261,17 @@ function tokenize(
         createError(
           'EXPR_FORBIDDEN_TOKEN',
           `Forbidden keyword "${tok.value}" at position ${tok.position}.`,
+          path,
+        ),
+      );
+    }
+
+    // Bare identifiers without $ prefix
+    if (tok.type === 'identifier' && !tok.value.startsWith('$') && !FORBIDDEN_KEYWORD_SET.has(tok.value)) {
+      errors.push(
+        createError(
+          'EXPR_FORBIDDEN_TOKEN',
+          `Identifier "${tok.value}" at position ${tok.position} must start with "$". Use "$${tok.value}" for variable references.`,
           path,
         ),
       );

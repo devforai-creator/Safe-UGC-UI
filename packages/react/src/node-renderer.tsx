@@ -119,22 +119,32 @@ export function renderNode(
 
       // Resolve src (may be a $ref)
       let src = resolveValue(props.src, ctx.state);
-      if (typeof src !== 'string') src = '';
+      if (typeof src !== 'string' || !src) return null;
 
-      // If src is an @assets/ path, resolve it via asset-resolver
-      if (typeof src === 'string' && src.startsWith('@assets/')) {
-        const resolved = resolveAsset(src, ctx.assets);
-        src = resolved ?? '';
+      // SECURITY: Only @assets/ paths are allowed
+      if (!src.startsWith('@assets/')) {
+        return null;
+      }
+
+      // SECURITY: Block path traversal
+      if (src.includes('../')) {
+        return null;
+      }
+
+      // Resolve via asset-resolver
+      const resolved = resolveAsset(src, ctx.assets);
+      if (!resolved) return null;
+
+      // SECURITY: Block javascript: scheme on resolved URL (defense-in-depth)
+      if (typeof resolved === 'string' && resolved.trim().toLowerCase().startsWith('javascript:')) {
+        return null;
       }
 
       // Resolve alt
       const resolvedAlt = resolveValue(props.alt, ctx.state);
       const alt = typeof resolvedAlt === 'string' ? resolvedAlt : undefined;
 
-      // Don't render if no valid src
-      if (!src) return null;
-
-      return <Image key={key} src={src as string} alt={alt} style={cssStyle} />;
+      return <Image key={key} src={resolved} alt={alt} style={cssStyle} />;
     }
 
     default:

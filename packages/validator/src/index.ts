@@ -92,14 +92,22 @@ function utf8ByteLength(str: string): number {
 // ---------------------------------------------------------------------------
 
 function runAllChecks(input: unknown): ValidationError[] {
-  const obj = input as { views: Record<string, unknown>; state?: Record<string, unknown> };
+  const obj = input as {
+    views: Record<string, unknown>;
+    state?: Record<string, unknown>;
+    assets?: Record<string, string>;
+  };
   const views = obj.views as Record<string, unknown>;
   const errors: ValidationError[] = [];
 
   errors.push(...validateNodes(views));
   errors.push(...validateValueTypes(views));
   errors.push(...validateStyles(views));
-  errors.push(...validateSecurity(views));
+  errors.push(...validateSecurity({
+    views,
+    state: obj.state as Record<string, unknown> | undefined,
+    cardAssets: obj.assets as Record<string, string> | undefined,
+  }));
   errors.push(...validateLimits({ state: obj.state as Record<string, unknown> | undefined, views }));
   errors.push(...validateExprConstraints(views));
 

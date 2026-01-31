@@ -45,6 +45,29 @@ describe('resolveRef', () => {
     expect(resolveRef('$a.b', { a: 42 })).toBeUndefined();
   });
 
+  // --- Fix 2: Array index [N] parsing ---
+
+  it('resolves array index with bracket notation', () => {
+    expect(resolveRef('$items[0].name', { items: [{ name: 'first' }] })).toBe('first');
+  });
+
+  it('resolves nested array indices', () => {
+    expect(resolveRef('$data[1][0]', { data: [['a', 'b'], ['c', 'd']] })).toBe('c');
+  });
+
+  it('returns undefined for out-of-bounds array index', () => {
+    expect(resolveRef('$items[5]', { items: ['a', 'b'] })).toBeUndefined();
+  });
+
+  it('resolves deep nested path with arrays', () => {
+    const state = {
+      users: [
+        { posts: [{ title: 'Hello' }, { title: 'World' }] },
+      ],
+    };
+    expect(resolveRef('$users[0].posts[1].title', state)).toBe('World');
+  });
+
   it('handles ref path without leading $', () => {
     expect(resolveRef('hp', { hp: 200 })).toBe(200);
   });
@@ -645,5 +668,53 @@ describe('renderTree', () => {
     const div = container.firstElementChild as HTMLElement;
     expect(div.style.backgroundColor).toBe('red');
     expect(div.style.padding).toBe('10px');
+  });
+
+  // --- Fix 1: Image src $ref security ---
+
+  it('blocks Image with $ref src resolving to external URL', () => {
+    const node = {
+      type: 'Image',
+      props: { src: { $ref: '$img' } },
+    };
+    const state = { img: 'https://evil.com/img.png' };
+    const { container } = render(<>{renderTree(node, state, {})}</>);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('renders Image with $ref src resolving to valid @assets/ path', () => {
+    const node = {
+      type: 'Image',
+      props: { src: { $ref: '$img' }, alt: 'test image' },
+    };
+    const state = { img: '@assets/logo.png' };
+    const assets = { '@assets/logo.png': 'https://cdn.example.com/logo.png' };
+    const { container } = render(<>{renderTree(node, state, assets)}</>);
+    const img = container.querySelector('img');
+    expect(img).toBeTruthy();
+    expect(img?.getAttribute('src')).toBe('https://cdn.example.com/logo.png');
+  });
+
+  it('blocks Image with $ref src resolving to path traversal', () => {
+    const node = {
+      type: 'Image',
+      props: { src: { $ref: '$img' } },
+    };
+    const state = { img: '@assets/../secret.png' };
+    const assets = { '@assets/../secret.png': 'https://cdn.example.com/secret.png' };
+    const { container } = render(<>{renderTree(node, state, assets)}</>);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  // --- Fix 2: $ref with array index in renderTree ---
+
+  it('resolves $ref with array index in Text content', () => {
+    const node = {
+      type: 'Text',
+      props: { content: { $ref: '$items[0].name' } },
+    };
+    const state = { items: [{ name: 'hi' }] };
+    const { container } = render(<>{renderTree(node, state, {})}</>);
+    expect(container.textContent).toBe('hi');
   });
 });

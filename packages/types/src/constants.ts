@@ -71,6 +71,9 @@ export const EXPR_MAX_REF_DEPTH = 5;
 /** Maximum allowed array index in variable references. */
 export const EXPR_MAX_ARRAY_INDEX = 9_999;
 
+/** Maximum digits after the decimal point in number literals. */
+export const EXPR_MAX_FRACTIONAL_DIGITS = 10;
+
 // ---------------------------------------------------------------------------
 // 6.4 Style limits
 // ---------------------------------------------------------------------------
@@ -227,3 +230,40 @@ export const PROTOTYPE_POLLUTION_SEGMENTS = [
   'constructor',
   'prototype',
 ] as const;
+
+// ---------------------------------------------------------------------------
+// CSS named colors (148 standard CSS color keywords)
+// ---------------------------------------------------------------------------
+
+export const CSS_NAMED_COLORS: ReadonlySet<string> = new Set([
+  'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure',
+  'beige', 'bisque', 'black', 'blanchedalmond', 'blue',
+  'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse',
+  'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson',
+  'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray',
+  'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen',
+  'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen',
+  'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet',
+  'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue',
+  'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro',
+  'ghostwhite', 'gold', 'goldenrod', 'gray', 'green',
+  'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred',
+  'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush',
+  'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan',
+  'lightgoldenrodyellow', 'lightgray', 'lightgreen', 'lightgrey', 'lightpink',
+  'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey',
+  'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen',
+  'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid',
+  'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise',
+  'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
+  'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab',
+  'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen',
+  'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru',
+  'pink', 'plum', 'powderblue', 'purple', 'rebeccapurple',
+  'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon',
+  'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver',
+  'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow',
+  'springgreen', 'steelblue', 'tan', 'teal', 'thistle',
+  'tomato', 'turquoise', 'violet', 'wheat', 'white',
+  'whitesmoke', 'yellow', 'yellowgreen',
+]);

@@ -499,6 +499,203 @@ describe('validateStyles', () => {
     const errors = validateStyles(views);
     expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
   });
+
+  // --- Fix 4: Color format validation ---
+
+  it('rejects invalid backgroundColor color value', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { backgroundColor: 'lolwut' },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+
+  it('accepts valid backgroundColor color (case-insensitive named color)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { backgroundColor: 'Red' },
+    });
+    const errors = validateStyles(views);
+    const colorErrors = errors.filter((e) => e.code === 'INVALID_COLOR');
+    expect(colorErrors).toHaveLength(0);
+  });
+
+  it('accepts hex color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { backgroundColor: '#ff0000' },
+    });
+    const errors = validateStyles(views);
+    const colorErrors = errors.filter((e) => e.code === 'INVALID_COLOR');
+    expect(colorErrors).toHaveLength(0);
+  });
+
+  it('accepts rgb() color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { color: 'rgb(255, 0, 0)' },
+    });
+    const errors = validateStyles(views);
+    const colorErrors = errors.filter((e) => e.code === 'INVALID_COLOR');
+    expect(colorErrors).toHaveLength(0);
+  });
+
+  it('accepts transparent keyword', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { backgroundColor: 'transparent' },
+    });
+    const errors = validateStyles(views);
+    const colorErrors = errors.filter((e) => e.code === 'INVALID_COLOR');
+    expect(colorErrors).toHaveLength(0);
+  });
+
+  // --- Fix 4: Length format validation ---
+
+  it('rejects invalid length unit (vw)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { width: '50vw' },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_LENGTH');
+  });
+
+  it('accepts auto for width', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { width: 'auto' },
+    });
+    const errors = validateStyles(views);
+    const lengthErrors = errors.filter((e) => e.code === 'INVALID_LENGTH');
+    expect(lengthErrors).toHaveLength(0);
+  });
+
+  it('rejects auto for padding', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { padding: 'auto' },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_LENGTH');
+  });
+
+  it('accepts valid length with px unit', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { width: '100px' },
+    });
+    const errors = validateStyles(views);
+    const lengthErrors = errors.filter((e) => e.code === 'INVALID_LENGTH');
+    expect(lengthErrors).toHaveLength(0);
+  });
+
+  it('accepts valid length with % unit', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { width: '50%' },
+    });
+    const errors = validateStyles(views);
+    const lengthErrors = errors.filter((e) => e.code === 'INVALID_LENGTH');
+    expect(lengthErrors).toHaveLength(0);
+  });
+
+  // --- Fix 4: String length range checks ---
+
+  it('rejects fontSize string out of range (too large)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { fontSize: '500px' },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects fontSize string out of range (too small)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { fontSize: '2px' },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('accepts fontSize string within range', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { fontSize: '16px' },
+    });
+    const errors = validateStyles(views);
+    const rangeErrors = errors.filter((e) => e.code === 'STYLE_VALUE_OUT_OF_RANGE');
+    expect(rangeErrors).toHaveLength(0);
+  });
+
+  // --- Fix 4: Nested color validation ---
+
+  it('rejects invalid border.color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { border: { width: 1, style: 'solid', color: 'notacolor' } },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+
+  it('rejects invalid borderTop.color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { borderTop: { width: 1, style: 'solid', color: 'notacolor' } },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+
+  it('rejects invalid borderRight.color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { borderRight: { width: 2, style: 'dashed', color: 'xyz123' } },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+
+  it('accepts valid borderBottom.color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { borderBottom: { width: 1, style: 'solid', color: '#ff0000' } },
+    });
+    const errors = validateStyles(views);
+    const colorErrors = errors.filter((e) => e.code === 'INVALID_COLOR');
+    expect(colorErrors).toHaveLength(0);
+  });
+
+  it('rejects invalid boxShadow color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { boxShadow: { offsetX: 0, offsetY: 0, blur: 5, color: 'badcolor' } },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+
+  it('rejects invalid gradient stop color', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        backgroundGradient: {
+          type: 'linear',
+          direction: '90deg',
+          stops: [
+            { color: 'invalidcolor', position: '0%' },
+            { color: 'blue', position: '100%' },
+          ],
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
 });
 
 // ===========================================================================
@@ -511,7 +708,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: 'https://evil.com/img.png' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(errors.length).toBeGreaterThan(0);
     expect(codes(errors)).toContain('EXTERNAL_URL');
   });
@@ -521,7 +718,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: 'http://evil.com/img.png' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
   });
 
@@ -530,7 +727,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: 'javascript:alert(1)' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
   });
 
@@ -539,7 +736,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: 'data:image/png;base64,abc' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
   });
 
@@ -548,7 +745,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: '//evil.com/img.png' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
   });
 
@@ -557,7 +754,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: '../../../etc/passwd' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('INVALID_ASSET_PATH');
   });
 
@@ -566,7 +763,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: '@assets/../secret' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('ASSET_PATH_TRAVERSAL');
   });
 
@@ -575,7 +772,7 @@ describe('validateSecurity', () => {
       type: 'Image',
       props: { src: '@assets/avatar.png' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     const srcErrors = errors.filter(
       (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
     );
@@ -587,7 +784,7 @@ describe('validateSecurity', () => {
       type: 'Box',
       style: { background: 'url(https://evil.com/bg.png)' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('FORBIDDEN_CSS_FUNCTION');
   });
 
@@ -596,7 +793,7 @@ describe('validateSecurity', () => {
       type: 'Box',
       style: { position: 'fixed' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('POSITION_FIXED_FORBIDDEN');
   });
 
@@ -605,7 +802,7 @@ describe('validateSecurity', () => {
       type: 'Box',
       style: { position: 'sticky' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('POSITION_STICKY_FORBIDDEN');
   });
 
@@ -614,7 +811,7 @@ describe('validateSecurity', () => {
       type: 'Box',
       style: { position: 'absolute' },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('POSITION_ABSOLUTE_NOT_IN_STACK');
   });
 
@@ -623,7 +820,7 @@ describe('validateSecurity', () => {
       type: 'Stack',
       children: [{ type: 'Box', style: { position: 'absolute' } }],
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     const posErrors = errors.filter((e) => e.code === 'POSITION_ABSOLUTE_NOT_IN_STACK');
     expect(posErrors).toHaveLength(0);
   });
@@ -639,7 +836,7 @@ describe('validateSecurity', () => {
         },
       ],
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('OVERFLOW_AUTO_NESTED');
   });
 
@@ -648,7 +845,7 @@ describe('validateSecurity', () => {
       type: 'Text',
       props: { content: { $ref: '$state.__proto__' } },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
   });
 
@@ -657,7 +854,7 @@ describe('validateSecurity', () => {
       type: 'Text',
       props: { content: { $ref: '$state.constructor' } },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
   });
 
@@ -666,7 +863,7 @@ describe('validateSecurity', () => {
       type: 'Text',
       props: { content: { $ref: '$state.prototype' } },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
   });
 
@@ -675,9 +872,114 @@ describe('validateSecurity', () => {
       type: 'Text',
       props: { content: { $ref: '$state.name' } },
     });
-    const errors = validateSecurity(views);
+    const errors = validateSecurity({ views });
     const pollutionErrors = errors.filter((e) => e.code === 'PROTOTYPE_POLLUTION');
     expect(pollutionErrors).toHaveLength(0);
+  });
+
+  // --- Fix 1: $ref external URL bypass ---
+
+  it('rejects Image src $ref resolving to external URL via state', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: { $ref: '$img' } },
+    });
+    const state = { img: 'https://evil.com/payload.png' };
+    const errors = validateSecurity({ views, state });
+    expect(codes(errors)).toContain('EXTERNAL_URL');
+  });
+
+  it('accepts Image src $ref resolving to valid @assets/ path', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: { $ref: '$img' } },
+    });
+    const state = { img: '@assets/logo.png' };
+    const errors = validateSecurity({ views, state });
+    const srcErrors = errors.filter(
+      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+    );
+    expect(srcErrors).toHaveLength(0);
+  });
+
+  it('rejects Image src $ref resolving to path traversal', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: { $ref: '$img' } },
+    });
+    const state = { img: '@assets/../secret' };
+    const errors = validateSecurity({ views, state });
+    expect(codes(errors)).toContain('ASSET_PATH_TRAVERSAL');
+  });
+
+  it('skips Image src $ref when state key does not exist (loop-local)', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: { $ref: '$item.img' } },
+    });
+    const state = { unrelated: 'value' };
+    const errors = validateSecurity({ views, state });
+    // Should NOT produce any src-related errors — unresolvable $ref is skipped
+    const srcErrors = errors.filter(
+      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+    );
+    expect(srcErrors).toHaveLength(0);
+  });
+
+  it('rejects Image src literal "logo.png" without @assets/ prefix', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: 'logo.png' },
+    });
+    const errors = validateSecurity({ views });
+    expect(codes(errors)).toContain('INVALID_ASSET_PATH');
+  });
+
+  // --- Fix 5: cardAssets validation ---
+
+  it('rejects cardAssets with external URL value', () => {
+    const views = makeViews({ type: 'Box' });
+    const cardAssets = { hero: 'https://evil.com/bg.png' };
+    const errors = validateSecurity({ views, cardAssets });
+    expect(codes(errors)).toContain('INVALID_ASSET_PATH');
+  });
+
+  it('rejects cardAssets with path traversal', () => {
+    const views = makeViews({ type: 'Box' });
+    const cardAssets = { hero: '@assets/../../../etc/passwd' };
+    const errors = validateSecurity({ views, cardAssets });
+    expect(codes(errors)).toContain('ASSET_PATH_TRAVERSAL');
+  });
+
+  it('accepts cardAssets with valid @assets/ paths', () => {
+    const views = makeViews({ type: 'Box' });
+    const cardAssets = { hero: '@assets/hero.png', logo: '@assets/logo.svg' };
+    const errors = validateSecurity({ views, cardAssets });
+    const assetErrors = errors.filter(
+      (e) => e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+    );
+    expect(assetErrors).toHaveLength(0);
+  });
+
+  // --- Fix 6: URL whitespace bypass ---
+
+  it('rejects URL with leading whitespace', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: '  https://evil.com/img.png' },
+    });
+    const errors = validateSecurity({ views });
+    expect(codes(errors)).toContain('EXTERNAL_URL');
+  });
+
+  it('rejects $ref resolving to URL with leading whitespace', () => {
+    const views = makeViews({
+      type: 'Image',
+      props: { src: { $ref: '$img' } },
+    });
+    const state = { img: '  https://evil.com/img.png' };
+    const errors = validateSecurity({ views, state });
+    expect(codes(errors)).toContain('EXTERNAL_URL');
   });
 });
 
@@ -983,6 +1285,54 @@ describe('validateExprConstraints', () => {
     const errors = validateExprConstraints(views);
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
   });
+
+  // --- Fix 3: Bare identifier rejection ---
+
+  it('rejects bare identifier without $ prefix', () => {
+    const views = makeViews({
+      type: 'Text',
+      props: { content: { $expr: 'foo + 1' } },
+    });
+    const errors = validateExprConstraints(views);
+    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
+    expect(errors.some((e) => e.message.includes('foo') && e.message.includes('$'))).toBe(true);
+  });
+
+  it('accepts $-prefixed identifier', () => {
+    const views = makeViews({
+      type: 'Text',
+      props: { content: { $expr: '$foo + 1' } },
+    });
+    const errors = validateExprConstraints(views);
+    const bareErrors = errors.filter(
+      (e) => e.code === 'EXPR_FORBIDDEN_TOKEN' && e.message.includes('must start with'),
+    );
+    expect(bareErrors).toHaveLength(0);
+  });
+
+  // --- Fix 3: Fractional digit enforcement ---
+
+  it('rejects number literal with > 10 fractional digits', () => {
+    const views = makeViews({
+      type: 'Text',
+      props: { content: { $expr: '$x + 3.12345678901' } },
+    });
+    const errors = validateExprConstraints(views);
+    expect(codes(errors)).toContain('EXPR_INVALID_TOKEN');
+    expect(errors.some((e) => e.message.includes('fractional'))).toBe(true);
+  });
+
+  it('accepts number literal with exactly 10 fractional digits', () => {
+    const views = makeViews({
+      type: 'Text',
+      props: { content: { $expr: '$x + 3.1234567890' } },
+    });
+    const errors = validateExprConstraints(views);
+    const fractErrors = errors.filter(
+      (e) => e.code === 'EXPR_INVALID_TOKEN' && e.message.includes('fractional'),
+    );
+    expect(fractErrors).toHaveLength(0);
+  });
 });
 
 // ===========================================================================
@@ -1021,6 +1371,34 @@ describe('validate', () => {
     const result = validate({ views: { Main: { type: 'Box' } } });
     expect(result.valid).toBe(false);
     expect(codes(result.errors)).toContain('MISSING_FIELD');
+  });
+
+  it('rejects card with invalid assets via validate() pipeline', () => {
+    // Verifies that card.assets (not cardAssets) is properly wired through
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: { Main: { type: 'Box' } },
+      assets: { hero: 'https://evil.com/bg.png' },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('INVALID_ASSET_PATH');
+  });
+
+  it('rejects card with $ref Image src resolving to external URL via validate() pipeline', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Image',
+          props: { src: { $ref: '$img' } },
+        },
+      },
+      state: { img: 'https://evil.com/payload.png' },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('EXTERNAL_URL');
   });
 
   it('aggregates errors from multiple validation phases', () => {

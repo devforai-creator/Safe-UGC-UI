@@ -2,8 +2,9 @@
  * @safe-ugc-ui/validator — Security Validation
  *
  * Enforces security rules from spec sections 3 and 8:
- *   - External URL blocking on Image/Avatar `src` props
+ *   - External URL blocking on Image/Avatar `src` props (literal and $ref)
  *   - Asset path validation (`@assets/` prefix, no traversal)
+ *   - cardAssets value validation
  *   - Forbidden CSS `url()` function in style string values
  *   - Position restrictions (fixed, sticky, absolute outside Stack)
  *   - Nested overflow:auto detection
@@ -101,7 +102,7 @@ function scanForRefs(
 }
 
 // ---------------------------------------------------------------------------
-// Helper: checkExternalUrl
+// Helper: isForbiddenUrl
 // ---------------------------------------------------------------------------
 
 /**
@@ -109,12 +110,12 @@ function scanForRefs(
  * (case-insensitive comparison).
  */
 function isForbiddenUrl(value: string): boolean {
-  const lower = value.toLowerCase();
+  const lower = value.trim().toLowerCase();
   return FORBIDDEN_URL_PREFIXES.some((prefix) => lower.startsWith(prefix));
 }
 
 // ---------------------------------------------------------------------------
-// Helper: checkAssetPath
+// Helper: validateAssetPath
 // ---------------------------------------------------------------------------
 
 /**
@@ -136,6 +137,113 @@ function validateAssetPath(
 }
 
 // ---------------------------------------------------------------------------
+// Helper: resolveRefFromState
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve a $ref path against a state object. Matches the algorithm in
+ * `packages/react/src/state-resolver.ts`:
+ *   - Strip leading `$` from the ref path
+ *   - Split by `.`, then for each segment extract `[N]` bracket indices
+ *   - Traverse state, using numeric indices for arrays
+ *   - Block prototype pollution segments
+ *
+ * @returns The resolved value, or `undefined` if resolution fails.
+ */
+function resolveRefFromState(
+  refPath: string,
+  state: Record<string, unknown>,
+): unknown {
+  // Strip leading $
+  const path = refPath.startsWith('$') ? refPath.slice(1) : refPath;
+  const dotSegments = path.split('.');
+
+  // Flatten dot-segments into individual traversal keys,
+  // expanding bracket notation (e.g. "items[0][1]" → ["items", "0", "1"])
+  const keys: string[] = [];
+  for (const dotSeg of dotSegments) {
+    // Match the base name (before any brackets) and any [N] patterns
+    const bracketPattern = /\[(\d+)\]/g;
+    const firstBracket = dotSeg.indexOf('[');
+    const baseName = firstBracket === -1 ? dotSeg : dotSeg.slice(0, firstBracket);
+    if (baseName) {
+      keys.push(baseName);
+    }
+    let match: RegExpExecArray | null;
+    while ((match = bracketPattern.exec(dotSeg)) !== null) {
+      keys.push(match[1]);
+    }
+  }
+
+  // Block prototype pollution
+  for (const key of keys) {
+    if (
+      (PROTOTYPE_POLLUTION_SEGMENTS as readonly string[]).includes(key)
+    ) {
+      return undefined;
+    }
+  }
+
+  // Traverse state
+  let current: unknown = state;
+  for (const key of keys) {
+    if (current == null || typeof current !== 'object') return undefined;
+
+    if (Array.isArray(current)) {
+      const index = Number(key);
+      if (!Number.isInteger(index) || index < 0) return undefined;
+      current = current[index];
+    } else {
+      current = (current as Record<string, unknown>)[key];
+    }
+  }
+  return current;
+}
+
+// ---------------------------------------------------------------------------
+// Helper: checkSrcValue
+// ---------------------------------------------------------------------------
+
+/**
+ * Check a resolved src string value and push appropriate errors.
+ */
+function checkSrcValue(
+  resolved: string,
+  type: string,
+  errorPath: string,
+  errors: ValidationError[],
+): void {
+  if (isForbiddenUrl(resolved)) {
+    errors.push(
+      createError(
+        'EXTERNAL_URL',
+        `External URLs are not allowed in ${type}.props.src. Got "${resolved}".`,
+        errorPath,
+      ),
+    );
+  } else {
+    const assetError = validateAssetPath(resolved);
+    if (assetError === 'ASSET_PATH_TRAVERSAL') {
+      errors.push(
+        createError(
+          'ASSET_PATH_TRAVERSAL',
+          `Asset path contains path traversal ("../"). Got "${resolved}".`,
+          errorPath,
+        ),
+      );
+    } else if (assetError === 'INVALID_ASSET_PATH') {
+      errors.push(
+        createError(
+          'INVALID_ASSET_PATH',
+          `Asset path must start with "@assets/". Got "${resolved}".`,
+          errorPath,
+        ),
+      );
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // validateSecurity
 // ---------------------------------------------------------------------------
 
@@ -143,20 +251,50 @@ function validateAssetPath(
  * Run all security validation rules against every node in every view.
  *
  * Rules checked (spec sections 3 and 8):
- *   1. External URL blocking on Image/Avatar `src`
+ *   1. External URL blocking on Image/Avatar `src` (literal and $ref)
  *   2. Asset path validation
- *   3. Forbidden CSS `url()` in style string values
- *   4. Position restrictions (fixed, sticky, absolute outside Stack)
- *   5. Nested overflow:auto
- *   6. Prototype pollution in $ref paths
+ *   3. cardAssets value validation
+ *   4. Forbidden CSS `url()` in style string values
+ *   5. Position restrictions (fixed, sticky, absolute outside Stack)
+ *   6. Nested overflow:auto
+ *   7. Prototype pollution in $ref paths
  *
- * @param views - The `views` object from a UGCCard.
+ * @param card - Object containing `views`, optional `state`, and optional `cardAssets`.
  * @returns An array of validation errors (empty if all rules pass).
  */
-export function validateSecurity(
-  views: Record<string, unknown>,
-): ValidationError[] {
+export function validateSecurity(card: {
+  views: Record<string, unknown>;
+  state?: Record<string, unknown>;
+  cardAssets?: Record<string, string>;
+}): ValidationError[] {
   const errors: ValidationError[] = [];
+  const { views, state, cardAssets } = card;
+
+  // -----------------------------------------------------------------
+  // 0. Validate cardAssets values
+  // -----------------------------------------------------------------
+  if (cardAssets) {
+    for (const [key, value] of Object.entries(cardAssets)) {
+      const assetError = validateAssetPath(value);
+      if (assetError === 'ASSET_PATH_TRAVERSAL') {
+        errors.push(
+          createError(
+            'ASSET_PATH_TRAVERSAL',
+            `Asset path contains path traversal ("../"). Got "${value}".`,
+            `assets.${key}`,
+          ),
+        );
+      } else if (assetError === 'INVALID_ASSET_PATH') {
+        errors.push(
+          createError(
+            'INVALID_ASSET_PATH',
+            `Asset path must start with "@assets/". Got "${value}".`,
+            `assets.${key}`,
+          ),
+        );
+      }
+    }
+  }
 
   traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
     const { path } = context;
@@ -168,35 +306,21 @@ export function validateSecurity(
     if ((type === 'Image' || type === 'Avatar') && props) {
       const src = props.src;
       if (typeof src === 'string') {
-        if (isForbiddenUrl(src)) {
-          errors.push(
-            createError(
-              'EXTERNAL_URL',
-              `External URLs are not allowed in ${type}.props.src. Got "${src}".`,
-              `${path}.props.src`,
-            ),
+        // Literal string src
+        checkSrcValue(src, type, `${path}.props.src`, errors);
+      } else if (isRef(src)) {
+        // $ref src — resolve from state if available
+        if (state) {
+          const resolved = resolveRefFromState(
+            (src as { $ref: string }).$ref,
+            state,
           );
-        } else {
-          // If it is not an external URL, it should be a valid asset path
-          const assetError = validateAssetPath(src);
-          if (assetError === 'ASSET_PATH_TRAVERSAL') {
-            errors.push(
-              createError(
-                'ASSET_PATH_TRAVERSAL',
-                `Asset path contains path traversal ("../"). Got "${src}".`,
-                `${path}.props.src`,
-              ),
-            );
-          } else if (assetError === 'INVALID_ASSET_PATH') {
-            errors.push(
-              createError(
-                'INVALID_ASSET_PATH',
-                `Asset path must start with "@assets/". Got "${src}".`,
-                `${path}.props.src`,
-              ),
-            );
+          if (typeof resolved === 'string') {
+            checkSrcValue(resolved, type, `${path}.props.src`, errors);
           }
+          // If resolution fails (undefined), skip — may be a loop-local variable
         }
+        // If no state provided, skip $ref resolution
       }
     }
 

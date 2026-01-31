@@ -122,6 +122,21 @@ function borderToCss(border: Record<string, unknown>): string {
 }
 
 // ---------------------------------------------------------------------------
+// Helper: map spec alignment values to CSS flexbox values
+// ---------------------------------------------------------------------------
+
+const FLEX_ALIGNMENT_MAP: Record<string, string> = {
+  start: 'flex-start',
+  end: 'flex-end',
+};
+
+const FLEX_ALIGNMENT_PROPS = new Set([
+  'justifyContent',
+  'alignItems',
+  'alignSelf',
+]);
+
+// ---------------------------------------------------------------------------
 // Main: mapStyle
 // ---------------------------------------------------------------------------
 
@@ -143,8 +158,16 @@ export function mapStyle(
   // Direct-mapped properties (resolve dynamic values)
   for (const prop of DIRECT_MAP_PROPS) {
     if (prop in style) {
-      const resolved = resolveStyleValue(style[prop], state);
+      let resolved = resolveStyleValue(style[prop], state);
       if (resolved !== undefined) {
+        // Map spec alignment values (start/end) to CSS flexbox values
+        if (
+          FLEX_ALIGNMENT_PROPS.has(prop) &&
+          typeof resolved === 'string' &&
+          resolved in FLEX_ALIGNMENT_MAP
+        ) {
+          resolved = FLEX_ALIGNMENT_MAP[resolved];
+        }
         (css as Record<string, unknown>)[prop] = resolved;
       }
     }

@@ -8,6 +8,8 @@
  *   - Transform skew prohibition
  *   - Dangerous CSS function injection detection
  *   - Overflow: scroll prohibition (defense-in-depth)
+ *   - Color format validation
+ *   - Length format validation
  */
 
 import {
@@ -29,12 +31,38 @@ import {
   LETTER_SPACING_MAX,
   OPACITY_MIN,
   OPACITY_MAX,
+  CSS_NAMED_COLORS,
   isRef,
   isExpr,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
 import { type TraversableNode, type TraversalContext, traverseCard } from './traverse.js';
+
+// ---------------------------------------------------------------------------
+// Property sets
+// ---------------------------------------------------------------------------
+
+const COLOR_PROPERTIES = new Set(['backgroundColor', 'color']);
+
+const LENGTH_PROPERTIES = new Set([
+  'width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
+  'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+  'top', 'right', 'bottom', 'left', 'gap', 'lineHeight',
+]);
+
+const LENGTH_AUTO_ALLOWED = new Set([
+  'width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
+  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+]);
+
+// Properties that have range limits AND accept string lengths
+const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> = {
+  fontSize: { min: FONT_SIZE_MIN, max: FONT_SIZE_MAX },
+  letterSpacing: { min: LETTER_SPACING_MIN, max: LETTER_SPACING_MAX },
+  borderRadius: { min: 0, max: BORDER_RADIUS_MAX },
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -48,11 +76,84 @@ function isLiteralNumber(value: unknown): value is number {
 }
 
 /**
+ * Returns true only if the value is a literal string (not a $ref or $expr).
+ */
+function isLiteralString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+/**
  * Returns true if the value is a dynamic binding ($ref or $expr) that should
  * be skipped for static range checks.
  */
 function isDynamic(value: unknown): boolean {
   return isRef(value) || isExpr(value);
+}
+
+/**
+ * Returns true if the string is a valid CSS color value.
+ *
+ * Supported formats:
+ *   - Hex: #RGB, #RRGGBB, #RRGGBBAA
+ *   - Functional: rgb(...), rgba(...), hsl(...), hsla(...)
+ *   - Named CSS colors (148 standard keywords)
+ *   - Special keywords: transparent, currentcolor
+ */
+function isValidColor(value: string): boolean {
+  const lower = value.toLowerCase();
+
+  // Hex colors
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/.test(lower)) {
+    return true;
+  }
+
+  // Functional color notations
+  if (
+    lower.startsWith('rgb(') ||
+    lower.startsWith('rgba(') ||
+    lower.startsWith('hsl(') ||
+    lower.startsWith('hsla(')
+  ) {
+    return true;
+  }
+
+  // Named CSS colors
+  if (CSS_NAMED_COLORS.has(lower)) {
+    return true;
+  }
+
+  // Special keywords
+  if (lower === 'transparent' || lower === 'currentcolor') {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Returns true if the string is a valid CSS length value.
+ *
+ * Allowed pattern: optional negative sign, digits (with optional decimal),
+ * and optional unit (px, %, em, rem).
+ *
+ * NOTE: `auto` is NOT checked here — it's handled separately per property.
+ */
+function isValidLength(value: string): boolean {
+  return /^-?[0-9]+(\.[0-9]+)?(px|%|em|rem)?$/.test(value);
+}
+
+/**
+ * Extract the numeric part from a length string like "42px", "50%", "16em",
+ * "1.5rem", or "100".
+ *
+ * Returns the number, or null if it can't be parsed.
+ */
+function parseLengthValue(value: string): number | null {
+  const match = value.match(/^(-?[0-9]+(\.[0-9]+)?)(px|%|em|rem)?$/);
+  if (!match) {
+    return null;
+  }
+  return Number(match[1]);
 }
 
 /**
@@ -103,7 +204,8 @@ function collectDangerousCssErrors(
 }
 
 /**
- * Validate a single shadow object's blur and spread values.
+ * Validate a single shadow object's blur and spread values,
+ * and its color if present.
  */
 function validateShadowObject(
   shadow: Record<string, unknown>,
@@ -135,6 +237,17 @@ function validateShadowObject(
       ),
     );
   }
+
+  // Validate shadow color
+  if (isLiteralString(shadow.color) && !isValidColor(shadow.color)) {
+    errors.push(
+      createError(
+        'INVALID_COLOR',
+        `Invalid color "${shadow.color}" at "${path}.color"`,
+        `${path}.color`,
+      ),
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -151,6 +264,9 @@ function validateShadowObject(
  *   4. Transform skew prohibition
  *   5. CSS function injection in string values
  *   6. Overflow: scroll prohibition (defense-in-depth)
+ *   7. Color format validation
+ *   8. Length format validation
+ *   9. Range checks on string length values
  */
 export function validateStyles(
   views: Record<string, unknown>,
@@ -341,7 +457,7 @@ export function validateStyles(
           );
         }
 
-        // Check each shadow's blur/spread
+        // Check each shadow's blur/spread/color
         for (let i = 0; i < boxShadow.length; i++) {
           const shadow = boxShadow[i];
           if (typeof shadow === 'object' && shadow !== null) {
@@ -380,6 +496,152 @@ export function validateStyles(
           `${stylePath}.overflow`,
         ),
       );
+    }
+
+    // ------------------------------------------------------------------
+    // 7. Color format validation
+    // ------------------------------------------------------------------
+    for (const prop of COLOR_PROPERTIES) {
+      if (
+        prop in style &&
+        isLiteralString(style[prop]) &&
+        !isDynamic(style[prop])
+      ) {
+        if (!isValidColor(style[prop] as string)) {
+          errors.push(
+            createError(
+              'INVALID_COLOR',
+              `Invalid color "${style[prop]}" at "${stylePath}.${prop}"`,
+              `${stylePath}.${prop}`,
+            ),
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // 8. Length format validation
+    // ------------------------------------------------------------------
+    for (const prop of LENGTH_PROPERTIES) {
+      if (
+        prop in style &&
+        isLiteralString(style[prop]) &&
+        !isDynamic(style[prop])
+      ) {
+        const val = style[prop] as string;
+        if (val === 'auto') {
+          if (!LENGTH_AUTO_ALLOWED.has(prop)) {
+            errors.push(
+              createError(
+                'INVALID_LENGTH',
+                `"auto" is not allowed for "${prop}" at "${stylePath}.${prop}"`,
+                `${stylePath}.${prop}`,
+              ),
+            );
+          }
+        } else if (!isValidLength(val)) {
+          errors.push(
+            createError(
+              'INVALID_LENGTH',
+              `Invalid length "${val}" at "${stylePath}.${prop}"`,
+              `${stylePath}.${prop}`,
+            ),
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // 9. Range checks on string length values
+    // ------------------------------------------------------------------
+    for (const [prop, range] of Object.entries(RANGE_LENGTH_PROPERTIES)) {
+      if (
+        prop in style &&
+        isLiteralString(style[prop]) &&
+        !isDynamic(style[prop])
+      ) {
+        const numericValue = parseLengthValue(style[prop] as string);
+        if (numericValue !== null) {
+          if (numericValue < range.min || numericValue > range.max) {
+            errors.push(
+              createError(
+                'STYLE_VALUE_OUT_OF_RANGE',
+                `${prop} (${style[prop]}) must be between ${range.min} and ${range.max} at "${stylePath}.${prop}"`,
+                `${stylePath}.${prop}`,
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // 10. Border color validation (border + borderTop/Right/Bottom/Left)
+    // ------------------------------------------------------------------
+    const borderKeys = ['border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft'] as const;
+    for (const borderKey of borderKeys) {
+      if (
+        borderKey in style &&
+        typeof style[borderKey] === 'object' &&
+        style[borderKey] !== null &&
+        !isDynamic(style[borderKey])
+      ) {
+        const border = style[borderKey] as Record<string, unknown>;
+        const borderPath = `${stylePath}.${borderKey}`;
+
+        if (
+          isLiteralString(border.color) &&
+          !isDynamic(border.color) &&
+          !isValidColor(border.color)
+        ) {
+          errors.push(
+            createError(
+              'INVALID_COLOR',
+              `Invalid color "${border.color}" at "${borderPath}.color"`,
+              `${borderPath}.color`,
+            ),
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // 11. Background gradient stop color validation
+    // ------------------------------------------------------------------
+    if (
+      'backgroundGradient' in style &&
+      typeof style.backgroundGradient === 'object' &&
+      style.backgroundGradient !== null &&
+      !isDynamic(style.backgroundGradient)
+    ) {
+      const gradient = style.backgroundGradient as Record<string, unknown>;
+      const gradientPath = `${stylePath}.backgroundGradient`;
+
+      if (Array.isArray(gradient.stops)) {
+        for (let i = 0; i < gradient.stops.length; i++) {
+          const stop = gradient.stops[i];
+          if (
+            typeof stop === 'object' &&
+            stop !== null &&
+            !isDynamic(stop)
+          ) {
+            const stopObj = stop as Record<string, unknown>;
+            if (
+              isLiteralString(stopObj.color) &&
+              !isDynamic(stopObj.color) &&
+              !isValidColor(stopObj.color)
+            ) {
+              errors.push(
+                createError(
+                  'INVALID_COLOR',
+                  `Invalid color "${stopObj.color}" at "${gradientPath}.stops[${i}].color"`,
+                  `${gradientPath}.stops[${i}].color`,
+                ),
+              );
+            }
+          }
+        }
+      }
     }
   });
 

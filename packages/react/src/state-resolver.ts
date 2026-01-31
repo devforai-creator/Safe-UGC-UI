@@ -11,20 +11,60 @@
 import { PROTOTYPE_POLLUTION_SEGMENTS } from '@safe-ugc-ui/types';
 
 /**
- * Resolves a $ref path (e.g. "$hp", "$msg.sender") from card state.
+ * Parse a $ref path into individual segments.
+ * Handles both dot notation and bracket notation:
+ *   "items[0].name" → ["items", "0", "name"]
+ *   "data[2][3]" → ["data", "2", "3"]
+ *   "simple.path" → ["simple", "path"]
+ */
+function parseRefSegments(path: string): string[] {
+  const segments: string[] = [];
+  const dotParts = path.split('.');
+  for (const part of dotParts) {
+    if (!part) continue;
+    // Check for bracket notation: extract base and indices
+    const bracketPattern = /\[(\d+)\]/g;
+    let match: RegExpExecArray | null;
+
+    // Find the base name (before first bracket)
+    const firstBracket = part.indexOf('[');
+    if (firstBracket > 0) {
+      segments.push(part.slice(0, firstBracket));
+    } else if (firstBracket === -1) {
+      // No brackets at all
+      segments.push(part);
+      continue;
+    }
+
+    // Extract all bracket indices
+    while ((match = bracketPattern.exec(part)) !== null) {
+      segments.push(match[1]);
+    }
+
+    // If part starts with [ and no base was added
+    if (firstBracket === 0) {
+      // Edge case: segment is just [0] with no base name
+      // This shouldn't normally happen but handle gracefully
+    }
+  }
+  return segments;
+}
+
+/**
+ * Resolves a $ref path (e.g. "$hp", "$items[0].name") from card state.
  *
  * - Strips leading '$' from the path
- * - Splits by '.' for nested access (max 5 levels per spec)
+ * - Parses dot notation and bracket notation into segments
  * - Blocks __proto__, constructor, prototype segments
+ * - Max depth of 5 segments per spec
  * - Returns undefined if path doesn't exist
  */
 export function resolveRef(
   refPath: string,
   state: Record<string, unknown>,
 ): unknown {
-  // Strip leading $
   const path = refPath.startsWith('$') ? refPath.slice(1) : refPath;
-  const segments = path.split('.');
+  const segments = parseRefSegments(path);
 
   // Block prototype pollution
   for (const seg of segments) {
@@ -33,11 +73,20 @@ export function resolveRef(
     }
   }
 
+  // Max depth check
+  if (segments.length > 5) return undefined;
+
   // Traverse state
   let current: unknown = state;
   for (const seg of segments) {
     if (current == null || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[seg];
+    if (Array.isArray(current)) {
+      const idx = parseInt(seg, 10);
+      if (isNaN(idx)) return undefined;
+      current = current[idx];
+    } else {
+      current = (current as Record<string, unknown>)[seg];
+    }
   }
   return current;
 }
