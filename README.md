@@ -122,6 +122,7 @@ The validation pipeline enforces:
 
 - **No untrusted external URLs** — images use `@assets/` paths resolved to host-controlled CDN URLs; user-specified external URLs are blocked
 - **No script execution** — no event handlers, no `javascript:` URIs, no `$expr` evaluation (Phase 1)
+- **Open decision** — `$expr` exists as a placeholder but is not evaluated; see `AGENTS.md` for the keep/remove decision
 - **No CSS injection** — `url()`, `var()`, `calc()`, `expression()` functions are rejected
 - **Layer isolation** — `position: fixed/sticky` forbidden, `z-index` capped at 0-100
 - **Resource limits** — card size (1MB), node count (10K), text content (200KB), style size (100KB)
