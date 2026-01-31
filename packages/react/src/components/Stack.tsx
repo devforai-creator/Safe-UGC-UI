@@ -6,8 +6,7 @@ interface StackProps {
 }
 
 const stackBase: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
+  position: 'relative',
 };
 
 export function Stack({ style, children }: StackProps) {
