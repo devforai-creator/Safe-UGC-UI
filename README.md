@@ -6,7 +6,7 @@ Safe UGC UI provides a JSON-based card format, a validation pipeline, and a Reac
 
 ## Status
 
-**Phase 1 (MVP)** — 5 components (Box, Row, Column, Text, Image), `$ref` state binding, full security validation, React renderer.
+**Phase 2 (current)** — 16 components, `$ref` state binding, `for...in` loops, `$style` reuse, Grid, directional borderRadius, full security validation, React renderer.
 
 ## Packages
 
@@ -15,7 +15,7 @@ packages/
   types/       Type definitions, Zod schemas, constants
   schema/      JSON Schema generation (zod-to-json-schema)
   validator/   Validation pipeline (schema, security, styles, limits, expressions)
-  react/       React renderer (Phase 1 components + style mapper)
+  react/       React renderer (Phase 2 components + style mapper)
   demo/        Interactive playground (Vite + React)
 ```
 
@@ -170,12 +170,12 @@ Schema validation fails fast. All other checks run and accumulate errors.
 │   │       ├── state-resolver.ts  $ref resolution with bracket notation
 │   │       ├── style-mapper.ts    StyleProps → CSSProperties
 │   │       ├── asset-resolver.ts  @assets/ → CDN URL mapping
-│   │       └── components/        Box, Row, Column, Text, Image
+│   │       └── components/        16 React components (Box…Toggle)
 │   │
 │   └── demo/              Vite playground
 │
 ├── safe-ugc-ui-spec-v0.3.md      Internal design spec
-├── safe-ugc-ui-card-spec.md       LLM-facing card spec (Phase 1)
+├── safe-ugc-ui-card-spec.md       LLM-facing card spec (Phase 2)
 └── vitest.workspace.ts
 ```
 
@@ -184,7 +184,7 @@ Schema validation fails fast. All other checks run and accumulate errors.
 | Phase | Scope |
 |-------|-------|
 | **Phase 1 (done)** | Box, Row, Column, Text, Image, `$ref`, validation, React renderer |
-| Phase 2 | Remaining 11 components, `for...in` loops, style reuse (`$style`), directional borderRadius |
+| **Phase 2 (done)** | 11 components, `for...in` loops, style reuse (`$style`), Grid, directional borderRadius |
 | Phase 3 | npm publish, icon set bundling, editor tooling, themes |
 | Future | `$expr` expression engine, interaction events (Button action, Toggle), CharLang text syntax |
 
