@@ -183,9 +183,9 @@ Schema validation fails fast. All other checks run and accumulate errors.
 | Phase | Scope |
 |-------|-------|
 | **Phase 1 (done)** | Box, Row, Column, Text, Image, `$ref`, validation, React renderer |
-| Phase 2 | Remaining components (ProgressBar, Avatar, Badge, Icon, Stack), `$expr` engine, `for...in` loops |
-| Phase 3 | Display + interaction components (Button, Toggle, Chip, Divider, Spacer) |
-| Phase 4 | Editor tooling, themes, CharLang text syntax |
+| Phase 2 | Remaining 11 components, `for...in` loops, style reuse (`$style`), directional borderRadius |
+| Phase 3 | npm publish, icon set bundling, editor tooling, themes |
+| Future | `$expr` expression engine, interaction events (Button action, Toggle), CharLang text syntax |
 
 ## License
 
