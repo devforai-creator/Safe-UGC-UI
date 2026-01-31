@@ -96,19 +96,22 @@ function runAllChecks(input: unknown): ValidationError[] {
     views: Record<string, unknown>;
     state?: Record<string, unknown>;
     assets?: Record<string, string>;
+    styles?: Record<string, Record<string, unknown>>;
   };
   const views = obj.views as Record<string, unknown>;
+  const cardStyles = obj.styles as Record<string, Record<string, unknown>> | undefined;
   const errors: ValidationError[] = [];
 
   errors.push(...validateNodes(views));
   errors.push(...validateValueTypes(views));
-  errors.push(...validateStyles(views));
+  errors.push(...validateStyles(views, cardStyles));
   errors.push(...validateSecurity({
     views,
     state: obj.state as Record<string, unknown> | undefined,
     cardAssets: obj.assets as Record<string, string> | undefined,
+    cardStyles,
   }));
-  errors.push(...validateLimits({ state: obj.state as Record<string, unknown> | undefined, views }));
+  errors.push(...validateLimits({ state: obj.state as Record<string, unknown> | undefined, views, cardStyles }));
   errors.push(...validateExprConstraints(views));
 
   return errors;

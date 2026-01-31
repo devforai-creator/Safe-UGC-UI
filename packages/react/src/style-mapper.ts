@@ -25,10 +25,24 @@ const DIRECT_MAP_PROPS = [
   'minHeight', 'maxHeight', 'padding', 'paddingTop', 'paddingRight',
   'paddingBottom', 'paddingLeft', 'margin', 'marginTop', 'marginRight',
   'marginBottom', 'marginLeft', 'backgroundColor', 'color', 'borderRadius',
+  'borderRadiusTopLeft', 'borderRadiusTopRight',
+  'borderRadiusBottomLeft', 'borderRadiusBottomRight',
   'fontSize', 'fontWeight', 'fontStyle', 'textAlign', 'textDecoration',
   'lineHeight', 'letterSpacing', 'opacity', 'overflow', 'position',
   'top', 'right', 'bottom', 'left', 'zIndex',
+  'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Forbidden CSS functions (defense-in-depth)
+// ---------------------------------------------------------------------------
+
+const FORBIDDEN_CSS_FUNCTIONS_LOWER = ['url(', 'var(', 'calc(', 'env(', 'expression('];
+
+function containsForbiddenCssFunction(value: string): boolean {
+  const lower = value.toLowerCase();
+  return FORBIDDEN_CSS_FUNCTIONS_LOWER.some(fn => lower.includes(fn));
+}
 
 // ---------------------------------------------------------------------------
 // Helper: resolve a style value (may be literal, $ref, or $expr)
@@ -37,8 +51,9 @@ const DIRECT_MAP_PROPS = [
 function resolveStyleValue(
   value: unknown,
   state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): unknown {
-  return resolveValue(value, state);
+  return resolveValue(value, state, locals);
 }
 
 // ---------------------------------------------------------------------------
@@ -145,11 +160,13 @@ const FLEX_ALIGNMENT_PROPS = new Set([
  *
  * @param style - The style object from a UGC node (may contain $ref/$expr values)
  * @param state - The card state for resolving $ref values
+ * @param locals - Optional local variables for resolving $ref values (checked before state)
  * @returns A React CSSProperties object
  */
 export function mapStyle(
   style: Record<string, unknown> | undefined,
   state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): CSSProperties {
   if (!style) return {};
 
@@ -158,7 +175,7 @@ export function mapStyle(
   // Direct-mapped properties (resolve dynamic values)
   for (const prop of DIRECT_MAP_PROPS) {
     if (prop in style) {
-      let resolved = resolveStyleValue(style[prop], state);
+      let resolved = resolveStyleValue(style[prop], state, locals);
       if (resolved !== undefined) {
         // Map spec alignment values (start/end) to CSS flexbox values
         if (
@@ -167,6 +184,10 @@ export function mapStyle(
           resolved in FLEX_ALIGNMENT_MAP
         ) {
           resolved = FLEX_ALIGNMENT_MAP[resolved];
+        }
+        // Block forbidden CSS functions (defense-in-depth)
+        if (typeof resolved === 'string' && containsForbiddenCssFunction(resolved)) {
+          continue;
         }
         (css as Record<string, unknown>)[prop] = resolved;
       }

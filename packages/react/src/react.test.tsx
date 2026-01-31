@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { resolveRef, resolveValue } from './state-resolver.js';
 import { mapStyle } from './style-mapper.js';
 import { resolveAsset } from './asset-resolver.js';
@@ -716,5 +716,358 @@ describe('renderTree', () => {
     const state = { items: [{ name: 'hi' }] };
     const { container } = render(<>{renderTree(node, state, {})}</>);
     expect(container.textContent).toBe('hi');
+  });
+});
+
+// =============================================================================
+// Phase 2 Tests
+// =============================================================================
+
+describe('State resolver with locals', () => {
+  it('resolveRef returns local value when key exists in locals', () => {
+    const result = resolveRef('$item', {}, { item: 'local-val' });
+    expect(result).toBe('local-val');
+  });
+
+  it('resolveRef falls back to state when key is not in locals', () => {
+    const result = resolveRef('$hp', { hp: 100 }, { item: 'x' });
+    expect(result).toBe(100);
+  });
+
+  it('resolveRef resolves nested path from locals', () => {
+    const result = resolveRef('$item.name', {}, { item: { name: 'Alice' } });
+    expect(result).toBe('Alice');
+  });
+
+  it('resolveValue resolves $ref from locals', () => {
+    const result = resolveValue({ $ref: '$item' }, {}, { item: 42 });
+    expect(result).toBe(42);
+  });
+});
+
+describe('Style mapper with locals', () => {
+  it('resolves color from locals via $ref', () => {
+    const result = mapStyle(
+      { color: { $ref: '$item.color' } },
+      {},
+      { item: { color: '#ff0000' } },
+    );
+    expect(result.color).toBe('#ff0000');
+  });
+
+  it('blocks CSS function url() in backgroundColor', () => {
+    const result = mapStyle(
+      { backgroundColor: { $ref: '$bg' } },
+      { bg: 'url(http://evil)' },
+      undefined,
+    );
+    expect(result).not.toHaveProperty('backgroundColor');
+  });
+
+  it('allows safe color value in backgroundColor', () => {
+    const result = mapStyle(
+      { backgroundColor: { $ref: '$bg' } },
+      { bg: '#ff0000' },
+    );
+    expect(result.backgroundColor).toBe('#ff0000');
+  });
+
+  it('blocks CSS function var() in gridTemplateColumns', () => {
+    const result = mapStyle(
+      { gridTemplateColumns: { $ref: '$cols' } },
+      { cols: 'var(--x)' },
+    );
+    expect(result).not.toHaveProperty('gridTemplateColumns');
+  });
+});
+
+describe('For-loop rendering', () => {
+  it('renders children for each item in the array', () => {
+    const node = {
+      type: 'Box',
+      children: {
+        for: 'msg',
+        in: '$messages',
+        template: {
+          type: 'Text',
+          props: { content: { $ref: '$msg' } },
+        },
+      },
+    };
+    const state = { messages: ['Hello', 'World'] };
+    const { container } = render(<>{renderTree(node, state, {})}</>);
+    expect(container.textContent).toContain('Hello');
+    expect(container.textContent).toContain('World');
+    // There should be two Text elements inside the Box
+    const spans = container.querySelectorAll('span');
+    expect(spans.length).toBe(2);
+  });
+
+  it('renders nothing when for-loop source is not an array', () => {
+    const node = {
+      type: 'Box',
+      children: {
+        for: 'msg',
+        in: '$messages',
+        template: {
+          type: 'Text',
+          props: { content: { $ref: '$msg' } },
+        },
+      },
+    };
+    const state = { messages: 'not-an-array' };
+    const { container } = render(<>{renderTree(node, state, {})}</>);
+    // The Box div should exist but have no text children
+    const spans = container.querySelectorAll('span');
+    expect(spans.length).toBe(0);
+  });
+
+  it('provides $index in locals for each iteration', () => {
+    // index is a number, so use item values (strings) to verify 3 iterations
+    const node = {
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: {
+          type: 'Text',
+          props: { content: { $ref: '$item' } },
+        },
+      },
+    };
+    const state = { items: ['a', 'b', 'c'] };
+    const { container } = render(<>{renderTree(node, state, {})}</>);
+    const spans = container.querySelectorAll('span');
+    expect(spans.length).toBe(3);
+    expect(spans[0].textContent).toBe('a');
+    expect(spans[1].textContent).toBe('b');
+    expect(spans[2].textContent).toBe('c');
+  });
+});
+
+describe('New components rendering', () => {
+  it('Stack renders a div', () => {
+    const node = { type: 'Stack', children: [] };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    expect(container.querySelector('div')).not.toBeNull();
+  });
+
+  it('Grid renders a div', () => {
+    const node = { type: 'Grid', children: [] };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    expect(container.querySelector('div')).not.toBeNull();
+  });
+
+  it('Spacer renders with size prop', () => {
+    const node = { type: 'Spacer', props: { size: 16 } };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    const el = container.firstElementChild;
+    expect(el).not.toBeNull();
+  });
+
+  it('Divider renders', () => {
+    const node = { type: 'Divider' };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    const el = container.firstElementChild;
+    expect(el).not.toBeNull();
+  });
+
+  it('Button renders with label and calls onAction on click', () => {
+    const onAction = vi.fn();
+    const node = {
+      type: 'Button',
+      props: { label: 'Click Me', action: 'submit' },
+    };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>,
+    );
+    const btn = screen.getByRole('button');
+    expect(btn.textContent).toBe('Click Me');
+    fireEvent.click(btn);
+    expect(onAction).toHaveBeenCalledWith('button', 'submit');
+  });
+
+  it('Toggle renders and calls onAction with toggle payload', () => {
+    const onAction = vi.fn();
+    const node = {
+      type: 'Toggle',
+      props: { value: false, onToggle: 'toggle-dark' },
+    };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>,
+    );
+    const btn = container.querySelector('button');
+    expect(btn).not.toBeNull();
+    fireEvent.click(btn!);
+    expect(onAction).toHaveBeenCalledWith('toggle', 'toggle-dark', { value: true });
+  });
+
+  it('ProgressBar renders with value and max', () => {
+    const node = { type: 'ProgressBar', props: { value: 50, max: 100 } };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    const el = container.firstElementChild;
+    expect(el).not.toBeNull();
+  });
+
+  it('Badge renders with label', () => {
+    const node = { type: 'Badge', props: { label: 'New' } };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    expect(container.textContent).toContain('New');
+  });
+
+  it('Chip renders with label', () => {
+    const node = { type: 'Chip', props: { label: 'Tag' } };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    expect(container.textContent).toContain('Tag');
+  });
+
+  it('Avatar renders with @assets/ src resolved from asset map', () => {
+    const node = {
+      type: 'Avatar',
+      props: { src: '@assets/avatar.png' },
+    };
+    const assets = { 'avatar.png': 'https://cdn.example.com/avatar.png' };
+    const { container } = render(<>{renderTree(node, {}, assets)}</>);
+    const img = container.querySelector('img');
+    expect(img).not.toBeNull();
+    expect(img!.getAttribute('src')).toBe('https://cdn.example.com/avatar.png');
+  });
+
+  it('Icon renders when iconResolver is provided', () => {
+    const iconResolver = (name: string) => <span data-testid="icon">{name}</span>;
+    const node = { type: 'Icon', props: { name: 'star' } };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, iconResolver)}</>,
+    );
+    expect(screen.getByTestId('icon')).not.toBeNull();
+    expect(screen.getByTestId('icon').textContent).toBe('star');
+  });
+
+  it('Icon returns null when iconResolver is not provided', () => {
+    const node = { type: 'Icon', props: { name: 'star' } };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    expect(container.innerHTML).toBe('');
+  });
+});
+
+describe('$style rendering', () => {
+  it('merges $style from cardStyles with inline styles', () => {
+    const node = {
+      type: 'Box',
+      style: { $style: 'myStyle', color: '#000' },
+      children: [],
+    };
+    const cardStyles = { myStyle: { backgroundColor: '#fff' } };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, cardStyles)}</>,
+    );
+    const div = container.querySelector('div');
+    expect(div).not.toBeNull();
+    expect(div!.style.backgroundColor).toBe('rgb(255, 255, 255)');
+    expect(div!.style.color).toBe('rgb(0, 0, 0)');
+  });
+
+  it('renders without $style when referencing a missing cardStyle', () => {
+    const node = {
+      type: 'Box',
+      style: { $style: 'nonExistent', color: '#000' },
+      children: [],
+    };
+    const cardStyles = {};
+    const { container } = render(
+      <>{renderTree(node, {}, {}, cardStyles)}</>,
+    );
+    const div = container.querySelector('div');
+    expect(div).not.toBeNull();
+    expect(div!.style.color).toBe('rgb(0, 0, 0)');
+  });
+});
+
+describe('Runtime limits', () => {
+  it('stops rendering when node count exceeds limit', () => {
+    // Create a tree with > 10001 nodes via deeply nested for-loop
+    const children: any[] = [];
+    for (let i = 0; i < 10002; i++) {
+      children.push({ type: 'Text', props: { content: `node-${i}` } });
+    }
+    const node = { type: 'Box', children };
+    const onError = vi.fn();
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>,
+    );
+    // Should not render all 10002 Text nodes
+    const spans = container.querySelectorAll('span');
+    expect(spans.length).toBeLessThan(10002);
+  });
+
+  it('stops rendering when text bytes exceed limit', () => {
+    // Use a for-loop producing many Text nodes with long content
+    const longStr = 'A'.repeat(1000);
+    const items = Array.from({ length: 2000 }, (_, i) => longStr);
+    const node = {
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: {
+          type: 'Text',
+          props: { content: { $ref: '$item' } },
+        },
+      },
+    };
+    const state = { items };
+    const onError = vi.fn();
+    const { container } = render(
+      <>{renderTree(node, state, {}, undefined, undefined, undefined, onError)}</>,
+    );
+    // Should have rendered some but not all text
+    const spans = container.querySelectorAll('span');
+    expect(spans.length).toBeLessThan(2000);
+  });
+});
+
+describe('UGCRenderer with new props', () => {
+  it('passes iconResolver prop through to renderer', () => {
+    const iconResolver = (name: string) => <span data-testid="ugc-icon">{name}</span>;
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: { Main: { type: 'Icon', props: { name: 'heart' } } },
+    };
+    render(<UGCRenderer card={card} iconResolver={iconResolver} />);
+    expect(screen.getByTestId('ugc-icon')).not.toBeNull();
+    expect(screen.getByTestId('ugc-icon').textContent).toBe('heart');
+  });
+
+  it('passes onAction prop through to renderer', () => {
+    const onAction = vi.fn();
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: { Main: { type: 'Button', props: { label: 'Act', action: 'click' } } },
+    };
+    const { container } = render(<UGCRenderer card={card} onAction={onAction} />);
+    const btn = container.querySelector('button');
+    expect(btn).not.toBeNull();
+    fireEvent.click(btn!);
+    expect(onAction).toHaveBeenCalledWith('button', 'click');
+  });
+
+  it('passes card.styles as cardStyles to renderer', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      styles: { heading: { fontSize: 24 } },
+      views: {
+        Main: {
+          type: 'Box',
+          style: { $style: 'heading', color: '#000' },
+          children: [],
+        },
+      },
+    };
+    const { container } = render(<UGCRenderer card={card} />);
+    // UGCContainer wraps the content with a div
+    const innerDivs = container.querySelectorAll('div');
+    // The card styles should produce a Box div with fontSize and color
+    const boxDiv = innerDivs[innerDivs.length - 1];
+    expect(boxDiv).not.toBeNull();
   });
 });

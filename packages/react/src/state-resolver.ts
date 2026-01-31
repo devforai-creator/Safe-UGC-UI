@@ -62,6 +62,7 @@ function parseRefSegments(path: string): string[] {
 export function resolveRef(
   refPath: string,
   state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): unknown {
   const path = refPath.startsWith('$') ? refPath.slice(1) : refPath;
   const segments = parseRefSegments(path);
@@ -76,8 +77,16 @@ export function resolveRef(
   // Max depth check
   if (segments.length > 5) return undefined;
 
-  // Traverse state
-  let current: unknown = state;
+  // Choose starting object: locals first, then state
+  const firstSeg = segments[0];
+  let current: unknown;
+  if (locals && firstSeg && firstSeg in locals) {
+    current = locals;
+  } else {
+    current = state;
+  }
+
+  // Traverse
   for (const seg of segments) {
     if (current == null || typeof current !== 'object') return undefined;
     if (Array.isArray(current)) {
@@ -100,11 +109,12 @@ export function resolveRef(
 export function resolveValue(
   value: unknown,
   state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
 ): unknown {
   if (value == null) return value;
   if (typeof value === 'object' && value !== null) {
     if ('$ref' in value && typeof (value as Record<string, unknown>).$ref === 'string') {
-      return resolveRef((value as Record<string, unknown>).$ref as string, state);
+      return resolveRef((value as Record<string, unknown>).$ref as string, state, locals);
     }
     if ('$expr' in value) {
       // Phase 2: expression evaluation

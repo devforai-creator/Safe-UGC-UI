@@ -69,7 +69,12 @@ export type ValidationErrorCode =
   | 'EXPR_INVALID_TOKEN'
   // ForLoop
   | 'LOOP_SOURCE_NOT_ARRAY'
-  | 'LOOP_SOURCE_MISSING';
+  | 'LOOP_SOURCE_MISSING'
+  // $style references
+  | 'STYLE_CIRCULAR_REF'
+  | 'STYLE_REF_NOT_FOUND'
+  | 'INVALID_STYLE_REF'
+  | 'INVALID_STYLE_NAME';
 
 // ---------------------------------------------------------------------------
 // ValidationError

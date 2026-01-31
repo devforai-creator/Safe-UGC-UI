@@ -1494,3 +1494,557 @@ describe('toResult', () => {
     expect(result.errors[0]).toBe(error);
   });
 });
+
+// ===========================================================================
+// Phase 2 Tests
+// ===========================================================================
+
+// ===========================================================================
+// P2-1. $style validation (validateStyles with cardStyles)
+// ===========================================================================
+
+describe('validateStyles — $style references', () => {
+  it('accepts a card with a valid $style reference', () => {
+    const cardStyles = {
+      myStyle: { backgroundColor: '#ff0000' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'myStyle' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects $style used inside card.styles (circular ref)', () => {
+    const cardStyles = {
+      myStyle: { $style: 'otherStyle' } as Record<string, unknown>,
+    };
+    const views = makeViews({ type: 'Box' });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('STYLE_CIRCULAR_REF');
+  });
+
+  it('rejects $style referencing a nonexistent style name', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'nonexistent' },
+    });
+    // No cardStyles at all
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_REF_NOT_FOUND');
+  });
+
+  it('rejects $style referencing nonexistent style when cardStyles exists but lacks the key', () => {
+    const cardStyles = {
+      other: { backgroundColor: '#000' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'nonexistent' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('STYLE_REF_NOT_FOUND');
+  });
+
+  it('rejects $style with whitespace-only value', () => {
+    const cardStyles = {
+      myStyle: { backgroundColor: '#000' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: ' ' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('INVALID_STYLE_REF');
+  });
+
+  it('rejects $style value containing url(', () => {
+    const cardStyles = {
+      myStyle: { backgroundColor: '#000' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'url(' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('INVALID_STYLE_REF');
+  });
+
+  it('rejects $style value starting with a digit', () => {
+    const cardStyles = {
+      myStyle: { backgroundColor: '#000' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: '123abc' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('INVALID_STYLE_REF');
+  });
+
+  it('rejects card.styles with empty string key', () => {
+    const cardStyles = {
+      '': { backgroundColor: '#000' },
+    };
+    const views = makeViews({ type: 'Box' });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('INVALID_STYLE_NAME');
+  });
+
+  it('reports STYLE_VALUE_OUT_OF_RANGE when $style merged result violates range', () => {
+    const cardStyles = {
+      big: { fontSize: 999 },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'big' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('reports error when $style merged with inline override violates range', () => {
+    const cardStyles = {
+      s: { fontSize: 10 },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 's', fontSize: 999 },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects borderRadiusTopLeft out of range', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { borderRadiusTopLeft: 99999 },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('accepts borderRadiusTopLeft within range', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { borderRadiusTopLeft: 100 },
+    });
+    const errors = validateStyles(views);
+    const rangeErrors = errors.filter((e) => e.code === 'STYLE_VALUE_OUT_OF_RANGE');
+    expect(rangeErrors).toHaveLength(0);
+  });
+});
+
+// ===========================================================================
+// P2-2. $style security (validateSecurity with cardStyles)
+// ===========================================================================
+
+describe('validateSecurity — $style merged position/overflow', () => {
+  it('rejects $style with position: absolute outside Stack', () => {
+    const cardStyles = {
+      absStyle: { position: 'absolute' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'absStyle' },
+    });
+    const errors = validateSecurity({ views, cardStyles });
+    expect(codes(errors)).toContain('POSITION_ABSOLUTE_NOT_IN_STACK');
+  });
+
+  it('rejects $style with position: fixed', () => {
+    const cardStyles = {
+      fixedStyle: { position: 'fixed' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'fixedStyle' },
+    });
+    const errors = validateSecurity({ views, cardStyles });
+    expect(codes(errors)).toContain('POSITION_FIXED_FORBIDDEN');
+  });
+
+  it('rejects $style with nested overflow:auto', () => {
+    const cardStyles = {
+      autoOverflow: { overflow: 'auto' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { overflow: 'auto' },
+      children: [
+        {
+          type: 'Box',
+          style: { $style: 'autoOverflow' },
+        },
+      ],
+    });
+    const errors = validateSecurity({ views, cardStyles });
+    expect(codes(errors)).toContain('OVERFLOW_AUTO_NESTED');
+  });
+
+  it('uses merged style from cardStyles for position checks', () => {
+    const cardStyles = {
+      posStyle: { position: 'absolute' },
+    };
+    // Inside a Stack, so absolute should be allowed
+    const views = makeViews({
+      type: 'Stack',
+      children: [
+        {
+          type: 'Box',
+          style: { $style: 'posStyle' },
+        },
+      ],
+    });
+    const errors = validateSecurity({ views, cardStyles });
+    const posErrors = errors.filter((e) => e.code === 'POSITION_ABSOLUTE_NOT_IN_STACK');
+    expect(posErrors).toHaveLength(0);
+  });
+});
+
+// ===========================================================================
+// P2-3. $style limits (validateLimits with cardStyles)
+// ===========================================================================
+
+describe('validateLimits — $style merged style bytes and overflow', () => {
+  it('counts $style merged style bytes toward total style bytes', () => {
+    const cardStyles = {
+      bigStyle: {
+        backgroundColor: '#ff0000',
+        color: '#00ff00',
+        fontSize: 16,
+        padding: '10px',
+      },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'bigStyle' },
+    });
+    // Should not error for a small style, but the merged style should be counted
+    const errors = validateLimits({ views, cardStyles });
+    const sizeErrors = errors.filter((e) => e.code === 'STYLE_SIZE_EXCEEDED');
+    expect(sizeErrors).toHaveLength(0);
+  });
+
+  it('counts overflow:auto in $style toward overflow limit', () => {
+    const cardStyles = {
+      autoScroll: { overflow: 'auto' },
+    };
+    const views = makeViews({
+      type: 'Box',
+      children: [
+        { type: 'Box', style: { $style: 'autoScroll' } },
+        { type: 'Box', style: { $style: 'autoScroll' } },
+        { type: 'Box', style: { $style: 'autoScroll' } },
+      ],
+    });
+    const errors = validateLimits({ views, cardStyles });
+    expect(codes(errors)).toContain('OVERFLOW_AUTO_COUNT_EXCEEDED');
+  });
+});
+
+// ===========================================================================
+// P2-4. For-loop limits (validateLimits)
+// ===========================================================================
+
+describe('validateLimits — for-loop validation', () => {
+  it('accepts loop with 5 items x 3 template nodes (15 effective nodes)', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: {
+          type: 'Box',
+          children: [
+            { type: 'Text', props: { content: 'a' } },
+            { type: 'Text', props: { content: 'b' } },
+          ],
+        },
+      },
+    });
+    const state = { items: [1, 2, 3, 4, 5] };
+    const errors = validateLimits({ views, state });
+    const nodeErrors = errors.filter((e) => e.code === 'NODE_COUNT_EXCEEDED');
+    expect(nodeErrors).toHaveLength(0);
+  });
+
+  it('resolves dotted path $data.items correctly', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$data.items',
+        template: { type: 'Text', props: { content: 'hi' } },
+      },
+    });
+    const state = { data: { items: [1, 2, 3] } };
+    const errors = validateLimits({ views, state });
+    const loopErrors = errors.filter(
+      (e) =>
+        e.code === 'LOOP_SOURCE_MISSING' ||
+        e.code === 'LOOP_SOURCE_NOT_ARRAY',
+    );
+    expect(loopErrors).toHaveLength(0);
+  });
+
+  it('skips validation when loop source is a locals/loop variable not in state', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$item.subItems',
+        template: { type: 'Text', props: { content: 'hi' } },
+      },
+    });
+    const state = { unrelated: 'value' };
+    const errors = validateLimits({ views, state });
+    // Should not produce LOOP_SOURCE_MISSING for unresolvable dotted path
+    const missingErrors = errors.filter((e) => e.code === 'LOOP_SOURCE_MISSING');
+    expect(missingErrors).toHaveLength(0);
+  });
+
+  it('reports LOOP_SOURCE_NOT_ARRAY when source is not an array', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { type: 'Text', props: { content: 'hi' } },
+      },
+    });
+    const errors = validateLimits({ views, state: { items: 'not an array' } });
+    expect(codes(errors)).toContain('LOOP_SOURCE_NOT_ARRAY');
+  });
+
+  it('reports LOOP_ITERATIONS_EXCEEDED when array exceeds MAX_LOOP_ITERATIONS', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { type: 'Text', props: { content: 'hi' } },
+      },
+    });
+    // MAX_LOOP_ITERATIONS is 1000, so 1001 should exceed
+    const bigArray = Array.from({ length: 1001 }, (_, i) => i);
+    const errors = validateLimits({ views, state: { items: bigArray } });
+    expect(codes(errors)).toContain('LOOP_ITERATIONS_EXCEEDED');
+  });
+
+  it('reports NESTED_LOOPS_EXCEEDED when loop nesting exceeds MAX_NESTED_LOOPS', () => {
+    // MAX_NESTED_LOOPS is 2, so 3 levels of nesting should trigger error
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'a',
+        in: '$items',
+        template: {
+          type: 'Box',
+          children: {
+            for: 'b',
+            in: '$items',
+            template: {
+              type: 'Box',
+              children: {
+                for: 'c',
+                in: '$items',
+                template: { type: 'Text', props: { content: 'deep' } },
+              },
+            },
+          },
+        },
+      },
+    });
+    const state = { items: [1, 2] };
+    const errors = validateLimits({ views, state });
+    expect(codes(errors)).toContain('NESTED_LOOPS_EXCEEDED');
+  });
+});
+
+// ===========================================================================
+// P2-5. Loop expansion multiplier
+// ===========================================================================
+
+describe('validateLimits — loop expansion multiplier', () => {
+  it('correctly counts node expansion for 100 items x 1 template node', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { type: 'Text', props: { content: 'x'.repeat(100) } },
+      },
+    });
+    const items = Array.from({ length: 100 }, (_, i) => i);
+    const state = { items };
+    const errors = validateLimits({ views, state });
+    // 100 items x 1 node = 100 nodes + 1 root Box = 101, well under 10000
+    const nodeErrors = errors.filter((e) => e.code === 'NODE_COUNT_EXCEEDED');
+    expect(nodeErrors).toHaveLength(0);
+  });
+
+  it('reports NODE_COUNT_EXCEEDED for loop with too many expanded nodes', () => {
+    // MAX_LOOP_ITERATIONS is 1000. Expansion only counts when <= 1000.
+    // Use 1000 items x 11 nodes per template = 11000 > MAX_NODE_COUNT (10000).
+    // Template: 1 Box + 10 Text children = 11 nodes per iteration.
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: {
+          type: 'Box',
+          children: [
+            { type: 'Text', props: { content: '1' } },
+            { type: 'Text', props: { content: '2' } },
+            { type: 'Text', props: { content: '3' } },
+            { type: 'Text', props: { content: '4' } },
+            { type: 'Text', props: { content: '5' } },
+            { type: 'Text', props: { content: '6' } },
+            { type: 'Text', props: { content: '7' } },
+            { type: 'Text', props: { content: '8' } },
+            { type: 'Text', props: { content: '9' } },
+            { type: 'Text', props: { content: '10' } },
+          ],
+        },
+      },
+    });
+    const state = { items: Array.from({ length: 1000 }, (_, i) => i) };
+    const errors = validateLimits({ views, state });
+    expect(codes(errors)).toContain('NODE_COUNT_EXCEEDED');
+  });
+});
+
+// ===========================================================================
+// P2-6. Grid $ref validation
+// ===========================================================================
+
+describe('validateStyles — Grid $ref and literal gridTemplateColumns', () => {
+  it('accepts gridTemplateColumns with $ref (dynamic, no error)', () => {
+    const views = makeViews({
+      type: 'Grid',
+      style: { gridTemplateColumns: { $ref: '$cols' } },
+    });
+    const errors = validateStyles(views);
+    const gridErrors = errors.filter(
+      (e) =>
+        e.code === 'STYLE_VALUE_OUT_OF_RANGE' ||
+        e.code === 'FORBIDDEN_STYLE_PROPERTY' ||
+        e.code === 'INVALID_LENGTH',
+    );
+    expect(gridErrors).toHaveLength(0);
+  });
+
+  it('accepts gridTemplateColumns with literal repeat() value', () => {
+    const views = makeViews({
+      type: 'Grid',
+      style: { gridTemplateColumns: 'repeat(3, 1fr)' },
+    });
+    const errors = validateStyles(views);
+    const gridErrors = errors.filter(
+      (e) =>
+        e.code === 'FORBIDDEN_STYLE_PROPERTY',
+    );
+    expect(gridErrors).toHaveLength(0);
+  });
+});
+
+// ===========================================================================
+// P2-7. Schema validation for card.styles
+// ===========================================================================
+
+describe('validate — card.styles integration', () => {
+  it('accepts a card with valid styles and $style reference', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      styles: {
+        myStyle: { backgroundColor: '#ff0000', fontSize: 16 },
+      },
+      views: {
+        Main: {
+          type: 'Box',
+          style: { $style: 'myStyle' },
+          children: [{ type: 'Text', props: { content: 'Hello' } }],
+        },
+      },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('rejects a card with styles key starting with a digit (schema error)', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      styles: {
+        '1badName': { backgroundColor: '#ff0000' },
+      },
+      views: {
+        Main: { type: 'Box' },
+      },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
+  });
+
+  it('rejects a card where $style references a style with fontSize out of range', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      styles: {
+        huge: { fontSize: 999 },
+      },
+      views: {
+        Main: {
+          type: 'Box',
+          style: { $style: 'huge' },
+        },
+      },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects a card where $style has position: fixed via merged style', () => {
+    // position: 'fixed' is not in positionValueSchema ('static' | 'relative' | 'absolute'),
+    // so Zod rejects it at schema level before security validation runs.
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      styles: {
+        fixedPos: { position: 'fixed' },
+      },
+      views: {
+        Main: {
+          type: 'Box',
+          style: { $style: 'fixedPos' },
+        },
+      },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
+  });
+
+  it('rejects a card with loop where source is not an array via validate()', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          children: {
+            for: 'item',
+            in: '$items',
+            template: { type: 'Text', props: { content: 'hi' } },
+          },
+        },
+      },
+      state: { items: 42 },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('LOOP_SOURCE_NOT_ARRAY');
+  });
+});

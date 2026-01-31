@@ -17,6 +17,7 @@
 
 import { z } from 'zod';
 import { ugcNodeSchema } from './primitives.js';
+import { stylePropsSchema } from './styles.js';
 
 // ---------------------------------------------------------------------------
 // 1. CardMeta
@@ -33,10 +34,14 @@ export type CardMeta = z.infer<typeof cardMetaSchema>;
 // 2. UGCCard — top-level card document
 // ---------------------------------------------------------------------------
 
+/** Pattern for valid style names: starts with letter, then alphanumeric/hyphens/underscores */
+const styleNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
+
 export const ugcCardSchema = z.object({
   meta: cardMetaSchema,
   assets: z.record(z.string(), z.string()).optional(),
   state: z.record(z.string(), z.unknown()).optional(),
+  styles: z.record(z.string().regex(styleNamePattern), stylePropsSchema).optional(),
   views: z.record(z.string(), ugcNodeSchema),
 });
 

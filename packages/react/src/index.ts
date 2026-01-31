@@ -1,5 +1,5 @@
 /**
- * @safe-ugc-ui/react — Barrel Export
+ * @safe-ugc-ui/react --- Barrel Export
  *
  * Public API for the React rendering package.
  */
@@ -12,10 +12,16 @@ export type { UGCRendererProps } from './UGCRenderer.js';
 export { UGCContainer } from './UGCContainer.js';
 
 // Individual components
-export { Box, Row, Column, Text, Image } from './components/index.js';
+export {
+  Box, Row, Column, Text, Image,
+  Stack, Grid, Spacer, Divider, Icon,
+  ProgressBar, Avatar, Badge, Chip,
+  Button, Toggle,
+} from './components/index.js';
 
 // Node renderer (for advanced usage)
 export { renderNode, renderTree } from './node-renderer.js';
+export type { RenderContext, RuntimeLimits } from './node-renderer.js';
 
 // Utilities
 export { resolveRef, resolveValue } from './state-resolver.js';

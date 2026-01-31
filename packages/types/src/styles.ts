@@ -307,6 +307,10 @@ export const stylePropsSchema = z.object({
   // Border radius — Dynamic
   // -----------------------------------------------------------------------
   borderRadius: dynamicSchema(lengthSchema).optional(),
+  borderRadiusTopLeft: dynamicSchema(lengthSchema).optional(),
+  borderRadiusTopRight: dynamicSchema(lengthSchema).optional(),
+  borderRadiusBottomLeft: dynamicSchema(lengthSchema).optional(),
+  borderRadiusBottomRight: dynamicSchema(lengthSchema).optional(),
 
   // -----------------------------------------------------------------------
   // Typography — Dynamic
@@ -365,9 +369,22 @@ export const stylePropsSchema = z.object({
   left: lengthSchema.optional(),
 
   // -----------------------------------------------------------------------
+  // Grid — Dynamic
+  // -----------------------------------------------------------------------
+  gridTemplateColumns: dynamicSchema(z.string()).optional(),
+  gridTemplateRows: dynamicSchema(z.string()).optional(),
+  gridColumn: dynamicSchema(z.string()).optional(),
+  gridRow: dynamicSchema(z.string()).optional(),
+
+  // -----------------------------------------------------------------------
   // z-index — Static only (0-100 enforced at validation layer)
   // -----------------------------------------------------------------------
   zIndex: z.number().optional(),
+
+  // -----------------------------------------------------------------------
+  // $style — reference to a named style in card.styles
+  // -----------------------------------------------------------------------
+  $style: z.string().optional(),
 });
 
 export type StyleProps = z.infer<typeof stylePropsSchema>;

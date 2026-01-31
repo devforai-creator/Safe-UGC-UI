@@ -1,5 +1,5 @@
 /**
- * @safe-ugc-ui/react — UGC Renderer
+ * @safe-ugc-ui/react --- UGC Renderer
  *
  * Top-level component that validates and renders a UGC card.
  *
@@ -10,15 +10,17 @@
  *   4. If valid, wrap in UGCContainer and render the view tree
  *
  * Props:
- *   - card:      UGCCard object or raw JSON string
- *   - viewName:  Name of the view to render (defaults to first view)
- *   - assets:    Mapping of asset keys to actual URLs
- *   - state:     Optional state override (merged with card.state)
- *   - onError:   Optional error callback
+ *   - card:           UGCCard object or raw JSON string
+ *   - viewName:       Name of the view to render (defaults to first view)
+ *   - assets:         Mapping of asset keys to actual URLs
+ *   - state:          Optional state override (merged with card.state)
+ *   - onError:        Optional error callback
+ *   - iconResolver:   Optional callback to resolve icon names to ReactNode
+ *   - onAction:       Optional callback for Button/Toggle actions
  */
 
 import { useMemo } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { validate, validateRaw } from '@safe-ugc-ui/validator';
 import type { UGCCard } from '@safe-ugc-ui/types';
 
@@ -31,7 +33,7 @@ import type { AssetMap } from './asset-resolver.js';
 // ---------------------------------------------------------------------------
 
 export interface UGCRendererProps {
-  /** The UGC card to render — either a parsed object or a raw JSON string. */
+  /** The UGC card to render --- either a parsed object or a raw JSON string. */
   card: UGCCard | string;
 
   /** Name of the view to render. Defaults to the first view in the card. */
@@ -46,8 +48,14 @@ export interface UGCRendererProps {
   /** Optional CSS style for the outer container. */
   containerStyle?: CSSProperties;
 
-  /** Optional callback invoked when validation fails. */
+  /** Optional callback invoked when validation fails or runtime limits are hit. */
   onError?: (errors: Array<{ code: string; message: string; path: string }>) => void;
+
+  /** Optional callback to resolve icon names to React elements. */
+  iconResolver?: (name: string) => ReactNode;
+
+  /** Optional callback for Button/Toggle interaction actions. */
+  onAction?: (type: string, actionId: string, payload?: unknown) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,6 +75,8 @@ export function UGCRenderer({
   state: stateOverride,
   containerStyle,
   onError,
+  iconResolver,
+  onAction,
 }: UGCRendererProps) {
   const result = useMemo(() => {
     // 1. Validate
@@ -100,10 +110,14 @@ export function UGCRenderer({
       ...(stateOverride ?? {}),
     };
 
+    // 5. Extract card-level styles
+    const cardStyles = cardObj.styles as Record<string, Record<string, unknown>> | undefined;
+
     return {
       valid: true as const,
       rootNode: views[selectedView],
       state: mergedState,
+      cardStyles,
     };
   }, [card, viewName, stateOverride]);
 
@@ -118,7 +132,15 @@ export function UGCRenderer({
   // Render the view tree inside the secure container
   return (
     <UGCContainer style={containerStyle}>
-      {renderTree(result.rootNode, result.state, assets)}
+      {renderTree(
+        result.rootNode,
+        result.state,
+        assets,
+        result.cardStyles,
+        iconResolver,
+        onAction,
+        onError,
+      )}
     </UGCContainer>
   );
 }

@@ -266,9 +266,10 @@ export function validateSecurity(card: {
   views: Record<string, unknown>;
   state?: Record<string, unknown>;
   cardAssets?: Record<string, string>;
+  cardStyles?: Record<string, Record<string, unknown>>;
 }): ValidationError[] {
   const errors: ValidationError[] = [];
-  const { views, state, cardAssets } = card;
+  const { views, state, cardAssets, cardStyles } = card;
 
   // -----------------------------------------------------------------
   // 0. Validate cardAssets values
@@ -342,10 +343,28 @@ export function validateSecurity(card: {
     }
 
     // -----------------------------------------------------------------
-    // 3. Position rules
+    // 3. Position rules (use merged style if $style is present)
     // -----------------------------------------------------------------
-    if (style && typeof style.position === 'string') {
-      const position = style.position;
+    // Build effective style by merging with card.styles if $style is present
+    let effectiveStyle = style;
+    if (
+      style &&
+      typeof style.$style === 'string' &&
+      cardStyles &&
+      style.$style.trim() in cardStyles
+    ) {
+      const refName = style.$style.trim();
+      const merged: Record<string, unknown> = { ...cardStyles[refName] };
+      for (const [key, value] of Object.entries(style)) {
+        if (key !== '$style') {
+          merged[key] = value;
+        }
+      }
+      effectiveStyle = merged;
+    }
+
+    if (effectiveStyle && typeof effectiveStyle.position === 'string') {
+      const position = effectiveStyle.position;
 
       if (position === 'fixed') {
         errors.push(
@@ -377,11 +396,11 @@ export function validateSecurity(card: {
     }
 
     // -----------------------------------------------------------------
-    // 4. Overflow auto nesting
+    // 4. Overflow auto nesting (use merged style)
     // -----------------------------------------------------------------
     if (
-      style &&
-      style.overflow === 'auto' &&
+      effectiveStyle &&
+      effectiveStyle.overflow === 'auto' &&
       context.overflowAutoAncestor
     ) {
       errors.push(
