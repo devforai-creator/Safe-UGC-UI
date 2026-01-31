@@ -35,6 +35,25 @@ This repository hosts Safe UGC UI, a pnpm workspace with TypeScript packages for
 - Update specs when behavior changes (`safe-ugc-ui-card-spec.md`, `safe-ugc-ui-spec-v0.3.md`).
 
 ## Specs & Security Notes
-- Follow the card spec in `safe-ugc-ui-card-spec.md` for Phase 1 behavior.
+- Follow the card spec in `safe-ugc-ui-card-spec.md` for current behavior (Phase 2).
 - Treat JSON Schema as structural validation only; security/limits live in the validator.
 - Asset references must go through `@assets/` and are validated in both validator and renderer.
+
+## Open Decisions
+
+### $expr: keep or remove? (pending)
+`$expr` (expression objects like `{ "$expr": "$hp + 10" }`) exists in the schema and validator
+since Phase 1 but is **not evaluated at runtime** — the renderer returns `undefined` for any
+`$expr` value. The card spec tells LLMs not to use it ("reserved for future use").
+
+Current state:
+- `packages/types/src/values.ts`: `exprSchema`, `isExpr`, `dynamicSchema()` includes $expr union
+- `packages/validator/src/expr-constraints.ts`: tokenizer validates $expr syntax safety
+- `packages/validator/src/value-types.ts`: per-property $expr permission (e.g. forbidden on Image.src, Icon.name)
+- `packages/react/src/state-resolver.ts`: `resolveValue()` returns `undefined` for $expr
+
+Options:
+1. **Keep as placeholder** — forward-compatible; if we add an expression engine later, schema/validator are ready.
+2. **Remove from code** — strip `exprSchema` from `dynamicSchema()`, remove expr-constraints validation, align code with "must not be used" policy in the spec.
+
+Decision deferred. When revisiting, update `safe-ugc-ui-card-spec.md` and `AGENTS.md` accordingly.
