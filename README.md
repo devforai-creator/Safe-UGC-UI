@@ -114,7 +114,10 @@ A card is a JSON object:
 - **State binding** via `{ "$ref": "$variableName" }`
 - **Images** must use `@assets/` paths (no external URLs)
 
-For full details, see [`safe-ugc-ui-card-spec.md`](./safe-ugc-ui-card-spec.md).
+For full details, see:
+- [`safe-ugc-ui-card-spec.md`](./safe-ugc-ui-card-spec.md) — full spec
+- [`safe-ugc-ui-card-spec-lite.md`](./safe-ugc-ui-card-spec-lite.md) — LLM-friendly summary
+- [`safe-ugc-ui-card-spec.types.ts`](./safe-ugc-ui-card-spec.types.ts) — TypeScript type guide
 
 ## Security model
 
@@ -174,8 +177,10 @@ Schema validation fails fast. All other checks run and accumulate errors.
 │   │
 │   └── demo/              Vite playground
 │
-├── safe-ugc-ui-spec-v0.3.md      Internal design spec
-├── safe-ugc-ui-card-spec.md       LLM-facing card spec (Phase 2)
+├── safe-ugc-ui-spec-v0.3.md          Internal design spec
+├── safe-ugc-ui-card-spec.md          Full card spec (Phase 2)
+├── safe-ugc-ui-card-spec-lite.md     LLM-friendly summary
+├── safe-ugc-ui-card-spec.types.ts    TypeScript type guide
 └── vitest.workspace.ts
 ```
 
