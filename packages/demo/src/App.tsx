@@ -3,6 +3,23 @@ import { UGCRenderer } from '@safe-ugc-ui/react';
 import { validate } from '@safe-ugc-ui/validator';
 import { SAMPLES } from './sample-card';
 
+const DEMO_ASSETS: Record<string, string> = {
+  '@assets/cyber-avatar.png':
+    'https://ui-avatars.com/api/?name=NR&background=00f0ff&color=0a0a12&size=128&bold=true',
+  '@assets/char-avatar.png':
+    'https://ui-avatars.com/api/?name=AR&background=a78bfa&color=18181b&size=128&bold=true',
+  '@assets/minji.png':
+    'https://ui-avatars.com/api/?name=민지&background=ff9eaa&color=fff&size=84',
+  '@assets/yuna.png':
+    'https://ui-avatars.com/api/?name=유나&background=a8d8ea&color=333&size=84',
+  '@assets/soobin.png':
+    'https://ui-avatars.com/api/?name=수빈&background=c3aed6&color=fff&size=84',
+  '@assets/shorts-channel.png':
+    'https://ui-avatars.com/api/?name=CM&background=ff0033&color=fff&size=84&bold=true',
+  '@assets/shorts-music.png':
+    'https://ui-avatars.com/api/?name=♪&background=333&color=fff&size=84',
+};
+
 const sampleNames = Object.keys(SAMPLES);
 
 export function App() {
@@ -93,6 +110,7 @@ export function App() {
             {card ? (
               <UGCRenderer
                 card={card}
+                assets={DEMO_ASSETS}
                 containerStyle={{ maxWidth: '100%' }}
               />
             ) : (
