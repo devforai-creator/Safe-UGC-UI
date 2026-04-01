@@ -1,12 +1,15 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface BadgeProps {
   label: string;
   color?: string;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
-export function Badge({ label, color, style }: BadgeProps) {
+export function Badge({ label, color, style, hoverStyle }: BadgeProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
   return (
     <span
       style={{
@@ -15,8 +18,10 @@ export function Badge({ label, color, style }: BadgeProps) {
         borderRadius: 12,
         backgroundColor: color ?? '#e0e0e0',
         fontSize: 12,
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {label}
     </span>

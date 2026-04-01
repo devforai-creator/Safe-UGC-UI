@@ -2140,3 +2140,165 @@ describe('validateLimits — loop source resolution policy', () => {
     expect(missingErrors).toHaveLength(0);
   });
 });
+
+// ===========================================================================
+// hoverStyle and transition validation
+// ===========================================================================
+
+describe('validateStyles — hoverStyle', () => {
+  it('accepts valid hoverStyle', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        height: 200,
+        hoverStyle: { height: 400, opacity: 0.9 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects nested hoverStyle (hoverStyle inside hoverStyle)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: {
+          height: 400,
+          hoverStyle: { height: 600 },
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('HOVER_STYLE_NESTED');
+  });
+
+  it('validates hoverStyle properties with same rules (rejects forbidden prop)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { backgroundImage: 'url(evil)' },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('FORBIDDEN_STYLE_PROPERTY');
+  });
+
+  it('validates hoverStyle range checks (fontSize out of range)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { fontSize: 999 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('validates hoverStyle color format', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { backgroundColor: 'not-a-color' },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+});
+
+describe('validateStyles — transition', () => {
+  it('accepts valid transition object', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        transition: { property: 'height', duration: 600, easing: 'ease' },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts valid transition array', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        transition: [
+          { property: 'height', duration: 600 },
+          { property: 'opacity', duration: 300, easing: 'ease-in-out' },
+        ],
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects transition with forbidden property', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        transition: { property: 'backgroundImage', duration: 300 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('TRANSITION_PROPERTY_FORBIDDEN');
+  });
+
+  it('rejects transition with duration exceeding max', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        transition: { property: 'opacity', duration: 5000 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects transition with delay exceeding max', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        transition: { property: 'opacity', duration: 300, delay: 2000 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects raw string transition (defense-in-depth)', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        transition: 'all 0.3s ease',
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('TRANSITION_RAW_STRING');
+  });
+
+  it('accepts hoverStyle with transition combined', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        height: 200,
+        transition: { property: 'height', duration: 600, easing: 'ease' },
+        hoverStyle: { height: 400 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('validateStyles — hoverStyle $style rejection', () => {
+  it('rejects $style inside hoverStyle', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { $style: 'foo', opacity: 0.5 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_STYLE_REF');
+  });
+});

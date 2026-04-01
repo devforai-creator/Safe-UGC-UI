@@ -24,7 +24,7 @@ A card is a JSON object with these top-level fields:
 | `meta` | Yes | `name` (string) and `version` (string, e.g. `"1.0.0"`) |
 | `assets` | No | Manifest of local assets used by the card (see below) |
 | `state` | No | Key-value pairs for dynamic data binding |
-| `styles` | No | Named style definitions for reuse via `$style` (see Section 3.14) |
+| `styles` | No | Named style definitions for reuse via `$style` (see Section 3.16) |
 | `views` | Yes | Named view definitions. Each value is a component tree (node). Must have at least one view. |
 
 ### Assets
@@ -85,7 +85,7 @@ Overlay container that establishes a positioning context (`position: relative`) 
 ```
 
 #### Grid
-CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to define the grid tracks (see Section 3.13).
+CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to define the grid tracks (see Section 3.15).
 
 ```json
 { "type": "Grid", "style": { "gridTemplateColumns": "1fr 1fr 1fr" }, "children": [ ... ] }
@@ -488,9 +488,93 @@ Types: `"linear"` (requires `direction`) or `"radial"`.
 
 ### 3.11 Forbidden Properties
 
-These are **never allowed**: `backgroundImage`, `cursor`, `listStyleImage`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `transition`, `clipPath`, `mask`.
+These are **never allowed**: `backgroundImage`, `cursor`, `listStyleImage`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `transition` (raw CSS string), `clipPath`, `mask`.
 
-### 3.12 Forbidden CSS Functions
+> **Note:** The `transition` key is only allowed in the structured object form described in Section 3.13. Raw CSS transition strings are forbidden.
+
+### 3.12 Hover Style
+
+Every component's `style` object can include a `hoverStyle` sub-object. When the user hovers over the component, the styles in `hoverStyle` are applied on top of the base styles.
+
+```json
+{
+  "type": "Box",
+  "style": {
+    "height": "25em",
+    "backgroundColor": "#1a1a2e",
+    "hoverStyle": {
+      "height": "44em",
+      "backgroundColor": "#2a2a3e"
+    }
+  }
+}
+```
+
+`hoverStyle` accepts the same style properties and validation rules as the base style, with these restrictions:
+
+| Rule | Description |
+|------|-------------|
+| No nesting | `hoverStyle` cannot contain another `hoverStyle` |
+| No `$style` | `$style` references are not allowed inside `hoverStyle` |
+| Same validation | Forbidden properties, value ranges, and color validation apply exactly as they do in the base style |
+
+The renderer implements hover by swapping inline style objects on `onMouseEnter`/`onMouseLeave` and merging `hoverStyle` on top of the base style. No raw CSS `:hover` pseudo-class is used.
+
+### 3.13 Transition
+
+The `transition` field defines the CSS transition value for a style object. It accepts a single transition object or an array of transition objects.
+
+It is most commonly placed on the base `style` to animate changes when `hoverStyle` is applied. Because `hoverStyle` accepts the same style fields, `transition` is also allowed inside `hoverStyle`; for predictable behavior, prefer declaring it on the base `style`.
+
+```json
+{
+  "style": {
+    "height": "25em",
+    "hoverStyle": { "height": "44em" },
+    "transition": { "property": "height", "duration": 600, "easing": "ease" }
+  }
+}
+```
+
+**Multiple transitions:**
+
+```json
+{
+  "transition": [
+    { "property": "height", "duration": 600, "easing": "ease" },
+    { "property": "backgroundColor", "duration": 300 }
+  ]
+}
+```
+
+**TransitionDef fields:**
+
+| Field | Required | Type | Description |
+|-------|----------|------|-------------|
+| `property` | Yes | string | CSS property to animate. Must be in the allowed list (see below). |
+| `duration` | Yes | number | Duration in milliseconds. Range: 0–2000. |
+| `easing` | No | string | Easing function. One of: `"ease"`, `"linear"`, `"ease-in"`, `"ease-out"`, `"ease-in-out"`. Default: `"ease"`. |
+| `delay` | No | number | Delay in milliseconds before the transition starts. Range: 0–1000. |
+
+**Constraints:**
+
+| Resource | Limit |
+|----------|-------|
+| Max transition definitions per style | 10 |
+| Duration range | 0–2000 ms |
+| Delay range | 0–1000 ms |
+
+**Allowed transition properties:**
+
+`display`, `flexDirection`, `justifyContent`, `alignItems`, `alignSelf`, `flexWrap`, `flex`, `gap`, `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`, `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft`, `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft`, `backgroundColor`, `color`, `borderRadius`, `borderRadiusTopLeft`, `borderRadiusTopRight`, `borderRadiusBottomLeft`, `borderRadiusBottomRight`, `fontSize`, `fontWeight`, `fontStyle`, `textAlign`, `textDecoration`, `lineHeight`, `letterSpacing`, `opacity`, `overflow`, `position`, `top`, `right`, `bottom`, `left`, `zIndex`, `gridTemplateColumns`, `gridTemplateRows`, `gridColumn`, `gridRow`
+
+Any property not in this list will be rejected by the validator.
+
+This allowlist is a validator/runtime compatibility rule, not a guarantee that every property will interpolate smoothly in CSS. Some allowed properties may still switch discretely depending on browser behavior.
+
+> **Important:** Raw CSS transition strings (e.g., `"transition": "height 0.6s ease"`) are forbidden. Always use the structured object format.
+
+### 3.14 Forbidden CSS Functions
 
 The following CSS functions are **rejected in any string style value**:
 
@@ -502,7 +586,7 @@ The following CSS functions are **rejected in any string style value**:
 
 If any style string value contains these function prefixes, the card will fail validation.
 
-### 3.13 Grid Style Properties
+### 3.15 Grid Style Properties
 
 Grid-specific style properties are used on `Grid` containers and their children.
 
@@ -540,7 +624,7 @@ Grid-specific style properties are used on `Grid` containers and their children.
 
 All grid properties accept string values. Use standard CSS Grid track syntax (`"1fr 1fr"`, `"auto 1fr"`, `"repeat(3, 1fr)"`, etc.).
 
-### 3.14 Style Reuse ($style)
+### 3.16 Style Reuse ($style)
 
 Cards can define reusable named styles in the top-level `styles` field and reference them in any node via `$style` inside the `style` object.
 
@@ -737,6 +821,10 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | boxShadow blur | max 100 |
 | boxShadow spread | max 50 |
 | overflow: auto count | max 2 per card, no nesting |
+| transition definitions per style | max 10 |
+| transition duration | 0–2000 ms |
+| transition delay | 0–1000 ms |
+| hoverStyle nesting | forbidden (no hoverStyle inside hoverStyle) |
 
 ---
 
@@ -1222,6 +1310,16 @@ Before outputting a card, verify:
 - [ ] Static-only style properties use literal values (no `$ref`/`$expr` on position, border, transform, etc., including nested fields like `borderLeft.color`)
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
 - [ ] Grid properties use string values
+
+**Hover & Transition:**
+- [ ] `hoverStyle` is inside `style`, not at node level
+- [ ] No nested `hoverStyle` (hoverStyle inside hoverStyle is forbidden)
+- [ ] No `$style` inside `hoverStyle`
+- [ ] `transition` uses structured object(s), not raw CSS strings
+- [ ] `transition.property` is in the allowed property list
+- [ ] `transition.duration` is 0–2000 ms
+- [ ] `transition.delay` (if present) is 0–1000 ms
+- [ ] Max 10 transition definitions per style
 
 **Style reuse:**
 - [ ] `$style` references exist in the card's `styles` section

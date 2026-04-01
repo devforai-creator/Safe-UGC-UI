@@ -74,7 +74,13 @@ export type ValidationErrorCode =
   | 'STYLE_CIRCULAR_REF'
   | 'STYLE_REF_NOT_FOUND'
   | 'INVALID_STYLE_REF'
-  | 'INVALID_STYLE_NAME';
+  | 'INVALID_STYLE_NAME'
+  // Hover / Transition
+  | 'INVALID_HOVER_STYLE'
+  | 'HOVER_STYLE_NESTED'
+  | 'TRANSITION_RAW_STRING'
+  | 'TRANSITION_COUNT_EXCEEDED'
+  | 'TRANSITION_PROPERTY_FORBIDDEN';
 
 // ---------------------------------------------------------------------------
 // ValidationError

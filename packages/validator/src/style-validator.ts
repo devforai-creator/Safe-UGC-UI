@@ -32,6 +32,10 @@ import {
   OPACITY_MIN,
   OPACITY_MAX,
   CSS_NAMED_COLORS,
+  TRANSITION_DURATION_MAX,
+  TRANSITION_DELAY_MAX,
+  TRANSITION_MAX_COUNT,
+  ALLOWED_TRANSITION_PROPERTIES,
   isRef,
   isExpr,
 } from '@safe-ugc-ui/types';
@@ -287,9 +291,13 @@ function validateSingleStyle(
 ): void {
   // ------------------------------------------------------------------
   // 1. Forbidden properties (spec 3.8)
+  //    Note: 'transition' and 'hoverStyle' are handled as structured
+  //    fields (sections 12-13), not raw CSS properties.
   // ------------------------------------------------------------------
+  const STRUCTURED_FIELDS = new Set(['transition', 'hoverStyle']);
   for (const key of Object.keys(style)) {
     if (
+      !STRUCTURED_FIELDS.has(key) &&
       (FORBIDDEN_STYLE_PROPERTIES as readonly string[]).includes(key)
     ) {
       errors.push(
@@ -648,6 +656,130 @@ function validateSingleStyle(
                 'INVALID_COLOR',
                 `Invalid color "${stopObj.color}" at "${gradientPath}.stops[${i}].color"`,
                 `${gradientPath}.stops[${i}].color`,
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 12. hoverStyle validation (spec 3.9)
+  // ------------------------------------------------------------------
+  if ('hoverStyle' in style && style.hoverStyle != null) {
+    const hoverStyle = style.hoverStyle;
+    const hoverPath = `${stylePath}.hoverStyle`;
+
+    if (typeof hoverStyle !== 'object' || Array.isArray(hoverStyle)) {
+      errors.push(
+        createError(
+          'INVALID_HOVER_STYLE',
+          `hoverStyle must be an object at "${hoverPath}"`,
+          hoverPath,
+        ),
+      );
+    } else {
+      const hoverObj = hoverStyle as Record<string, unknown>;
+
+      // Nested hoverStyle is forbidden
+      if ('hoverStyle' in hoverObj) {
+        errors.push(
+          createError(
+            'HOVER_STYLE_NESTED',
+            `Nested hoverStyle is forbidden at "${hoverPath}.hoverStyle"`,
+            `${hoverPath}.hoverStyle`,
+          ),
+        );
+      }
+
+      // $style is not allowed inside hoverStyle (no resolution path)
+      if ('$style' in hoverObj) {
+        errors.push(
+          createError(
+            'INVALID_STYLE_REF',
+            `$style is not allowed inside hoverStyle at "${hoverPath}.$style"`,
+            `${hoverPath}.$style`,
+          ),
+        );
+      }
+
+      // Validate hoverStyle with the same rules (recursive call)
+      validateSingleStyle(hoverObj, hoverPath, errors);
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 13. transition validation (spec 3.9)
+  // ------------------------------------------------------------------
+  if ('transition' in style && style.transition != null) {
+    const transition = style.transition;
+    const transPath = `${stylePath}.transition`;
+
+    // Defense-in-depth: reject raw string transitions
+    if (typeof transition === 'string') {
+      errors.push(
+        createError(
+          'TRANSITION_RAW_STRING',
+          `transition must be an object or array, not a string at "${transPath}"`,
+          transPath,
+        ),
+      );
+    } else {
+      const transitions = Array.isArray(transition) ? transition : [transition];
+
+      if (transitions.length > TRANSITION_MAX_COUNT) {
+        errors.push(
+          createError(
+            'TRANSITION_COUNT_EXCEEDED',
+            `transition has ${transitions.length} entries, maximum is ${TRANSITION_MAX_COUNT} at "${transPath}"`,
+            transPath,
+          ),
+        );
+      }
+
+      for (let i = 0; i < transitions.length; i++) {
+        const t = transitions[i];
+        const tPath = Array.isArray(transition) ? `${transPath}[${i}]` : transPath;
+
+        if (typeof t !== 'object' || t === null) continue;
+        const tObj = t as Record<string, unknown>;
+
+        // Validate property is in whitelist
+        if (
+          isLiteralString(tObj.property) &&
+          !(ALLOWED_TRANSITION_PROPERTIES as readonly string[]).includes(tObj.property)
+        ) {
+          errors.push(
+            createError(
+              'TRANSITION_PROPERTY_FORBIDDEN',
+              `transition property "${tObj.property}" is not in the allowed list at "${tPath}.property"`,
+              `${tPath}.property`,
+            ),
+          );
+        }
+
+        // Validate duration range
+        if (isLiteralNumber(tObj.duration)) {
+          if (tObj.duration < 0 || tObj.duration > TRANSITION_DURATION_MAX) {
+            errors.push(
+              createError(
+                'STYLE_VALUE_OUT_OF_RANGE',
+                `transition duration (${tObj.duration}) must be between 0 and ${TRANSITION_DURATION_MAX} at "${tPath}.duration"`,
+                `${tPath}.duration`,
+              ),
+            );
+          }
+        }
+
+        // Validate delay range
+        if (isLiteralNumber(tObj.delay)) {
+          if (tObj.delay < 0 || tObj.delay > TRANSITION_DELAY_MAX) {
+            errors.push(
+              createError(
+                'STYLE_VALUE_OUT_OF_RANGE',
+                `transition delay (${tObj.delay}) must be between 0 and ${TRANSITION_DELAY_MAX} at "${tPath}.delay"`,
+                `${tPath}.delay`,
               ),
             );
           }

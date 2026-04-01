@@ -243,7 +243,34 @@ export const fontWeightValueSchema = z.union([
 export type FontWeightValue = z.infer<typeof fontWeightValueSchema>;
 
 // ===========================================================================
-// 3. StyleProps — the main style schema (spec 4.3)
+// 3. TransitionDef — constrained CSS transition declaration (spec 3.9)
+// ===========================================================================
+
+export const easingValueSchema = z.enum([
+  'ease',
+  'linear',
+  'ease-in',
+  'ease-out',
+  'ease-in-out',
+]);
+
+export type EasingValue = z.infer<typeof easingValueSchema>;
+
+export const transitionDefSchema = z.object({
+  property: z.string(),
+  duration: z.number(),
+  easing: easingValueSchema.optional(),
+  delay: z.number().optional(),
+});
+
+export type TransitionDef = z.infer<typeof transitionDefSchema>;
+
+const transitionFieldSchema = z
+  .union([transitionDefSchema, z.array(transitionDefSchema)])
+  .optional();
+
+// ===========================================================================
+// 4. StyleProps — the main style schema (spec 4.3)
 //
 // Dynamic fields: literal | $ref | $expr  -> dynamicSchema(base).optional()
 // Static fields:  literal only            -> base.optional()
@@ -260,7 +287,11 @@ const sizeValueSchema = z.union([lengthSchema, percentageSchema, z.literal('auto
  */
 const lineHeightValueSchema = z.union([z.number(), lengthSchema]);
 
-export const stylePropsSchema = z.object({
+/**
+ * Core style shape shared by both stylePropsSchema and hoverStylePropsSchema.
+ * Extracted to avoid duplication and prevent recursive nesting of hoverStyle.
+ */
+const coreStyleShape = {
   // -----------------------------------------------------------------------
   // Layout — Dynamic
   // -----------------------------------------------------------------------
@@ -385,6 +416,31 @@ export const stylePropsSchema = z.object({
   // $style — reference to a named style in card.styles
   // -----------------------------------------------------------------------
   $style: z.string().optional(),
+};
+
+// ---------------------------------------------------------------------------
+// HoverStyleProps — same as core style + transition, but NO hoverStyle
+// (prevents infinite nesting)
+// ---------------------------------------------------------------------------
+
+// Destructure out $style from coreStyleShape — it's not allowed in hoverStyle
+const { $style: _$styleField, ...coreStyleShapeWithout$style } = coreStyleShape;
+
+export const hoverStylePropsSchema = z.object({
+  ...coreStyleShapeWithout$style,
+  transition: transitionFieldSchema,
+});
+
+export type HoverStyleProps = z.infer<typeof hoverStylePropsSchema>;
+
+// ---------------------------------------------------------------------------
+// StyleProps — core style + hoverStyle + transition
+// ---------------------------------------------------------------------------
+
+export const stylePropsSchema = z.object({
+  ...coreStyleShape,
+  hoverStyle: hoverStylePropsSchema.optional(),
+  transition: transitionFieldSchema,
 });
 
 export type StyleProps = z.infer<typeof stylePropsSchema>;

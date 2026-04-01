@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { resolveRef, resolveValue } from './state-resolver.js';
-import { mapStyle } from './style-mapper.js';
+import { mapStyle, mapTransition } from './style-mapper.js';
 import { resolveAsset } from './asset-resolver.js';
 import { renderTree } from './node-renderer.js';
 import { UGCContainer } from './UGCContainer.js';
@@ -1179,5 +1179,130 @@ describe('Review feedback fixes', () => {
     );
     // resolveRef for "$items" returns undefined → soft skip, no error
     expect(onError).not.toHaveBeenCalled();
+  });
+});
+
+// =============================================================================
+// mapTransition
+// =============================================================================
+
+describe('mapTransition', () => {
+  it('converts single transition to CSS string', () => {
+    const result = mapTransition({ property: 'height', duration: 600, easing: 'ease' });
+    expect(result).toBe('height 600ms ease');
+  });
+
+  it('converts camelCase property to kebab-case', () => {
+    const result = mapTransition({ property: 'backgroundColor', duration: 300 });
+    expect(result).toBe('background-color 300ms');
+  });
+
+  it('converts borderRadiusTopLeft to correct CSS name', () => {
+    const result = mapTransition({ property: 'borderRadiusTopLeft', duration: 300 });
+    expect(result).toBe('border-top-left-radius 300ms');
+  });
+
+  it('converts transition with delay', () => {
+    const result = mapTransition({ property: 'opacity', duration: 300, easing: 'linear', delay: 100 });
+    expect(result).toBe('opacity 300ms linear 100ms');
+  });
+
+  it('converts transition array to comma-separated CSS', () => {
+    const result = mapTransition([
+      { property: 'height', duration: 600, easing: 'ease' },
+      { property: 'backgroundColor', duration: 300 },
+    ]);
+    expect(result).toBe('height 600ms ease, background-color 300ms');
+  });
+
+  it('returns undefined for empty/null input', () => {
+    expect(mapTransition(null)).toBeUndefined();
+    expect(mapTransition(undefined)).toBeUndefined();
+  });
+});
+
+// =============================================================================
+// mapStyle with transition
+// =============================================================================
+
+describe('mapStyle — transition integration', () => {
+  it('maps transition field to css.transition string', () => {
+    const result = mapStyle(
+      { height: 200, transition: { property: 'height', duration: 600, easing: 'ease' } },
+      {},
+    );
+    expect(result.transition).toBe('height 600ms ease');
+    expect(result.height).toBe(200);
+  });
+
+  it('rejects non-whitelisted property in transition at render time', () => {
+    const result = mapStyle(
+      { transition: { property: 'all', duration: 300 } },
+      {},
+    );
+    expect(result.transition).toBeUndefined();
+  });
+
+  it('rejects non-whitelisted easing in transition at render time', () => {
+    const result = mapStyle(
+      { transition: { property: 'opacity', duration: 300, easing: 'cubic-bezier(0,0,1,1)' } },
+      {},
+    );
+    // easing is stripped but property + duration still work
+    expect(result.transition).toBe('opacity 300ms');
+  });
+});
+
+// =============================================================================
+// Hover rendering
+// =============================================================================
+
+describe('Hover rendering', () => {
+  it('renders Box with hoverStyle and responds to mouseEnter/mouseLeave', () => {
+    const root = {
+      type: 'Box',
+      style: {
+        height: 200,
+        backgroundColor: '#000',
+        transition: { property: 'height', duration: 600, easing: 'ease' },
+        hoverStyle: { height: 400 },
+      },
+      children: [{ type: 'Text', content: 'hover me' }],
+    };
+
+    const { container } = render(
+      <>{renderTree(root, {}, {})}</>,
+    );
+
+    const box = container.firstChild as HTMLElement;
+    expect(box).toBeTruthy();
+    expect(box.style.height).toBe('200px');
+    expect(box.style.transition).toBe('height 600ms ease');
+
+    // Hover
+    fireEvent.mouseEnter(box);
+    expect(box.style.height).toBe('400px');
+
+    // Unhover
+    fireEvent.mouseLeave(box);
+    expect(box.style.height).toBe('200px');
+  });
+
+  it('renders without hover handlers when hoverStyle is absent', () => {
+    const root = {
+      type: 'Box',
+      style: { height: 200 },
+      children: [{ type: 'Text', content: 'no hover' }],
+    };
+
+    const { container } = render(
+      <>{renderTree(root, {}, {})}</>,
+    );
+
+    const box = container.firstChild as HTMLElement;
+    expect(box.style.height).toBe('200px');
+    // Should not have hover handlers (no crash on mouse events)
+    fireEvent.mouseEnter(box);
+    expect(box.style.height).toBe('200px');
   });
 });

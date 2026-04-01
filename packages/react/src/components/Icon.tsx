@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface IconProps {
   name: string;
@@ -6,9 +7,12 @@ interface IconProps {
   color?: string;
   iconResolver?: (name: string) => ReactNode;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
-export function Icon({ name, size, color, iconResolver, style }: IconProps) {
+export function Icon({ name, size, color, iconResolver, style, hoverStyle }: IconProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
+
   if (!iconResolver) {
     return null;
   }
@@ -21,8 +25,10 @@ export function Icon({ name, size, color, iconResolver, style }: IconProps) {
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {iconResolver(name)}
     </span>

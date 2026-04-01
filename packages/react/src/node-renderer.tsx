@@ -211,27 +211,31 @@ export function renderNode(
   // Resolve style to CSS
   const cssStyle = mapStyle(mergedRawStyle, ctx.state, ctx.locals);
 
+  // Resolve hoverStyle to CSS (if present)
+  const rawHoverStyle = mergedRawStyle?.hoverStyle as Record<string, unknown> | undefined;
+  const cssHoverStyle = rawHoverStyle ? mapStyle(rawHoverStyle, ctx.state, ctx.locals) : undefined;
+
   // Render children recursively
   const childElements = renderChildren(n.children, ctx);
 
   switch (n.type) {
     case 'Box':
-      return <Box key={key} style={cssStyle}>{childElements}</Box>;
+      return <Box key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Box>;
 
     case 'Row':
-      return <Row key={key} style={cssStyle}>{childElements}</Row>;
+      return <Row key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Row>;
 
     case 'Column':
-      return <Column key={key} style={cssStyle}>{childElements}</Column>;
+      return <Column key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Column>;
 
     case 'Stack':
-      return <Stack key={key} style={cssStyle}>{childElements}</Stack>;
+      return <Stack key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Stack>;
 
     case 'Grid':
-      return <Grid key={key} style={cssStyle}>{childElements}</Grid>;
+      return <Grid key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Grid>;
 
     case 'Text':
-      return <Text key={key} content={resolvedTextContent!} style={cssStyle} />;
+      return <Text key={key} content={resolvedTextContent!} style={cssStyle} hoverStyle={cssHoverStyle} />;
 
     case 'Image': {
       let src = rv((n as Record<string, unknown>).src);
@@ -243,7 +247,7 @@ export function renderNode(
       if (typeof resolved === 'string' && resolved.trim().toLowerCase().startsWith('javascript:')) return null;
       const resolvedAlt = rv((n as Record<string, unknown>).alt);
       const alt = typeof resolvedAlt === 'string' ? resolvedAlt : undefined;
-      return <Image key={key} src={resolved} alt={alt} style={cssStyle} />;
+      return <Image key={key} src={resolved} alt={alt} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Avatar': {
@@ -257,7 +261,7 @@ export function renderNode(
       const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;
-      return <Avatar key={key} src={resolved} size={size} style={cssStyle} />;
+      return <Avatar key={key} src={resolved} size={size} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Icon': {
@@ -276,6 +280,7 @@ export function renderNode(
           color={color}
           iconResolver={ctx.iconResolver}
           style={cssStyle}
+          hoverStyle={cssHoverStyle}
         />
       );
     }
@@ -284,7 +289,7 @@ export function renderNode(
       const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;
-      return <Spacer key={key} size={size} style={cssStyle} />;
+      return <Spacer key={key} size={size} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Divider': {
@@ -293,7 +298,7 @@ export function renderNode(
       const resolvedThickness = rv((n as Record<string, unknown>).thickness);
       const thickness = typeof resolvedThickness === 'number' || typeof resolvedThickness === 'string'
         ? resolvedThickness : undefined;
-      return <Divider key={key} color={color} thickness={thickness} style={cssStyle} />;
+      return <Divider key={key} color={color} thickness={thickness} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'ProgressBar': {
@@ -303,7 +308,7 @@ export function renderNode(
       const max = typeof resolvedMax === 'number' ? resolvedMax : 100;
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      return <ProgressBar key={key} value={value} max={max} color={color} style={cssStyle} />;
+      return <ProgressBar key={key} value={value} max={max} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Badge': {
@@ -311,7 +316,7 @@ export function renderNode(
       const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      return <Badge key={key} label={label} color={color} style={cssStyle} />;
+      return <Badge key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Chip': {
@@ -319,7 +324,7 @@ export function renderNode(
       const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      return <Chip key={key} label={label} color={color} style={cssStyle} />;
+      return <Chip key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Button': {
@@ -334,6 +339,7 @@ export function renderNode(
           action={action}
           onAction={ctx.onAction}
           style={cssStyle}
+          hoverStyle={cssHoverStyle}
         />
       );
     }
@@ -350,6 +356,7 @@ export function renderNode(
           onToggle={onToggle}
           onAction={ctx.onAction}
           style={cssStyle}
+          hoverStyle={cssHoverStyle}
         />
       );
     }

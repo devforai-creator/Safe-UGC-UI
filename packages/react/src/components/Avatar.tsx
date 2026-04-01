@@ -1,13 +1,16 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface AvatarProps {
   src: string;
   alt?: string;
   size?: number | string;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
-export function Avatar({ src, alt, size, style }: AvatarProps) {
+export function Avatar({ src, alt, size, style, hoverStyle }: AvatarProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
   return (
     <img
       src={src}
@@ -17,8 +20,10 @@ export function Avatar({ src, alt, size, style }: AvatarProps) {
         height: size ?? 40,
         borderRadius: '50%',
         objectFit: 'cover',
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     />
   );
 }

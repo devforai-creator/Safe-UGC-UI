@@ -633,7 +633,103 @@ export const SAMPLE_SHORTS = {
   },
 };
 
+export const SAMPLE_HOVER_TRANSITION = {
+  meta: { name: 'hover-transition-demo', version: '1.0.0' },
+  assets: {
+    portrait: '@assets/char-avatar.png',
+  },
+  state: {
+    name: 'Hover Demo',
+    description: 'Hover over the image container or the cards below to see transition effects.',
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: {
+        backgroundColor: '#18181b',
+        padding: 24,
+        borderRadius: 16,
+        width: '380px',
+        gap: 20,
+      },
+      children: [
+        {
+          type: 'Text',
+          content: { $ref: '$name' },
+          style: { fontSize: 20, fontWeight: 'bold', color: '#fafafa' },
+        },
+        {
+          type: 'Text',
+          content: { $ref: '$description' },
+          style: { fontSize: 12, color: '#a1a1aa', lineHeight: 18 },
+        },
+        // Image container with hover expand (like charx hover-to-expand)
+        {
+          type: 'Box',
+          style: {
+            height: 120,
+            borderRadius: 16,
+            overflow: 'hidden',
+            backgroundColor: '#27272a',
+            transition: { property: 'height', duration: 600, easing: 'ease' },
+            hoverStyle: { height: 280 },
+          },
+          children: [
+            {
+              type: 'Image',
+              src: '@assets/char-avatar.png',
+              alt: 'portrait',
+              style: { width: '100%', height: 280 },
+            },
+          ],
+        },
+        // Color transition card
+        {
+          type: 'Box',
+          style: {
+            backgroundColor: '#27272a',
+            padding: 16,
+            borderRadius: 12,
+            transition: [
+              { property: 'backgroundColor', duration: 300, easing: 'ease' },
+              { property: 'borderRadius', duration: 300, easing: 'ease' },
+            ],
+            hoverStyle: { backgroundColor: '#3f3f46', borderRadius: 20 },
+          },
+          children: [
+            {
+              type: 'Text',
+              content: 'Hover: background color + border radius transition',
+              style: { fontSize: 13, color: '#d4d4d8' },
+            },
+          ],
+        },
+        // Opacity transition
+        {
+          type: 'Box',
+          style: {
+            backgroundColor: '#a78bfa',
+            padding: 16,
+            borderRadius: 12,
+            opacity: 0.6,
+            transition: { property: 'opacity', duration: 400, easing: 'ease-in-out' },
+            hoverStyle: { opacity: 1 },
+          },
+          children: [
+            {
+              type: 'Text',
+              content: 'Hover: opacity 0.6 -> 1.0',
+              style: { fontSize: 13, color: '#ffffff', fontWeight: 'bold' },
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
 export const SAMPLES: Record<string, unknown> = {
+  'Hover & Transition': SAMPLE_HOVER_TRANSITION,
   'Character Card': SAMPLE_CHARACTER,
   'YouTube Shorts': SAMPLE_SHORTS,
   'Cyberpunk Profile': SAMPLE_CYBERPUNK,

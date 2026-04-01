@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface ButtonProps {
   label: string;
@@ -6,9 +7,11 @@ interface ButtonProps {
   onAction?: (type: string, actionId: string) => void;
   disabled?: boolean;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
-export function Button({ label, action, onAction, disabled, style }: ButtonProps) {
+export function Button({ label, action, onAction, disabled, style, hoverStyle }: ButtonProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
   return (
     <button
       disabled={disabled}
@@ -18,8 +21,10 @@ export function Button({ label, action, onAction, disabled, style }: ButtonProps
         borderRadius: 6,
         border: '1px solid #ccc',
         cursor: disabled ? 'default' : 'pointer',
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {label}
     </button>

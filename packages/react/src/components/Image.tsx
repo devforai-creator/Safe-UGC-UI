@@ -1,9 +1,11 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface ImageComponentProps {
   src: string;
   alt?: string;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
 /**
@@ -19,11 +21,13 @@ interface ImageComponentProps {
  *
  * If the src starts with @assets/, it was not resolved and we render nothing.
  */
-export function Image({ src, alt, style }: ImageComponentProps) {
+export function Image({ src, alt, style, hoverStyle }: ImageComponentProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
+
   // SECURITY: reject unresolved @assets/ paths (should already be resolved)
   if (src.startsWith('@assets/')) {
     return null;
   }
 
-  return <img src={src} alt={alt ?? ''} style={style} />;
+  return <img src={src} alt={alt ?? ''} style={resolvedStyle} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />;
 }

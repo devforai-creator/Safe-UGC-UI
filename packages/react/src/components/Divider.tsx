@@ -1,9 +1,11 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface DividerProps {
   color?: string;
   thickness?: number | string;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
 function formatThickness(thickness: number | string | undefined): string {
@@ -15,14 +17,17 @@ function formatThickness(thickness: number | string | undefined): string {
   return thickness;
 }
 
-export function Divider({ color, thickness, style }: DividerProps) {
+export function Divider({ color, thickness, style, hoverStyle }: DividerProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
   return (
     <div
       style={{
         borderTop: `${formatThickness(thickness)} solid ${color ?? '#e0e0e0'}`,
         width: '100%',
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     />
   );
 }

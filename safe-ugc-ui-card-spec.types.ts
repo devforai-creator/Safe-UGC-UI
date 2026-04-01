@@ -92,13 +92,24 @@ export interface TransformObject {
   translateY?: number; // -500–500
 }
 
+export type EasingValue = 'ease' | 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
+
+export interface TransitionDef {
+  property: string;
+  duration: number; // 0–2000 ms
+  easing?: EasingValue;
+  delay?: number; // 0–1000 ms
+}
+
+export type TransitionField = TransitionDef | TransitionDef[];
+
 /**
  * Style fields.
  *
  * Static-only properties must be **literal** (no $ref), and all nested fields
  * are also literal-only (e.g., borderLeft.color cannot be $ref).
  */
-export interface Style {
+export interface BaseStyle {
   // Layout — dynamic
   display?: Dynamic<DisplayValue>;
   flexDirection?: Dynamic<FlexDirectionValue>;
@@ -174,6 +185,20 @@ export interface Style {
 
   // $style reference
   $style?: string;
+}
+
+/**
+ * Hover style supports the same style fields as the base style, except:
+ * - no nested hoverStyle
+ * - no $style references
+ */
+export type HoverStyle = Omit<BaseStyle, '$style'> & {
+  transition?: TransitionField;
+};
+
+export interface Style extends BaseStyle {
+  hoverStyle?: HoverStyle;
+  transition?: TransitionField;
 }
 
 // ---------------------------------------------------------------------------

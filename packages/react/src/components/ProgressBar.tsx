@@ -1,14 +1,17 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface ProgressBarProps {
   value: number;
   max: number;
   color?: string;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
-export function ProgressBar({ value, max, color, style }: ProgressBarProps) {
+export function ProgressBar({ value, max, color, style, hoverStyle }: ProgressBarProps) {
   const percentage = max <= 0 ? 0 : Math.min(100, Math.max(0, (value / max) * 100));
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
 
   return (
     <div
@@ -16,8 +19,10 @@ export function ProgressBar({ value, max, color, style }: ProgressBarProps) {
         backgroundColor: '#e0e0e0',
         borderRadius: 4,
         overflow: 'hidden',
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div
         style={{

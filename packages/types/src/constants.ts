@@ -126,6 +126,33 @@ export const OPACITY_MIN = 0;
 /** Maximum opacity value. */
 export const OPACITY_MAX = 1;
 
+/** Maximum transition duration in milliseconds. */
+export const TRANSITION_DURATION_MAX = 2000;
+
+/** Maximum transition delay in milliseconds. */
+export const TRANSITION_DELAY_MAX = 1000;
+
+/** Maximum number of transition definitions per style. */
+export const TRANSITION_MAX_COUNT = 10;
+
+/**
+ * CSS properties allowed in transition.property (spec 3.9).
+ * Matches the DIRECT_MAP_PROPS whitelist from style-mapper.
+ */
+export const ALLOWED_TRANSITION_PROPERTIES = [
+  'display', 'flexDirection', 'justifyContent', 'alignItems', 'alignSelf',
+  'flexWrap', 'flex', 'gap', 'width', 'height', 'minWidth', 'maxWidth',
+  'minHeight', 'maxHeight', 'padding', 'paddingTop', 'paddingRight',
+  'paddingBottom', 'paddingLeft', 'margin', 'marginTop', 'marginRight',
+  'marginBottom', 'marginLeft', 'backgroundColor', 'color', 'borderRadius',
+  'borderRadiusTopLeft', 'borderRadiusTopRight',
+  'borderRadiusBottomLeft', 'borderRadiusBottomRight',
+  'fontSize', 'fontWeight', 'fontStyle', 'textAlign', 'textDecoration',
+  'lineHeight', 'letterSpacing', 'opacity', 'overflow', 'position',
+  'top', 'right', 'bottom', 'left', 'zIndex',
+  'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
+] as const;
+
 // ---------------------------------------------------------------------------
 // Component type lists
 // ---------------------------------------------------------------------------

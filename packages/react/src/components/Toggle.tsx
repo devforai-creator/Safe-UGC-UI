@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface ToggleProps {
   value: boolean;
@@ -6,9 +7,11 @@ interface ToggleProps {
   onAction?: (type: string, actionId: string, payload?: unknown) => void;
   disabled?: boolean;
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
 }
 
-export function Toggle({ value, onToggle, onAction, disabled, style }: ToggleProps) {
+export function Toggle({ value, onToggle, onAction, disabled, style, hoverStyle }: ToggleProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
   return (
     <button
       disabled={disabled}
@@ -20,8 +23,10 @@ export function Toggle({ value, onToggle, onAction, disabled, style }: TogglePro
         backgroundColor: value ? '#4caf50' : '#e0e0e0',
         color: value ? '#fff' : '#333',
         cursor: disabled ? 'default' : 'pointer',
-        ...style,
+        ...resolvedStyle,
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {value ? 'ON' : 'OFF'}
     </button>

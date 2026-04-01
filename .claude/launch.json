@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "demo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@safe-ugc-ui/demo", "dev", "--host"],
+      "port": 5173
+    }
+  ]
+}

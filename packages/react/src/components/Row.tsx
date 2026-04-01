@@ -1,7 +1,9 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface RowProps {
   style?: CSSProperties;
+  hoverStyle?: CSSProperties;
   children?: ReactNode;
 }
 
@@ -10,6 +12,7 @@ const rowBase: CSSProperties = {
   flexDirection: 'row',
 };
 
-export function Row({ style, children }: RowProps) {
-  return <div style={{ ...rowBase, ...style }}>{children}</div>;
+export function Row({ style, hoverStyle, children }: RowProps) {
+  const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
+  return <div style={{ ...rowBase, ...resolvedStyle }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>{children}</div>;
 }

@@ -13,6 +13,7 @@
  */
 
 import type { CSSProperties } from 'react';
+import { ALLOWED_TRANSITION_PROPERTIES } from '@safe-ugc-ui/types';
 import { resolveValue } from './state-resolver.js';
 
 // ---------------------------------------------------------------------------
@@ -225,5 +226,91 @@ export function mapStyle(
     );
   }
 
+  // Transition object(s) -> CSS transition string
+  if (style.transition) {
+    const transitionCss = mapTransition(style.transition);
+    if (transitionCss) {
+      css.transition = transitionCss;
+    }
+  }
+
   return css;
+}
+
+// ---------------------------------------------------------------------------
+// mapTransition — convert structured transition to CSS string
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert a TransitionDef or TransitionDef[] to a CSS transition string.
+ *
+ * @example
+ *   mapTransition({ property: 'height', duration: 600, easing: 'ease' })
+ *   // => "height 600ms ease"
+ *
+ *   mapTransition([
+ *     { property: 'height', duration: 600, easing: 'ease' },
+ *     { property: 'opacity', duration: 300 },
+ *   ])
+ *   // => "height 600ms ease, opacity 300ms"
+ */
+/**
+ * Map from SUU camelCase property names to valid CSS property names.
+ * Most properties are simple camelCase → kebab-case, but some
+ * (like borderRadius directional variants) have non-obvious CSS names.
+ */
+const CSS_PROPERTY_NAME_MAP: Record<string, string> = {
+  borderRadiusTopLeft: 'border-top-left-radius',
+  borderRadiusTopRight: 'border-top-right-radius',
+  borderRadiusBottomLeft: 'border-bottom-left-radius',
+  borderRadiusBottomRight: 'border-bottom-right-radius',
+};
+
+/**
+ * Convert a SUU camelCase property name to its CSS property name.
+ * Uses explicit mapping for irregular names, falls back to
+ * generic camelCase → kebab-case conversion.
+ */
+function toCssPropertyName(prop: string): string {
+  if (prop in CSS_PROPERTY_NAME_MAP) {
+    return CSS_PROPERTY_NAME_MAP[prop];
+  }
+  return prop.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
+}
+
+export function mapTransition(transition: unknown): string | undefined {
+  if (!transition) return undefined;
+
+  const items = Array.isArray(transition) ? transition : [transition];
+  const parts: string[] = [];
+
+  for (const item of items) {
+    if (typeof item !== 'object' || item === null) continue;
+    const t = item as Record<string, unknown>;
+    const property = t.property;
+    const duration = t.duration;
+    if (typeof property !== 'string' || typeof duration !== 'number') continue;
+
+    // Defense-in-depth: reject properties not in whitelist at render time
+    if (!(ALLOWED_TRANSITION_PROPERTIES as readonly string[]).includes(property)) {
+      continue;
+    }
+
+    // Defense-in-depth: reject easing values that aren't in the allowed set
+    const ALLOWED_EASINGS = new Set(['ease', 'linear', 'ease-in', 'ease-out', 'ease-in-out']);
+
+    // Convert SUU property name to valid CSS property name
+    const cssProperty = toCssPropertyName(property);
+
+    let part = `${cssProperty} ${duration}ms`;
+    if (typeof t.easing === 'string' && ALLOWED_EASINGS.has(t.easing)) {
+      part += ` ${t.easing}`;
+    }
+    if (typeof t.delay === 'number' && t.delay > 0) {
+      part += ` ${t.delay}ms`;
+    }
+    parts.push(part);
+  }
+
+  return parts.length > 0 ? parts.join(', ') : undefined;
 }
