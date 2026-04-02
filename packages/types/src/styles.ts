@@ -400,6 +400,12 @@ const coreStyleShape = {
   left: lengthSchema.optional(),
 
   // -----------------------------------------------------------------------
+  // Object-fit — Dynamic (for Image nodes)
+  // -----------------------------------------------------------------------
+  objectFit: dynamicSchema(z.enum(['cover', 'contain', 'fill', 'none', 'scale-down'])).optional(),
+  objectPosition: dynamicSchema(z.string()).optional(),
+
+  // -----------------------------------------------------------------------
   // Grid — Dynamic
   // -----------------------------------------------------------------------
   gridTemplateColumns: dynamicSchema(z.string()).optional(),

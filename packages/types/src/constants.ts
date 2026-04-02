@@ -151,6 +151,7 @@ export const ALLOWED_TRANSITION_PROPERTIES = [
   'lineHeight', 'letterSpacing', 'opacity', 'overflow', 'position',
   'top', 'right', 'bottom', 'left', 'zIndex',
   'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
+  'objectFit', 'objectPosition',
 ] as const;
 
 // ---------------------------------------------------------------------------

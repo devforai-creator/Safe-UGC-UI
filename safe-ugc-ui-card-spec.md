@@ -24,7 +24,7 @@ A card is a JSON object with these top-level fields:
 | `meta` | Yes | `name` (string) and `version` (string, e.g. `"1.0.0"`) |
 | `assets` | No | Manifest of local assets used by the card (see below) |
 | `state` | No | Key-value pairs for dynamic data binding |
-| `styles` | No | Named style definitions for reuse via `$style` (see Section 3.16) |
+| `styles` | No | Named style definitions for reuse via `$style` (see Section 3.17) |
 | `views` | Yes | Named view definitions. Each value is a component tree (node). Must have at least one view. |
 
 ### Assets
@@ -85,7 +85,7 @@ Overlay container that establishes a positioning context (`position: relative`) 
 ```
 
 #### Grid
-CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to define the grid tracks (see Section 3.15).
+CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to define the grid tracks (see Section 3.16).
 
 ```json
 { "type": "Grid", "style": { "gridTemplateColumns": "1fr 1fr 1fr" }, "children": [ ... ] }
@@ -468,7 +468,46 @@ Types: `"linear"` (requires `direction`) or `"radial"`.
 | `translateX`, `translateY` | -500–500 |
 | `rotate` | any valid deg string |
 
-### 3.10 Other Properties
+### 3.10 Image Fit Properties
+
+These properties control how an image is sized and positioned within its container. They are most useful on `Image` nodes but can be applied to any component.
+
+```json
+{
+  "type": "Image",
+  "src": "@assets/photo.png",
+  "style": {
+    "width": "100%",
+    "height": "25em",
+    "objectFit": "cover",
+    "objectPosition": "center 10%"
+  }
+}
+```
+
+| Property | Values | Dynamic |
+|----------|--------|---------|
+| `objectFit` | `"cover"` \| `"contain"` \| `"fill"` \| `"none"` \| `"scale-down"` | literal or $ref |
+| `objectPosition` | string (CSS object-position value, e.g. `"center"`, `"top"`, `"50% 20%"`) | literal or $ref |
+
+Both properties are allowed in `hoverStyle` and as `transition` targets. This enables effects like panning across a cropped image on hover:
+
+```json
+{
+  "style": {
+    "objectFit": "cover",
+    "objectPosition": "center 10%",
+    "hoverStyle": {
+      "objectPosition": "center 5%"
+    },
+    "transition": [
+      { "property": "objectPosition", "duration": 600, "easing": "ease" }
+    ]
+  }
+}
+```
+
+### 3.11 Other Properties
 
 | Property | Values | Constraints |
 |----------|--------|-------------|
@@ -486,13 +525,13 @@ Types: `"linear"` (requires `direction`) or `"radial"`.
 - `position: "absolute"` is only allowed on direct children of a `Stack` component
 - Using `position: "absolute"` inside Box, Row, Column, or Grid is forbidden
 
-### 3.11 Forbidden Properties
+### 3.12 Forbidden Properties
 
 These are **never allowed**: `backgroundImage`, `cursor`, `listStyleImage`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `transition` (raw CSS string), `clipPath`, `mask`.
 
-> **Note:** The `transition` key is only allowed in the structured object form described in Section 3.13. Raw CSS transition strings are forbidden.
+> **Note:** The `transition` key is only allowed in the structured object form described in Section 3.14. Raw CSS transition strings are forbidden.
 
-### 3.12 Hover Style
+### 3.13 Hover Style
 
 Every component's `style` object can include a `hoverStyle` sub-object. When the user hovers over the component, the styles in `hoverStyle` are applied on top of the base styles.
 
@@ -520,7 +559,7 @@ Every component's `style` object can include a `hoverStyle` sub-object. When the
 
 The renderer implements hover by swapping inline style objects on `onMouseEnter`/`onMouseLeave` and merging `hoverStyle` on top of the base style. No raw CSS `:hover` pseudo-class is used.
 
-### 3.13 Transition
+### 3.14 Transition
 
 The `transition` field defines the CSS transition value for a style object. It accepts a single transition object or an array of transition objects.
 
@@ -566,7 +605,7 @@ It is most commonly placed on the base `style` to animate changes when `hoverSty
 
 **Allowed transition properties:**
 
-`display`, `flexDirection`, `justifyContent`, `alignItems`, `alignSelf`, `flexWrap`, `flex`, `gap`, `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`, `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft`, `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft`, `backgroundColor`, `color`, `borderRadius`, `borderRadiusTopLeft`, `borderRadiusTopRight`, `borderRadiusBottomLeft`, `borderRadiusBottomRight`, `fontSize`, `fontWeight`, `fontStyle`, `textAlign`, `textDecoration`, `lineHeight`, `letterSpacing`, `opacity`, `overflow`, `position`, `top`, `right`, `bottom`, `left`, `zIndex`, `gridTemplateColumns`, `gridTemplateRows`, `gridColumn`, `gridRow`
+`display`, `flexDirection`, `justifyContent`, `alignItems`, `alignSelf`, `flexWrap`, `flex`, `gap`, `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`, `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft`, `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft`, `backgroundColor`, `color`, `borderRadius`, `borderRadiusTopLeft`, `borderRadiusTopRight`, `borderRadiusBottomLeft`, `borderRadiusBottomRight`, `fontSize`, `fontWeight`, `fontStyle`, `textAlign`, `textDecoration`, `lineHeight`, `letterSpacing`, `opacity`, `overflow`, `position`, `top`, `right`, `bottom`, `left`, `zIndex`, `gridTemplateColumns`, `gridTemplateRows`, `gridColumn`, `gridRow`, `objectFit`, `objectPosition`
 
 Any property not in this list will be rejected by the validator.
 
@@ -574,7 +613,7 @@ This allowlist is a validator/runtime compatibility rule, not a guarantee that e
 
 > **Important:** Raw CSS transition strings (e.g., `"transition": "height 0.6s ease"`) are forbidden. Always use the structured object format.
 
-### 3.14 Forbidden CSS Functions
+### 3.15 Forbidden CSS Functions
 
 The following CSS functions are **rejected in any string style value**:
 
@@ -586,7 +625,7 @@ The following CSS functions are **rejected in any string style value**:
 
 If any style string value contains these function prefixes, the card will fail validation.
 
-### 3.15 Grid Style Properties
+### 3.16 Grid Style Properties
 
 Grid-specific style properties are used on `Grid` containers and their children.
 
@@ -624,7 +663,7 @@ Grid-specific style properties are used on `Grid` containers and their children.
 
 All grid properties accept string values. Use standard CSS Grid track syntax (`"1fr 1fr"`, `"auto 1fr"`, `"repeat(3, 1fr)"`, etc.).
 
-### 3.16 Style Reuse ($style)
+### 3.17 Style Reuse ($style)
 
 Cards can define reusable named styles in the top-level `styles` field and reference them in any node via `$style` inside the `style` object.
 

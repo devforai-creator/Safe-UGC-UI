@@ -32,6 +32,7 @@ const DIRECT_MAP_PROPS = [
   'lineHeight', 'letterSpacing', 'opacity', 'overflow', 'position',
   'top', 'right', 'bottom', 'left', 'zIndex',
   'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
+  'objectFit', 'objectPosition',
 ] as const;
 
 // ---------------------------------------------------------------------------
