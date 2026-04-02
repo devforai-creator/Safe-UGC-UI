@@ -15,17 +15,38 @@ import { writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { ugcCardSchema } from '@safe-ugc-ui/types';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { generateCardSchema } from './index.js';
 
-const jsonSchema = zodToJsonSchema(ugcCardSchema, {
-  name: 'UGCCard',
-  nameStrategy: 'title',
-});
+export function generateCardSchemaJson(): string {
+  return JSON.stringify(generateCardSchema(), null, 2);
+}
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const outputPath = resolve(__dirname, 'ugc-card.schema.json');
+export function getDefaultOutputPath(moduleUrl: string = import.meta.url): string {
+  const moduleDir = dirname(fileURLToPath(moduleUrl));
+  return resolve(moduleDir, 'ugc-card.schema.json');
+}
 
-writeFileSync(outputPath, JSON.stringify(jsonSchema, null, 2), 'utf-8');
+export function writeGeneratedSchema(outputPath: string): string {
+  writeFileSync(outputPath, generateCardSchemaJson(), 'utf-8');
+  return outputPath;
+}
 
-console.log(`Generated ${outputPath}`);
+export function runGenerateScript(moduleUrl: string = import.meta.url): string {
+  return writeGeneratedSchema(getDefaultOutputPath(moduleUrl));
+}
+
+export function isDirectExecution(
+  moduleUrl: string = import.meta.url,
+  argv1: string | undefined = process.argv[1],
+): boolean {
+  if (!argv1) {
+    return false;
+  }
+
+  return fileURLToPath(moduleUrl) === resolve(argv1);
+}
+
+if (isDirectExecution()) {
+  const outputPath = runGenerateScript();
+  console.log(`Generated ${outputPath}`);
+}
