@@ -325,10 +325,11 @@ All other style properties accept literal values or `$ref`.
 | Property | Values |
 |----------|--------|
 | `width`, `height` | number \| length string \| percentage string \| `"auto"` |
-| `minWidth`, `maxWidth` | number \| length string \| percentage string \| `"auto"` |
-| `minHeight`, `maxHeight` | number \| length string \| percentage string \| `"auto"` |
+| `minWidth`, `maxWidth` | number \| length string \| percentage string |
+| `minHeight`, `maxHeight` | number \| length string \| percentage string |
 
 Length values: bare number (treated as px), `"100px"`, `"50%"`, `"2em"`, `"1.5rem"`.
+Only `width` and `height` accept the literal `"auto"` in the sizing group.
 
 ### 3.3 Spacing Properties
 

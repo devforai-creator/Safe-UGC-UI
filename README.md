@@ -6,7 +6,7 @@ Safe UGC UI provides a JSON-based card format, a validation pipeline, and a Reac
 
 ## Status
 
-**Phase 2 (current)** — 16 components, `$ref` state binding, `for...in` loops, `$style` reuse, Grid, directional borderRadius, full security validation, React renderer.
+**Phase 2 (current)** — 16 components, `$ref` state binding, `for...in` loops, `$style` reuse, Grid, directional borderRadius, `hoverStyle`, structured `transition`, `objectFit`/`objectPosition`, full security validation, React renderer.
 
 ## Packages
 
@@ -160,7 +160,7 @@ Schema validation fails fast. All other checks run and accumulate errors.
 │   ├── types/             Zod schemas + TypeScript types + constants
 │   │   └── src/
 │   │       ├── values.ts       Ref, Expr, Dynamic, Length, Color schemas
-│   │       ├── styles.ts       StyleProps schema (40+ properties)
+│   │       ├── styles.ts       StyleProps schema + hover/transition support
 │   │       ├── props.ts        Component field schemas (legacy filename)
 │   │       ├── primitives.ts   16 node type schemas (discriminated union)
 │   │       ├── card.ts         Top-level card schema
@@ -201,7 +201,7 @@ Schema validation fails fast. All other checks run and accumulate errors.
 | Phase | Scope |
 |-------|-------|
 | **Phase 1 (done)** | Box, Row, Column, Text, Image, `$ref`, validation, React renderer |
-| **Phase 2 (done)** | 11 components, `for...in` loops, style reuse (`$style`), Grid, directional borderRadius, npm publish |
+| **Phase 2 (done)** | 16 components, `for...in` loops, style reuse (`$style`), Grid, directional borderRadius, `hoverStyle`, structured `transition`, `objectFit`/`objectPosition`, npm publish |
 | Phase 3 | icon set bundling, editor tooling, themes |
 | Future | `$expr` expression engine, interaction events (Button action, Toggle), CharLang text syntax |
 

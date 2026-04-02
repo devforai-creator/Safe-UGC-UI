@@ -33,6 +33,11 @@ Interaction: `Button`, `Toggle`
   `position`, `top/right/bottom/left`, `zIndex`, `overflow`, `transform`,  
   `border*`, `boxShadow`, `backgroundGradient`  
   **All nested fields are also literal-only** (e.g., `borderLeft.color` cannot be `$ref`).
+- **Image fit/position props**: `objectFit` (`cover|contain|fill|none|scale-down`) and `objectPosition` (CSS object-position string) are allowed, including inside `hoverStyle`.
+- **Hover effects**: `style.hoverStyle` is allowed on every component. It follows the same validation rules as `style`, but `hoverStyle` cannot contain another `hoverStyle` and cannot use `$style`.
+- **Transitions**: use structured objects only, for example
+  `{ "transition": { "property": "height", "duration": 600, "easing": "ease" } }`.
+  Raw CSS strings like `"height 0.6s ease"` are forbidden.
 - **No CSS shorthand lengths**: use single values only.  
   ✅ `padding: 8` / `paddingLeft: 8`  
   ❌ `padding: "6px 8px"`
@@ -61,6 +66,8 @@ Inside template: `$item` and `$index`.
 3) `padding: "6px 8px"` (shorthand not allowed)  
 4) `fontWeight: "900"` (must be number 900)  
 5) `Image.src` not starting with `@assets/`
+6) Raw CSS `"transition": "height 0.6s ease"` instead of structured transition objects
+7) Putting `$style` or nested `hoverStyle` inside `hoverStyle`
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

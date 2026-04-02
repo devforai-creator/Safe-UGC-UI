@@ -30,6 +30,9 @@ export type Length = number | string;
 /** Color values: hex, rgb/rgba, hsl/hsla, or named colors. */
 export type Color = string;
 
+/** Width/height can additionally use the literal "auto". */
+export type SizeValue = Length | 'auto';
+
 // ---------------------------------------------------------------------------
 // 2) Style types
 // ---------------------------------------------------------------------------
@@ -121,12 +124,12 @@ export interface BaseStyle {
   gap?: Dynamic<Length>;
 
   // Sizing — dynamic
-  width?: Dynamic<Length | 'auto'>;
-  height?: Dynamic<Length | 'auto'>;
-  minWidth?: Dynamic<Length | string>;
-  maxWidth?: Dynamic<Length | string>;
-  minHeight?: Dynamic<Length | string>;
-  maxHeight?: Dynamic<Length | string>;
+  width?: Dynamic<SizeValue>;
+  height?: Dynamic<SizeValue>;
+  minWidth?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
+  maxWidth?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
+  minHeight?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
+  maxHeight?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
 
   // Spacing — dynamic (single values only)
   padding?: Dynamic<Length>;
@@ -166,6 +169,10 @@ export interface BaseStyle {
   gridColumn?: Dynamic<string>;
   gridRow?: Dynamic<string>;
 
+  // Image fit/position — dynamic
+  objectFit?: Dynamic<'cover' | 'contain' | 'fill' | 'none' | 'scale-down'>;
+  objectPosition?: Dynamic<string>;
+
   // Static-only (literal only)
   overflow?: OverflowValue;
   position?: PositionValue;
@@ -191,6 +198,7 @@ export interface BaseStyle {
  * Hover style supports the same style fields as the base style, except:
  * - no nested hoverStyle
  * - no $style references
+ * - objectFit/objectPosition are allowed
  */
 export type HoverStyle = Omit<BaseStyle, '$style'> & {
   transition?: TransitionField;
