@@ -1,35 +1,30 @@
 # Safe UGC UI
 
-Safely render untrusted user-generated UI cards in sandboxed environments.
-
-Safe UGC UI provides a JSON-based card format, a validation pipeline, and a React renderer. Users (or LLMs) describe UI layouts as JSON; the framework validates the card against security rules and resource limits, then renders it without risk of XSS, data exfiltration, or UI hijacking.
+Safe UGC UI is a pnpm workspace for describing, validating, and rendering untrusted UI cards.
+It combines a JSON card format, Zod-based types, JSON Schema generation, a security-focused
+validator, and a React renderer that keeps user-provided UI inside a constrained container.
 
 ## Status
 
-**Phase 2 (current)** — 16 components, `$ref` state binding, `for...in` loops, `$style` reuse, Grid, directional borderRadius, `hoverStyle`, structured `transition`, `objectFit`/`objectPosition`, full security validation, React renderer.
+- Phase 2 is implemented.
+- Published packages are currently `0.3.1`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
+- `packages/demo` is a private playground app used for local development.
+- `$expr` is still reserved for future use. The schema accepts it, the validator constrains it,
+  and the React renderer does not evaluate it.
 
 ## Packages
 
-```
-packages/
-  types/       Type definitions, Zod schemas, constants
-  schema/      JSON Schema generation (zod-to-json-schema)
-  validator/   Validation pipeline (schema, security, styles, limits, expressions)
-  react/       React renderer (Phase 2 components + style mapper)
-  demo/        Interactive playground (Vite + React)
-```
-
-| Package | Description |
-|---------|-------------|
-| `@safe-ugc-ui/types` | Zod schemas for card structure, node types, style fields, and value types |
-| `@safe-ugc-ui/schema` | Generates JSON Schema from Zod definitions for editor integration |
-| `@safe-ugc-ui/validator` | Multi-stage validation: schema, node structure, value types, styles, security, limits, expressions |
-| `@safe-ugc-ui/react` | React components + state resolver + style mapper + asset resolver |
-| `@safe-ugc-ui/demo` | Split-pane playground with JSON editor and live preview |
+| Package | Purpose |
+|---------|---------|
+| `@safe-ugc-ui/types` | Zod schemas, inferred TypeScript types, constants, helpers |
+| `@safe-ugc-ui/schema` | JSON Schema generation and the built `ugc-card.schema.json` artifact |
+| `@safe-ugc-ui/validator` | Structural, style, security, limit, and expression validation |
+| `@safe-ugc-ui/react` | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers |
+| `@safe-ugc-ui/demo` | Vite-based playground for editing card JSON and previewing output |
 
 ### Dependency graph
 
-```
+```text
 types ─────┬── schema
            ├── validator
            └── react ──── validator
@@ -40,170 +35,185 @@ demo ────┬── react
 
 ## Install
 
+Install only the package you need:
+
 ```bash
-npm install @safe-ugc-ui/react
-# or
 pnpm add @safe-ugc-ui/react
+pnpm add @safe-ugc-ui/validator
+pnpm add @safe-ugc-ui/schema
+pnpm add @safe-ugc-ui/types
 ```
 
-This pulls in `@safe-ugc-ui/types` and `@safe-ugc-ui/validator` as dependencies.
+`@safe-ugc-ui/react` already depends on `@safe-ugc-ui/types` and `@safe-ugc-ui/validator`.
 
-## Quick start
+## Quick Start
 
-```bash
-# Prerequisites: Node >= 20, pnpm >= 9
+### Validate a card
 
-pnpm install
-pnpm build
-pnpm test
-```
+Use `validateRaw()` when the input is still a JSON string so the validator can reject oversized
+payloads before parsing:
 
-### Run the demo
+```ts
+import { validateRaw } from '@safe-ugc-ui/validator';
 
-```bash
-cd packages/demo
-pnpm dev        # http://localhost:5173
-```
-
-### Use in your app
-
-```tsx
-import { validate } from '@safe-ugc-ui/validator';
-import { UGCRenderer } from '@safe-ugc-ui/react';
-
-const card = {
-  meta: { name: 'hello', version: '1.0.0' },
-  state: { greeting: 'Hello, World!' },
-  views: {
-    Main: {
-      type: 'Box',
-      style: { padding: 24, backgroundColor: '#1a1a2e', borderRadius: 12 },
-      children: [
-        {
-          type: 'Text',
-          content: { $ref: '$greeting' },
-          style: { fontSize: 20, color: '#00f0ff' },
-        },
-      ],
-    },
-  },
-};
-
-const result = validate(card);
-if (result.valid) {
-  return <UGCRenderer card={card} />;
-}
-```
-
-## Card format
-
-A card is a JSON object:
-
-```json
-{
-  "meta": { "name": "my-card", "version": "1.0.0" },
-  "assets": { "avatar": "@assets/avatar.png" },
-  "state": { "username": "Alice", "level": 42 },
+const rawCard = `{
+  "meta": { "name": "hello", "version": "1.0.0" },
+  "state": { "greeting": "Hello, World!" },
   "views": {
     "Main": {
-      "type": "Box",
-      "style": { "padding": 16 },
-      "children": [
-        {
-          "type": "Text",
-          "content": { "$ref": "$username" }
-        }
-      ]
+      "type": "Text",
+      "content": { "$ref": "$greeting" }
     }
   }
+}`;
+
+const result = validateRaw(rawCard);
+
+if (!result.valid) {
+  console.error(result.errors);
 }
 ```
 
-- **Layout nodes** (Box, Row, Column) have `children`
-- **Content nodes** (Text, Image) use top-level fields (no `props` wrapper)
-- **State binding** via `{ "$ref": "$variableName" }`
-- **Images** must use `@assets/` paths (no external URLs)
+If the card is already parsed, use `validate()` instead.
+
+### Render a card in React
+
+`UGCRenderer` accepts either a parsed card object or a raw JSON string. It validates before
+rendering and returns `null` on failure.
+
+```tsx
+import { UGCRenderer } from '@safe-ugc-ui/react';
+
+export function CardPreview({ card }: { card: string }) {
+  return (
+    <UGCRenderer
+      card={card}
+      assets={{
+        '@assets/avatar.png': 'https://cdn.example.com/avatar.png',
+      }}
+      onError={(errors) => {
+        console.error(errors);
+      }}
+    />
+  );
+}
+```
+
+Key renderer props:
+
+- `viewName` to render a specific named view
+- `assets` to resolve `@assets/...` references to host-controlled URLs
+- `state` to override or extend `card.state`
+- `containerStyle` to style the outer isolation container
+- `iconResolver` to map icon names to React nodes
+- `onAction` to receive Button and Toggle action events
+
+### Generate JSON Schema
+
+For editor integration or external structural validation:
+
+```ts
+import { generateCardSchema } from '@safe-ugc-ui/schema';
+
+const schema = generateCardSchema();
+```
+
+The build also emits a static file at `packages/schema/dist/ugc-card.schema.json`, published as:
+
+```text
+@safe-ugc-ui/schema/ugc-card.schema.json
+```
+
+## Card Model
+
+A card is a JSON object with four main areas:
+
+- `meta`: card identity and version metadata
+- `assets`: named asset references that must use `@assets/...`
+- `state`: precomputed values referenced via `{ "$ref": "$path.to.value" }`
+- `views`: one or more renderable trees
+
+Phase 2 components:
+
+- `Box`, `Row`, `Column`, `Text`, `Image`
+- `Stack`, `Grid`, `Spacer`, `Divider`, `Icon`
+- `ProgressBar`, `Avatar`, `Badge`, `Chip`, `Button`, `Toggle`
+
+Supported card-level features:
+
+- `$ref` state binding
+- `for...in` loops
+- reusable `styles` plus `$style` references
+- `hoverStyle`
+- structured `transition`
+- directional `borderRadius`
+- `objectFit` and `objectPosition`
+
+Reserved behavior:
+
+- `$expr` is accepted by the schema for forward compatibility but should not be used in cards today
 
 For full details, see:
-- [`safe-ugc-ui-card-spec.md`](./safe-ugc-ui-card-spec.md) — full spec
-- [`safe-ugc-ui-card-spec-lite.md`](./safe-ugc-ui-card-spec-lite.md) — LLM-friendly summary
-- [`safe-ugc-ui-card-spec.types.ts`](./safe-ugc-ui-card-spec.types.ts) — TypeScript type guide
 
-## Security model
+- [`safe-ugc-ui-card-spec.md`](./safe-ugc-ui-card-spec.md)
+- [`safe-ugc-ui-card-spec-lite.md`](./safe-ugc-ui-card-spec-lite.md)
+- [`safe-ugc-ui-card-spec.types.ts`](./safe-ugc-ui-card-spec.types.ts)
 
-See `SECURITY.md` for reporting and scope details.
+## Security Model
+
+JSON Schema is structural only. Actual safety checks live in `@safe-ugc-ui/validator`.
 
 The validation pipeline enforces:
 
-- **No untrusted external URLs** — images use `@assets/` paths resolved to host-controlled CDN URLs; user-specified external URLs are blocked
-- **No script execution** — no event handlers, no `javascript:` URIs, no `$expr` evaluation (Phase 1)
-- **Open decision** — `$expr` exists as a placeholder but is not evaluated; see `AGENTS.md` for the keep/remove decision
-- **No CSS injection** — `url()`, `var()`, `calc()`, `expression()` functions are rejected
-- **Layer isolation** — `position: fixed/sticky` forbidden, `z-index` capped at 0-100
-- **Resource limits** — card size (1MB), node count (10K), text content (200KB), style size (100KB)
-- **Prototype pollution prevention** — `__proto__`, `constructor`, `prototype` segments blocked in `$ref` paths
+- external URL blocking for user-controlled asset fields
+- path traversal checks for `@assets/...`
+- CSS function restrictions such as `url()`, `var()`, `calc()`, `expression()`
+- layout isolation rules like forbidding `position: fixed` and `position: sticky`
+- runtime-oriented limits for card size, node count, loop count, text size, and style size
+- prototype-pollution protection in `$ref` paths
+- constrained placeholder support for `$expr`
 
-## Validation pipeline
+`UGCContainer` adds renderer-side isolation with `overflow: hidden`, `isolation: isolate`,
+`contain: content`, and `position: relative`.
 
-```
-Input → Size check → JSON parse → Schema (Zod) → Node structure
-  → Value types → Styles → Security → Limits → Expressions → Result
-```
+## Development
 
-Schema validation fails fast. All other checks run and accumulate errors.
+### Prerequisites
 
-## Project structure
+- Node.js `>= 20`
+- pnpm `>= 9`
 
-```
-/
-├── packages/
-│   ├── types/             Zod schemas + TypeScript types + constants
-│   │   └── src/
-│   │       ├── values.ts       Ref, Expr, Dynamic, Length, Color schemas
-│   │       ├── styles.ts       StyleProps schema + hover/transition support
-│   │       ├── props.ts        Component field schemas (legacy filename)
-│   │       ├── primitives.ts   16 node type schemas (discriminated union)
-│   │       ├── card.ts         Top-level card schema
-│   │       └── constants.ts    All numeric limits + enums
-│   │
-│   ├── schema/            JSON Schema generation
-│   │
-│   ├── validator/         Validation pipeline
-│   │   └── src/
-│   │       ├── schema.ts          Zod parse + structural checks
-│   │       ├── node-validator.ts  Node structure + hierarchy rules
-│   │       ├── value-types.ts     Ref/Expr/Static type restrictions
-│   │       ├── style-validator.ts Color/Length format + range checks
-│   │       ├── security.ts        URL blocking, path traversal, $ref resolve
-│   │       ├── limits.ts          Resource limit enforcement
-│   │       └── expr-constraints.ts Expression tokenizer + constraints
-│   │
-│   ├── react/             React renderer
-│   │   └── src/
-│   │       ├── UGCRenderer.tsx    Public component
-│   │       ├── node-renderer.tsx  Recursive renderer (Phase 2 types)
-│   │       ├── state-resolver.ts  $ref resolution with bracket notation
-│   │       ├── style-mapper.ts    StyleProps → CSSProperties
-│   │       ├── asset-resolver.ts  @assets/ → CDN URL mapping
-│   │       └── components/        16 React components (Box…Toggle)
-│   │
-│   └── demo/              Vite playground
-│
-├── safe-ugc-ui-spec-v0.3.md          Internal design spec
-├── safe-ugc-ui-card-spec.md          Full card spec (Phase 2)
-├── safe-ugc-ui-card-spec-lite.md     LLM-friendly summary
-├── safe-ugc-ui-card-spec.types.ts    TypeScript type guide
-└── vitest.workspace.ts
+### Common commands
+
+```bash
+pnpm install
+pnpm build
+pnpm test
+pnpm test:run
+pnpm clean
+pnpm --filter @safe-ugc-ui/schema build
+pnpm --filter @safe-ugc-ui/demo dev
 ```
 
-## Roadmap
+## Repository Layout
 
-| Phase | Scope |
-|-------|-------|
-| **Phase 1 (done)** | Box, Row, Column, Text, Image, `$ref`, validation, React renderer |
-| **Phase 2 (done)** | 16 components, `for...in` loops, style reuse (`$style`), Grid, directional borderRadius, `hoverStyle`, structured `transition`, `objectFit`/`objectPosition`, npm publish |
-| Phase 3 | icon set bundling, editor tooling, themes |
-| Future | `$expr` expression engine, interaction events (Button action, Toggle), CharLang text syntax |
+```text
+packages/
+  types/       Zod schemas, inferred TS types, constants
+  schema/      JSON Schema generation and static schema artifact
+  validator/   Validation pipeline and diagnostic result types
+  react/       React renderer, components, asset/style/state helpers
+  demo/        Vite playground
+```
+
+Tests live alongside source as `*.test.ts` or `*.test.tsx`.
+
+## Maintainer Notes
+
+- Update `README.md`, `AGENTS.md`, and `CLAUDE.md` together when package versions, public APIs,
+  commands, or workflow expectations change.
+- Treat `safe-ugc-ui-card-spec.md` as the source of truth for current card behavior.
+- Treat `safe-ugc-ui-spec-v0.3.md` as design history, not the current implementation contract.
 
 ## License
 
