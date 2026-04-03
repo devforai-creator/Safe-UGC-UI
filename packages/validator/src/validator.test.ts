@@ -48,6 +48,27 @@ describe('validateSchema', () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  it('accepts nested $ref in structured style leaf fields', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          style: {
+            border: {
+              width: 1,
+              style: 'solid',
+              color: { $ref: '$theme.border' },
+            },
+          },
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
   it('rejects non-object input', () => {
     const result = validateSchema('not an object');
     expect(result.valid).toBe(false);
@@ -246,6 +267,46 @@ describe('validateValueTypes', () => {
     const views = makeViews({
       type: 'Box',
       style: { overflow: { $ref: '$x' } },
+    });
+    const errors = validateValueTypes(views);
+    expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
+  });
+
+  it('allows $ref inside structured style object fields', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        border: {
+          width: 1,
+          style: 'solid',
+          color: { $ref: '$theme.border' },
+        },
+        transform: {
+          scale: { $ref: '$scale' },
+        },
+        boxShadow: {
+          offsetX: { $ref: '$shadow.x' },
+          offsetY: 2,
+          color: { $ref: '$shadow.color' },
+        },
+        backgroundGradient: {
+          type: 'linear',
+          direction: { $ref: '$gradient.direction' },
+          stops: [
+            { color: { $ref: '$gradient.start' }, position: '0%' },
+            { color: 'blue', position: { $ref: '$gradient.endPosition' } },
+          ],
+        },
+      },
+    });
+    const errors = validateValueTypes(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects top-level $ref on a structured style object', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { border: { $ref: '$border' } },
     });
     const errors = validateValueTypes(views);
     expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');

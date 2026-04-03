@@ -29,9 +29,9 @@ Interaction: `Button`, `Toggle`
 ## 4) Style Rules (Core)
 - Most style values allow literal or `$ref`.
 - **Static-only style props** (literal only):  
-  `position`, `top/right/bottom/left`, `zIndex`, `overflow`, `transform`,  
-  `border*`, `boxShadow`, `backgroundGradient`  
-  **All nested fields are also literal-only** (e.g., `borderLeft.color` cannot be `$ref`).
+  `position`, `top/right/bottom/left`, `zIndex`, `overflow`
+- **Structured style objects** must stay object literals, but leaf values may use `$ref`:  
+  `transform.*`, `border*.*`, `boxShadow.*`, `backgroundGradient.direction`, `backgroundGradient.stops[*].*`
 - **Image fit/position props**: `objectFit` (`cover|contain|fill|none|scale-down`) and `objectPosition` (CSS object-position string) are allowed, including inside `hoverStyle`.
 - **Alignment aliases**: `"start"` / `"end"` are preferred, but `"flex-start"` / `"flex-end"` are also accepted.
 - **fontWeight**: accepts `"normal"`, `"bold"`, numeric values `100`–`900`, and numeric strings like `"900"`.
@@ -62,7 +62,7 @@ Inside template: `$item` and `$index`.
 `in` must resolve to an array (state or loop-local). `undefined` → empty render.
 
 ## 7) Common Mistakes (Avoid)
-1) `borderLeft.color` with `$ref`  
+1) `borderLeft` itself as `$ref` instead of using `$ref` inside `borderLeft.color`
 2) `padding: "6px 8px"` (shorthand not allowed)  
 3) `Image.src` not starting with `@assets/`
 4) Raw CSS `"transition": "height 0.6s ease"` instead of structured transition objects

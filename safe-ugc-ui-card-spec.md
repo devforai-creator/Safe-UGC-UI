@@ -267,18 +267,19 @@ Boolean toggle switch that triggers a callback when flipped.
 
 ## 3. Style System
 
-Every component accepts an optional `style` object. Most style values can be literal or `$ref` (see Section 4), but some properties are **static-only** — they must be literal values, no `$ref`.
+Every component accepts an optional `style` object. Most style values can be literal or `$ref` (see Section 4), but some properties remain **static-only** — they must be literal values, no `$ref`.
 
 **Static-only style properties** (literal values only):
 - `position`, `top`, `right`, `bottom`, `left`, `zIndex`
 - `overflow`
-- `transform`
-- `border`, `borderTop`, `borderRight`, `borderBottom`, `borderLeft`
-- `boxShadow`
-- `backgroundGradient`
 
-**Important:** For static-only object properties (e.g., `border*`, `boxShadow`, `backgroundGradient`), **all nested fields are also literal-only**.  
-Example: `borderLeft.color` cannot use `$ref`.
+**Structured style objects** must still be object literals, but selected leaf fields inside them may use `$ref`:
+- `transform.rotate`, `transform.scale`, `transform.translateX`, `transform.translateY`
+- `border*.width`, `border*.style`, `border*.color`
+- `boxShadow.offsetX`, `boxShadow.offsetY`, `boxShadow.blur`, `boxShadow.spread`, `boxShadow.color`
+- `backgroundGradient.direction`, `backgroundGradient.stops[].color`, `backgroundGradient.stops[].position`
+
+Example: `borderLeft.color` may use `$ref`, but `borderLeft` itself cannot be a `$ref`.
 
 All other style properties accept literal values or `$ref`.
 
@@ -1346,7 +1347,8 @@ Before outputting a card, verify:
 - [ ] No forbidden CSS functions in style strings (calc, var, url, env, expression)
 - [ ] All color values are valid (hex, rgb, hsl, or named color)
 - [ ] `assets` values (if any) all start with `@assets/` and contain no `../`
-- [ ] Static-only style properties use literal values (no `$ref` on position, border, transform, etc., including nested fields like `borderLeft.color`)
+- [ ] `position`, offsets, `overflow`, and `zIndex` use literal values (no `$ref`)
+- [ ] Structured style objects are object literals; if dynamic values are needed, use `$ref` inside leaf fields like `borderLeft.color`
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
 - [ ] Grid properties use string values
 

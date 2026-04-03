@@ -9,7 +9,7 @@
  *   - transform object -> CSS transform string
  *   - boxShadow object(s) -> CSS box-shadow string
  *   - backgroundGradient object -> CSS background string
- *   - Dynamic values ($ref/$expr) are resolved via state-resolver
+ *   - Dynamic values ($ref) are resolved via state-resolver
  */
 
 import type { CSSProperties } from 'react';
@@ -47,7 +47,7 @@ function containsForbiddenCssFunction(value: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: resolve a style value (may be literal, $ref, or $expr)
+// Helper: resolve a style value (may be literal or $ref)
 // ---------------------------------------------------------------------------
 
 function resolveStyleValue(
@@ -56,6 +56,34 @@ function resolveStyleValue(
   locals?: Record<string, unknown>,
 ): unknown {
   return resolveValue(value, state, locals);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function resolveStructuredNumber(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): number | undefined {
+  const resolved = resolveStyleValue(value, state, locals);
+  return typeof resolved === 'number' ? resolved : undefined;
+}
+
+function resolveStructuredString(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): string | undefined {
+  const resolved = resolveStyleValue(value, state, locals);
+  if (typeof resolved !== 'string') {
+    return undefined;
+  }
+  if (containsForbiddenCssFunction(resolved)) {
+    return undefined;
+  }
+  return resolved;
 }
 
 // ---------------------------------------------------------------------------
@@ -81,6 +109,29 @@ function transformToCss(transform: Record<string, unknown>): string {
   return parts.join(' ');
 }
 
+function resolveTransformObject(
+  transform: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(transform)) {
+    return undefined;
+  }
+
+  const resolved: Record<string, unknown> = {};
+  const rotate = resolveStructuredString(transform.rotate, state, locals);
+  const scale = resolveStructuredNumber(transform.scale, state, locals);
+  const translateX = resolveStructuredNumber(transform.translateX, state, locals);
+  const translateY = resolveStructuredNumber(transform.translateY, state, locals);
+
+  if (rotate !== undefined) resolved.rotate = rotate;
+  if (scale !== undefined) resolved.scale = scale;
+  if (translateX !== undefined) resolved.translateX = translateX;
+  if (translateY !== undefined) resolved.translateY = translateY;
+
+  return resolved;
+}
+
 // ---------------------------------------------------------------------------
 // Helper: shadow object(s) -> CSS box-shadow string
 // ---------------------------------------------------------------------------
@@ -94,6 +145,31 @@ function singleShadowToCss(shadow: Record<string, unknown>): string {
   return `${String(offsetX)}px ${String(offsetY)}px ${String(blur)}px ${String(spread)}px ${String(color)}`;
 }
 
+function resolveShadowObject(
+  shadow: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(shadow)) {
+    return undefined;
+  }
+
+  const resolved: Record<string, unknown> = {};
+  const offsetX = resolveStructuredNumber(shadow.offsetX, state, locals);
+  const offsetY = resolveStructuredNumber(shadow.offsetY, state, locals);
+  const blur = resolveStructuredNumber(shadow.blur, state, locals);
+  const spread = resolveStructuredNumber(shadow.spread, state, locals);
+  const color = resolveStructuredString(shadow.color, state, locals);
+
+  if (offsetX !== undefined) resolved.offsetX = offsetX;
+  if (offsetY !== undefined) resolved.offsetY = offsetY;
+  if (blur !== undefined) resolved.blur = blur;
+  if (spread !== undefined) resolved.spread = spread;
+  if (color !== undefined) resolved.color = color;
+
+  return resolved;
+}
+
 function shadowToCss(shadow: unknown): string {
   if (Array.isArray(shadow)) {
     return shadow
@@ -104,6 +180,20 @@ function shadowToCss(shadow: unknown): string {
     return singleShadowToCss(shadow as Record<string, unknown>);
   }
   return '';
+}
+
+function resolveBoxShadowValue(
+  shadow: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): unknown {
+  if (Array.isArray(shadow)) {
+    return shadow
+      .map((item) => resolveShadowObject(item, state, locals))
+      .filter((item): item is Record<string, unknown> => item !== undefined);
+  }
+
+  return resolveShadowObject(shadow, state, locals);
 }
 
 // ---------------------------------------------------------------------------
@@ -127,6 +217,50 @@ function gradientToCss(gradient: Record<string, unknown>): string {
   return `linear-gradient(${direction}, ${stopsStr})`;
 }
 
+function resolveGradientStop(
+  stop: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): { color: string; position: string } | undefined {
+  if (!isRecord(stop)) {
+    return undefined;
+  }
+
+  const color = resolveStructuredString(stop.color, state, locals);
+  const position = resolveStructuredString(stop.position, state, locals);
+  if (color === undefined || position === undefined) {
+    return undefined;
+  }
+
+  return { color, position };
+}
+
+function resolveGradientObject(
+  gradient: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(gradient) || !Array.isArray(gradient.stops)) {
+    return undefined;
+  }
+
+  const resolvedStops = gradient.stops
+    .map((stop) => resolveGradientStop(stop, state, locals))
+    .filter((stop): stop is { color: string; position: string } => stop !== undefined);
+
+  const resolved: Record<string, unknown> = {
+    type: gradient.type,
+    stops: resolvedStops,
+  };
+
+  const direction = resolveStructuredString(gradient.direction, state, locals);
+  if (direction !== undefined) {
+    resolved.direction = direction;
+  }
+
+  return resolved;
+}
+
 // ---------------------------------------------------------------------------
 // Helper: border object -> CSS border shorthand string
 // ---------------------------------------------------------------------------
@@ -136,6 +270,29 @@ function borderToCss(border: Record<string, unknown>): string {
   const style = border.style ?? 'solid';
   const color = border.color ?? '#000';
   return `${String(width)}px ${String(style)} ${String(color)}`;
+}
+
+const BORDER_STYLE_VALUES = new Set(['solid', 'dashed', 'dotted', 'none']);
+
+function resolveBorderObject(
+  border: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(border)) {
+    return undefined;
+  }
+
+  const resolved: Record<string, unknown> = {};
+  const width = resolveStructuredNumber(border.width, state, locals);
+  const style = resolveStructuredString(border.style, state, locals);
+  const color = resolveStructuredString(border.color, state, locals);
+
+  if (width !== undefined) resolved.width = width;
+  if (style !== undefined && BORDER_STYLE_VALUES.has(style)) resolved.style = style;
+  if (color !== undefined) resolved.color = color;
+
+  return resolved;
 }
 
 // ---------------------------------------------------------------------------
@@ -160,7 +317,7 @@ const FLEX_ALIGNMENT_PROPS = new Set([
 /**
  * Convert a UGC StyleProps object to React CSSProperties.
  *
- * @param style - The style object from a UGC node (may contain $ref/$expr values)
+ * @param style - The style object from a UGC node (may contain $ref values)
  * @param state - The card state for resolving $ref values
  * @param locals - Optional local variables for resolving $ref values (checked before state)
  * @returns A React CSSProperties object
@@ -197,34 +354,44 @@ export function mapStyle(
   }
 
   // Transform object -> CSS transform string
-  if (style.transform && typeof style.transform === 'object') {
-    css.transform = transformToCss(style.transform as Record<string, unknown>);
+  const resolvedTransform = resolveTransformObject(style.transform, state, locals);
+  if (resolvedTransform) {
+    const transformCss = transformToCss(resolvedTransform);
+    if (transformCss) {
+      css.transform = transformCss;
+    }
   }
 
   // Border shorthand
-  if (style.border && typeof style.border === 'object') {
-    css.border = borderToCss(style.border as Record<string, unknown>);
+  const resolvedBorder = resolveBorderObject(style.border, state, locals);
+  if (resolvedBorder) {
+    css.border = borderToCss(resolvedBorder);
   }
 
   // Border sides (borderTop, borderRight, borderBottom, borderLeft)
   for (const side of ['borderTop', 'borderRight', 'borderBottom', 'borderLeft'] as const) {
-    if (style[side] && typeof style[side] === 'object') {
-      (css as Record<string, unknown>)[side] = borderToCss(
-        style[side] as Record<string, unknown>,
-      );
+    const resolvedSide = resolveBorderObject(style[side], state, locals);
+    if (resolvedSide) {
+      (css as Record<string, unknown>)[side] = borderToCss(resolvedSide);
     }
   }
 
   // Box shadow
   if (style.boxShadow) {
-    css.boxShadow = shadowToCss(style.boxShadow);
+    const resolvedShadow = resolveBoxShadowValue(style.boxShadow, state, locals);
+    const shadowCss = shadowToCss(resolvedShadow);
+    if (shadowCss) {
+      css.boxShadow = shadowCss;
+    }
   }
 
   // Background gradient -> CSS background
-  if (style.backgroundGradient && typeof style.backgroundGradient === 'object') {
-    css.background = gradientToCss(
-      style.backgroundGradient as Record<string, unknown>,
-    );
+  const resolvedGradient = resolveGradientObject(style.backgroundGradient, state, locals);
+  if (resolvedGradient) {
+    const backgroundCss = gradientToCss(resolvedGradient);
+    if (backgroundCss) {
+      css.background = backgroundCss;
+    }
   }
 
   // Transition object(s) -> CSS transition string

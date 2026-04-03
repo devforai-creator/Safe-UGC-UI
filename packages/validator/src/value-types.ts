@@ -13,12 +13,12 @@
  * | Color properties  |   yes   | yes  |
  * | Size properties   |   yes   | yes  |
  * | position          |   yes   |  no  |
- * | transform         |   yes   |  no  |
- * | gradient          |   yes   |  no  |
+ * | overflow          |   yes   |  no  |
+ * | zIndex            |   yes   |  no  |
+ * | structured style objects | object literal | top-level $ref no |
  *
- * Additionally, several style properties must always be static
- * (no $ref): overflow, border*, boxShadow, zIndex,
- * and position offset properties (top/right/bottom/left).
+ * Structured style objects such as border/transform/boxShadow/backgroundGradient
+ * must remain object literals, but selected leaf fields inside them may use $ref.
  */
 
 import { type ValidationError, createError } from './result.js';
@@ -44,14 +44,19 @@ const STATIC_ONLY_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
   'bottom',
   'left',
 
+  // Overflow
+  'overflow',
+
+  // Stacking
+  'zIndex',
+]);
+
+const STRUCTURED_OBJECT_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
   // Transform
   'transform',
 
   // Gradient
   'backgroundGradient',
-
-  // Overflow
-  'overflow',
 
   // Borders
   'border',
@@ -62,9 +67,6 @@ const STATIC_ONLY_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
 
   // Shadow
   'boxShadow',
-
-  // Stacking
-  'zIndex',
 ]);
 
 /**
@@ -85,17 +87,27 @@ function validateNodeStyle(
       continue;
     }
 
-    if (STATIC_ONLY_STYLE_PROPERTIES.has(prop)) {
-      if (
-        typeof value === 'object' &&
-        value !== null &&
-        '$ref' in value &&
-        typeof (value as Record<string, unknown>).$ref === 'string'
-      ) {
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      '$ref' in value &&
+      typeof (value as Record<string, unknown>).$ref === 'string'
+    ) {
+      if (STATIC_ONLY_STYLE_PROPERTIES.has(prop)) {
         errors.push(
           createError(
             'DYNAMIC_NOT_ALLOWED',
             `Style property "${prop}" must be a static literal; $ref is not allowed.`,
+            `${ctx.path}.style.${prop}`,
+          ),
+        );
+      }
+
+      if (STRUCTURED_OBJECT_STYLE_PROPERTIES.has(prop)) {
+        errors.push(
+          createError(
+            'DYNAMIC_NOT_ALLOWED',
+            `Style property "${prop}" must be an object literal; use $ref only inside its nested fields.`,
             `${ctx.path}.style.${prop}`,
           ),
         );

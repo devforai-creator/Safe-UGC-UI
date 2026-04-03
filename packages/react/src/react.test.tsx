@@ -199,6 +199,22 @@ describe('mapStyle', () => {
     expect(result.border).toBe('1px solid #ccc');
   });
 
+  it('resolves nested $ref in border object fields', () => {
+    const result = mapStyle(
+      {
+        border: {
+          width: { $ref: '$border.width' },
+          style: { $ref: '$border.style' },
+          color: { $ref: '$border.color' },
+        },
+      },
+      {
+        border: { width: 2, style: 'dashed', color: '#ccc' },
+      },
+    );
+    expect(result.border).toBe('2px dashed #ccc');
+  });
+
   it('converts border side objects to CSS shorthand', () => {
     const result = mapStyle(
       { borderTop: { width: 2, style: 'dashed', color: 'blue' } },
@@ -224,6 +240,36 @@ describe('mapStyle', () => {
     expect(result.background).toBe('linear-gradient(90deg, red 0%, blue 100%)');
   });
 
+  it('resolves nested $ref in backgroundGradient fields', () => {
+    const result = mapStyle(
+      {
+        backgroundGradient: {
+          type: 'linear',
+          direction: { $ref: '$gradient.direction' },
+          stops: [
+            {
+              color: { $ref: '$gradient.start' },
+              position: { $ref: '$gradient.startPosition' },
+            },
+            {
+              color: { $ref: '$gradient.end' },
+              position: '100%',
+            },
+          ],
+        },
+      },
+      {
+        gradient: {
+          direction: '45deg',
+          start: 'red',
+          startPosition: '0%',
+          end: 'blue',
+        },
+      },
+    );
+    expect(result.background).toBe('linear-gradient(45deg, red 0%, blue 100%)');
+  });
+
   it('converts backgroundGradient to CSS background (radial)', () => {
     const result = mapStyle(
       {
@@ -245,6 +291,28 @@ describe('mapStyle', () => {
     expect(result.transform).toContain('rotate(45deg)');
   });
 
+  it('resolves nested $ref in transform object fields', () => {
+    const result = mapStyle(
+      {
+        transform: {
+          rotate: { $ref: '$transform.rotate' },
+          scale: { $ref: '$transform.scale' },
+          translateX: { $ref: '$transform.x' },
+        },
+      },
+      {
+        transform: {
+          rotate: '45deg',
+          scale: 1.2,
+          x: 10,
+        },
+      },
+    );
+    expect(result.transform).toContain('rotate(45deg)');
+    expect(result.transform).toContain('scale(1.2)');
+    expect(result.transform).toContain('translateX(10px)');
+  });
+
   it('converts transform with translateY', () => {
     const result = mapStyle({ transform: { translateY: 20 } }, {});
     expect(result.transform).toContain('translateY(20px)');
@@ -263,6 +331,29 @@ describe('mapStyle', () => {
     expect(result.boxShadow).toContain('1px 2px 3px 4px red');
     expect(result.boxShadow).toContain('5px 6px 7px 8px blue');
     expect(result.boxShadow).toContain(', ');
+  });
+
+  it('resolves nested $ref in boxShadow fields', () => {
+    const result = mapStyle(
+      {
+        boxShadow: {
+          offsetX: { $ref: '$shadow.x' },
+          offsetY: { $ref: '$shadow.y' },
+          blur: { $ref: '$shadow.blur' },
+          color: { $ref: '$shadow.color' },
+        },
+      },
+      {
+        shadow: {
+          x: 2,
+          y: 4,
+          blur: 6,
+          color: '#000',
+        },
+      },
+    );
+    expect(result.boxShadow).toContain('2px 4px 6px');
+    expect(result.boxShadow).toContain('#000');
   });
 
   it('resolves $ref values in style properties', () => {
@@ -776,6 +867,21 @@ describe('Style mapper with locals', () => {
       { bg: '#ff0000' },
     );
     expect(result.backgroundColor).toBe('#ff0000');
+  });
+
+  it('blocks forbidden CSS functions in nested structured style refs', () => {
+    const result = mapStyle(
+      {
+        border: {
+          width: 1,
+          style: 'solid',
+          color: { $ref: '$border.color' },
+        },
+      },
+      { border: { color: 'url(http://evil)' } },
+    );
+    expect(result.border).toBe('1px solid #000');
+    expect(result.border).not.toContain('url(');
   });
 
   it('blocks CSS function var() in gridTemplateColumns', () => {

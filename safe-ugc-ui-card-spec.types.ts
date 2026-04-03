@@ -92,27 +92,27 @@ export type PositionValue = 'static' | 'relative' | 'absolute';
 export type OverflowValue = 'visible' | 'hidden' | 'auto';
 
 export interface BorderObject {
-  width: number;
-  style: 'solid' | 'dashed' | 'dotted' | 'none';
-  color: Color;
+  width: Dynamic<number>;
+  style: Dynamic<'solid' | 'dashed' | 'dotted' | 'none'>;
+  color: Dynamic<Color>;
 }
 
 export interface ShadowObject {
-  offsetX: number;
-  offsetY: number;
-  blur?: number;
-  spread?: number;
-  color: Color;
+  offsetX: Dynamic<number>;
+  offsetY: Dynamic<number>;
+  blur?: Dynamic<number>;
+  spread?: Dynamic<number>;
+  color: Dynamic<Color>;
 }
 
 export interface GradientStop {
-  color: Color;
-  position: string; // e.g. "0%", "100%"
+  color: Dynamic<Color>;
+  position: Dynamic<string>; // e.g. "0%", "100%"
 }
 
 export interface LinearGradient {
   type: 'linear';
-  direction: string; // e.g. "135deg"
+  direction: Dynamic<string>; // e.g. "135deg"
   stops: GradientStop[];
 }
 
@@ -124,10 +124,10 @@ export interface RadialGradient {
 export type GradientObject = LinearGradient | RadialGradient;
 
 export interface TransformObject {
-  rotate?: string; // e.g. "45deg"
-  scale?: number; // 0.1–1.5
-  translateX?: number; // -500–500
-  translateY?: number; // -500–500
+  rotate?: Dynamic<string>; // e.g. "45deg"
+  scale?: Dynamic<number>; // 0.1–1.5
+  translateX?: Dynamic<number>; // -500–500
+  translateY?: Dynamic<number>; // -500–500
 }
 
 export type EasingValue = 'ease' | 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
@@ -144,8 +144,9 @@ export type TransitionField = TransitionDef | TransitionDef[];
 /**
  * Style fields.
  *
- * Static-only properties must be **literal** (no $ref), and all nested fields
- * are also literal-only (e.g., borderLeft.color cannot be $ref).
+ * Positioning and overflow controls stay literal-only.
+ * Structured style objects must be object literals, but selected leaf fields
+ * inside border/transform/boxShadow/backgroundGradient may use $ref.
  */
 export interface BaseStyle {
   // Layout — dynamic
@@ -216,6 +217,8 @@ export interface BaseStyle {
   bottom?: Length;
   left?: Length;
   zIndex?: number;
+
+  // Structured style objects (object literal only, leaf fields may use $ref)
   transform?: TransformObject;
   border?: BorderObject;
   borderTop?: BorderObject;

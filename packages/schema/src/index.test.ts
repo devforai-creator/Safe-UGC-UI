@@ -36,6 +36,29 @@ describe('generateCardSchema', () => {
     });
   });
 
+  it('includes $ref support in structured style leaf fields', () => {
+    const schema = generateCardSchema() as {
+      properties?: {
+        styles?: {
+          additionalProperties?: {
+            properties?: Record<string, unknown>;
+          };
+        };
+      };
+    };
+
+    const styleProps = schema.properties?.styles?.additionalProperties?.properties as
+      | Record<string, any>
+      | undefined;
+
+    expect(styleProps?.border?.properties?.color?.anyOf).toHaveLength(2);
+    expect(styleProps?.transform?.properties?.scale?.anyOf).toHaveLength(2);
+    expect(styleProps?.boxShadow?.anyOf?.[0]?.properties?.color?.anyOf).toHaveLength(2);
+    expect(
+      styleProps?.backgroundGradient?.anyOf?.[0]?.properties?.stops?.items?.properties?.color?.anyOf,
+    ).toHaveLength(2);
+  });
+
   it('matches the checked-in static schema artifact', () => {
     const generated = generateCardSchema();
     const staticSchema = readJson(

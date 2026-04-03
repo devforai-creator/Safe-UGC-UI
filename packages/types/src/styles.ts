@@ -30,8 +30,8 @@ import {
 // ---------------------------------------------------------------------------
 
 export const gradientStopSchema = z.object({
-  color: z.string(),
-  position: z.string(), // e.g. "0%", "100%"
+  color: dynamicSchema(z.string()),
+  position: dynamicSchema(z.string()), // e.g. "0%", "100%"
 });
 
 export type GradientStop = z.infer<typeof gradientStopSchema>;
@@ -42,7 +42,7 @@ export type GradientStop = z.infer<typeof gradientStopSchema>;
 
 export const linearGradientSchema = z.object({
   type: z.literal('linear'),
-  direction: z.string(), // e.g. "135deg", "to right"
+  direction: dynamicSchema(z.string()), // e.g. "135deg", "to right"
   stops: z.array(gradientStopSchema),
 });
 
@@ -75,11 +75,11 @@ export type GradientObject = z.infer<typeof gradientObjectSchema>;
 // ---------------------------------------------------------------------------
 
 export const shadowObjectSchema = z.object({
-  offsetX: z.number(),
-  offsetY: z.number(),
-  blur: z.number().optional(),
-  spread: z.number().optional(),
-  color: z.string(),
+  offsetX: dynamicSchema(z.number()),
+  offsetY: dynamicSchema(z.number()),
+  blur: dynamicSchema(z.number()).optional(),
+  spread: dynamicSchema(z.number()).optional(),
+  color: dynamicSchema(z.string()),
 });
 
 export type ShadowObject = z.infer<typeof shadowObjectSchema>;
@@ -88,10 +88,12 @@ export type ShadowObject = z.infer<typeof shadowObjectSchema>;
 // 1.6 BorderObject
 // ---------------------------------------------------------------------------
 
+export const borderStyleValueSchema = z.enum(['solid', 'dashed', 'dotted', 'none']);
+
 export const borderObjectSchema = z.object({
-  width: z.number(),
-  style: z.enum(['solid', 'dashed', 'dotted', 'none']),
-  color: z.string(),
+  width: dynamicSchema(z.number()),
+  style: dynamicSchema(borderStyleValueSchema),
+  color: dynamicSchema(z.string()),
 });
 
 export type BorderObject = z.infer<typeof borderObjectSchema>;
@@ -101,10 +103,10 @@ export type BorderObject = z.infer<typeof borderObjectSchema>;
 // ---------------------------------------------------------------------------
 
 export const transformObjectSchema = z.object({
-  rotate: z.string().optional(),    // e.g. "45deg"
-  scale: z.number().optional(),     // 0.1 ~ 1.5
-  translateX: z.number().optional(), // -500 ~ 500
-  translateY: z.number().optional(), // -500 ~ 500
+  rotate: dynamicSchema(z.string()).optional(),    // e.g. "45deg"
+  scale: dynamicSchema(z.number()).optional(),     // 0.1 ~ 1.5
+  translateX: dynamicSchema(z.number()).optional(), // -500 ~ 500
+  translateY: dynamicSchema(z.number()).optional(), // -500 ~ 500
 });
 
 export type TransformObject = z.infer<typeof transformObjectSchema>;
