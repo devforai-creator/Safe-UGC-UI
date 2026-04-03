@@ -8,7 +8,6 @@ import {
   validateStyles,
   validateSecurity,
   validateLimits,
-  validateExprConstraints,
   createError,
   toResult,
 } from './index.js';
@@ -243,15 +242,6 @@ describe('validateValueTypes', () => {
     expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
   });
 
-  it('rejects $expr on a static-only style property (zIndex)', () => {
-    const views = makeViews({
-      type: 'Box',
-      style: { zIndex: { $expr: '$a + 1' } },
-    });
-    const errors = validateValueTypes(views);
-    expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
-  });
-
   it('rejects $ref on a static-only style property (overflow)', () => {
     const views = makeViews({
       type: 'Box',
@@ -261,48 +251,19 @@ describe('validateValueTypes', () => {
     expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
   });
 
-  it('rejects $expr on Image.src', () => {
-    const views = makeViews({
-      type: 'Image',
-       src: { $expr: '$url + ".png"' } ,
-    });
-    const errors = validateValueTypes(views);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(codes(errors)).toContain('EXPR_NOT_ALLOWED');
-  });
-
-  it('rejects $ref on Icon.name', () => {
+  it('allows $ref on Icon.name', () => {
     const views = makeViews({
       type: 'Icon',
        name: { $ref: '$x' } ,
     });
     const errors = validateValueTypes(views);
-    expect(errors.length).toBeGreaterThan(0);
-    expect(codes(errors)).toContain('REF_NOT_ALLOWED');
-  });
-
-  it('rejects $expr on Icon.name', () => {
-    const views = makeViews({
-      type: 'Icon',
-       name: { $expr: '$iconName' } ,
-    });
-    const errors = validateValueTypes(views);
-    expect(codes(errors)).toContain('EXPR_NOT_ALLOWED');
+    expect(errors).toHaveLength(0);
   });
 
   it('allows $ref on Text.content', () => {
     const views = makeViews({
       type: 'Text',
        content: { $ref: '$x' } ,
-    });
-    const errors = validateValueTypes(views);
-    expect(errors).toHaveLength(0);
-  });
-
-  it('allows $expr on Text.content', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$name' } ,
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
@@ -315,6 +276,29 @@ describe('validateValueTypes', () => {
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
+  });
+
+  it('accepts flex-start/flex-end alignment aliases at schema level', () => {
+    const card = makeCard(makeViews({
+      type: 'Box',
+      style: {
+        justifyContent: 'flex-end',
+        alignItems: 'flex-start',
+        alignSelf: 'flex-end',
+      },
+    }));
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts numeric string fontWeight at schema level', () => {
+    const card = makeCard(makeViews({
+      type: 'Text',
+      content: 'Hello',
+      style: { fontWeight: '900' },
+    }));
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
   });
 });
 
@@ -1120,223 +1104,7 @@ describe('validateLimits', () => {
 });
 
 // ===========================================================================
-// 7. Expression constraints (validateExprConstraints)
-// ===========================================================================
-
-describe('validateExprConstraints', () => {
-  it('accepts a simple expression', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$hp + 10' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(errors).toHaveLength(0);
-  });
-
-  it('accepts if/then/else expression', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: "if $x > 0 then 'positive' else 'negative'" } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(errors).toHaveLength(0);
-  });
-
-  it('rejects expr too long (> 500 chars)', () => {
-    const longExpr = '$x ' + '+ 1 '.repeat(200); // well over 500 chars
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: longExpr } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_TOO_LONG');
-  });
-
-  it('rejects $ref too long (> 500 chars)', () => {
-    const longRef = '$' + 'a'.repeat(600);
-    const views = makeViews({
-      type: 'Text',
-       content: { $ref: longRef } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('REF_TOO_LONG');
-  });
-
-  it('rejects forbidden operator ===', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a === $b' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-    expect(errors.some((e) => e.message.includes('==='))).toBe(true);
-  });
-
-  it('rejects forbidden operator !==', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a !== $b' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-    expect(errors.some((e) => e.message.includes('!=='))).toBe(true);
-  });
-
-  it('rejects forbidden operator &&', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a && $b' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-    expect(errors.some((e) => e.message.includes('&&'))).toBe(true);
-  });
-
-  it('rejects forbidden operator ||', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a || $b' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-    expect(errors.some((e) => e.message.includes('||'))).toBe(true);
-  });
-
-  it('rejects forbidden keyword "function"', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: 'function' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-    expect(errors.some((e) => e.message.includes('function'))).toBe(true);
-  });
-
-  it('rejects forbidden keyword "new"', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: 'new $obj' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-  });
-
-  it('rejects function call pattern (identifier followed by open paren)', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: 'foo($x)' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FUNCTION_CALL');
-    expect(errors.some((e) => e.message.includes('foo('))).toBe(true);
-  });
-
-  it('rejects too many tokens (> 50)', () => {
-    // Build an expression with more than 50 tokens: $a + 1 + 1 + 1 ...
-    const parts = ['$a'];
-    for (let i = 0; i < 30; i++) {
-      parts.push('+ 1');
-    }
-    const expr = parts.join(' '); // "$a + 1 + 1 + 1 ..." -> 1 + 30*2 = 61 tokens
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: expr } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_TOO_MANY_TOKENS');
-  });
-
-  it('accepts expression with exactly allowed tokens', () => {
-    // A simple expression well under 50 tokens
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a + $b - $c * 2' } ,
-    });
-    const errors = validateExprConstraints(views);
-    const tokenErrors = errors.filter((e) => e.code === 'EXPR_TOO_MANY_TOKENS');
-    expect(tokenErrors).toHaveLength(0);
-  });
-
-  it('accepts "and" / "or" / "not" keywords (not forbidden)', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a and $b or not $c' } ,
-    });
-    const errors = validateExprConstraints(views);
-    const forbiddenErrors = errors.filter((e) => e.code === 'EXPR_FORBIDDEN_TOKEN');
-    expect(forbiddenErrors).toHaveLength(0);
-  });
-
-  it('accepts comparison operators == and !=', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$a == 1' } ,
-    });
-    const errors = validateExprConstraints(views);
-    const forbiddenErrors = errors.filter((e) => e.code === 'EXPR_FORBIDDEN_TOKEN');
-    expect(forbiddenErrors).toHaveLength(0);
-  });
-
-  it('validates $ref prototype pollution segments', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $ref: '$obj.__proto__' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
-  });
-
-  // --- Fix 3: Bare identifier rejection ---
-
-  it('rejects bare identifier without $ prefix', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: 'foo + 1' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_FORBIDDEN_TOKEN');
-    expect(errors.some((e) => e.message.includes('foo') && e.message.includes('$'))).toBe(true);
-  });
-
-  it('accepts $-prefixed identifier', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$foo + 1' } ,
-    });
-    const errors = validateExprConstraints(views);
-    const bareErrors = errors.filter(
-      (e) => e.code === 'EXPR_FORBIDDEN_TOKEN' && e.message.includes('must start with'),
-    );
-    expect(bareErrors).toHaveLength(0);
-  });
-
-  // --- Fix 3: Fractional digit enforcement ---
-
-  it('rejects number literal with > 10 fractional digits', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$x + 3.12345678901' } ,
-    });
-    const errors = validateExprConstraints(views);
-    expect(codes(errors)).toContain('EXPR_INVALID_TOKEN');
-    expect(errors.some((e) => e.message.includes('fractional'))).toBe(true);
-  });
-
-  it('accepts number literal with exactly 10 fractional digits', () => {
-    const views = makeViews({
-      type: 'Text',
-       content: { $expr: '$x + 3.1234567890' } ,
-    });
-    const errors = validateExprConstraints(views);
-    const fractErrors = errors.filter(
-      (e) => e.code === 'EXPR_INVALID_TOKEN' && e.message.includes('fractional'),
-    );
-    expect(fractErrors).toHaveLength(0);
-  });
-});
-
-// ===========================================================================
-// 8. Integration: validate() and validateRaw()
+// 7. Integration: validate() and validateRaw()
 // ===========================================================================
 
 describe('validate', () => {

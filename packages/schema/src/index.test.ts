@@ -36,33 +36,6 @@ describe('generateCardSchema', () => {
     });
   });
 
-  it('includes current forward-compatibility support for $expr in style values', () => {
-    const schema = generateCardSchema() as {
-      properties?: {
-        styles?: {
-          additionalProperties?: {
-            properties?: {
-              display?: {
-                anyOf?: Array<Record<string, unknown>>;
-              };
-            };
-          };
-        };
-      };
-    };
-
-    expect(
-      schema.properties?.styles?.additionalProperties?.properties?.display?.anyOf,
-    ).toContainEqual({
-      type: 'object',
-      properties: {
-        $expr: { type: 'string' },
-      },
-      required: ['$expr'],
-      additionalProperties: false,
-    });
-  });
-
   it('matches the checked-in static schema artifact', () => {
     const generated = generateCardSchema();
     const staticSchema = readJson(

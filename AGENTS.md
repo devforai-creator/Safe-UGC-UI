@@ -14,7 +14,7 @@ untrusted UI cards.
 
 - `packages/types/src` — Zod schemas, inferred TS types, and numeric/string constraints.
 - `packages/schema/src` — JSON Schema generation; build output lands at `packages/schema/dist/ugc-card.schema.json`.
-- `packages/validator/src` — validation pipeline for schema, nodes, values, styles, security, limits, and expr constraints.
+- `packages/validator/src` — validation pipeline for schema, nodes, values, styles, security, and limits.
 - `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, asset/style/state helpers, and 16 React components.
 - `packages/demo` — Vite playground that edits JSON and previews rendered cards.
 - Build outputs land in `packages/*/dist`. Tests live next to source as `*.test.ts` or `*.test.tsx`.
@@ -24,7 +24,6 @@ untrusted UI cards.
 - Phase 2 is implemented.
 - Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` at `0.3.1`.
 - `@safe-ugc-ui/demo` is private and remains at `0.1.0`.
-- `$expr` remains a placeholder: accepted by schema, constrained by validator, not evaluated by the React renderer.
 
 ## Build, Test, and Development Commands
 
@@ -69,25 +68,3 @@ untrusted UI cards.
 - JSON Schema is structural only; security and limits live in the validator.
 - Asset references must go through `@assets/...` and are checked in both validator and renderer.
 - `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`.
-
-## Open Decisions
-
-### $expr: keep or remove? (pending)
-
-`$expr` objects like `{ "$expr": "$hp + 10" }` still exist in the schema and validator, but the
-renderer returns `undefined` for them at runtime. The card spec instructs authors not to use `$expr`
-yet because it is reserved for future use.
-
-Current state:
-
-- `packages/types/src/values.ts` — `exprSchema`, `isExpr`, and `dynamicSchema()` include `$expr`
-- `packages/validator/src/expr-constraints.ts` — tokenizer and safety limits for `$expr`
-- `packages/validator/src/value-types.ts` — per-property `$expr` permission rules
-- `packages/react/src/state-resolver.ts` — `resolveValue()` returns `undefined` for `$expr`
-
-Options:
-
-1. Keep it as a placeholder for future compatibility.
-2. Remove it from schema and validator to match the current spec more strictly.
-
-If this decision changes, update `safe-ugc-ui-card-spec.md`, `README.md`, `AGENTS.md`, and `CLAUDE.md` together.

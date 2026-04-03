@@ -53,7 +53,6 @@ export interface TraversableNode {
   type: string;
   children?: TraversableNode[] | ForLoopLike;
   style?: Record<string, unknown>;
-  condition?: unknown;
   [key: string]: unknown;
 }
 

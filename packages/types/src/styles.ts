@@ -8,14 +8,13 @@
  *   - Zod schema  -> `fooSchema`
  *   - Inferred TS -> `Foo`
  *
- * Dynamic fields accept literal | $ref | $expr.
- * Static fields accept literal only (no $ref, no $expr).
+ * Dynamic fields accept literal | $ref.
+ * Static fields accept literal only (no $ref).
  */
 
 import { z } from 'zod';
 import {
   refSchema,
-  exprSchema,
   dynamicSchema,
   colorSchema,
   lengthSchema,
@@ -153,8 +152,10 @@ export type FlexDirectionValue = z.infer<typeof flexDirectionValueSchema>;
 
 export const justifyContentValueSchema = z.enum([
   'start',
+  'flex-start',
   'center',
   'end',
+  'flex-end',
   'space-between',
   'space-around',
   'space-evenly',
@@ -167,8 +168,10 @@ export type JustifyContentValue = z.infer<typeof justifyContentValueSchema>;
 
 export const alignItemsValueSchema = z.enum([
   'start',
+  'flex-start',
   'center',
   'end',
+  'flex-end',
   'stretch',
   'baseline',
 ]);
@@ -181,8 +184,10 @@ export type AlignItemsValue = z.infer<typeof alignItemsValueSchema>;
 export const alignSelfValueSchema = z.enum([
   'auto',
   'start',
+  'flex-start',
   'center',
   'end',
+  'flex-end',
   'stretch',
 ]);
 export type AlignSelfValue = z.infer<typeof alignSelfValueSchema>;
@@ -230,6 +235,15 @@ export type FontStyleValue = z.infer<typeof fontStyleValueSchema>;
 
 export const fontWeightValueSchema = z.union([
   z.enum(['normal', 'bold']),
+  z.literal('100'),
+  z.literal('200'),
+  z.literal('300'),
+  z.literal('400'),
+  z.literal('500'),
+  z.literal('600'),
+  z.literal('700'),
+  z.literal('800'),
+  z.literal('900'),
   z.literal(100),
   z.literal(200),
   z.literal(300),
@@ -272,8 +286,8 @@ const transitionFieldSchema = z
 // ===========================================================================
 // 4. StyleProps — the main style schema (spec 4.3)
 //
-// Dynamic fields: literal | $ref | $expr  -> dynamicSchema(base).optional()
-// Static fields:  literal only            -> base.optional()
+// Dynamic fields: literal | $ref  -> dynamicSchema(base).optional()
+// Static fields:  literal only    -> base.optional()
 // ===========================================================================
 
 /**

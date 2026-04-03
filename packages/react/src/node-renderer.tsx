@@ -57,7 +57,6 @@ interface UGCNodeLike {
   type: string;
   style?: Record<string, unknown>;
   children?: unknown;
-  condition?: unknown;
   [key: string]: unknown;
 }
 
@@ -265,8 +264,8 @@ export function renderNode(
     }
 
     case 'Icon': {
-      const nameVal = (n as Record<string, unknown>).name;
-      const name = typeof nameVal === 'string' ? nameVal : '';
+      const resolvedName = rv((n as Record<string, unknown>).name);
+      const name = typeof resolvedName === 'string' ? resolvedName : '';
       const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;

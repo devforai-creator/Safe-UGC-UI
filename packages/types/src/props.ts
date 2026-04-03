@@ -5,9 +5,10 @@
  * field set (formerly `props`). Based on spec section 4.2.
  *
  * Security-sensitive fields use restricted value types:
- *   - Image.src, Avatar.src  -> refOnly  (no $expr — prevents URL manipulation)
- *   - Icon.name              -> static   (no $ref, no $expr)
- *   - All others             -> dynamic  (literal | $ref | $expr)
+ *   - Image.src, Avatar.src  -> refOnly  (prevents URL manipulation)
+ *   - Button.action          -> static
+ *   - Toggle.onToggle        -> static
+ *   - All others             -> dynamic  (literal | $ref)
  *
  * Naming convention:
  *   - Zod schema  -> `fooPropsSchema`
@@ -73,7 +74,7 @@ export type AvatarProps = z.infer<typeof avatarPropsSchema>;
 // ---------------------------------------------------------------------------
 
 export const iconPropsSchema = z.object({
-  name: iconNameSchema,
+  name: dynamicSchema(iconNameSchema),
   size: dynamicSchema(lengthSchema).optional(),
   color: dynamicSchema(colorSchema).optional(),
 });

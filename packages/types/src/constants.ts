@@ -47,35 +47,7 @@ export const MAX_OVERFLOW_AUTO_COUNT = 2;
 export const MAX_STACK_NESTING = 3;
 
 // ---------------------------------------------------------------------------
-// 6.3 Expression limits
-// ---------------------------------------------------------------------------
-
-/** Maximum character length of an expression string. */
-export const EXPR_MAX_LENGTH = 500;
-
-/** Maximum number of tokens in a single expression. */
-export const EXPR_MAX_TOKENS = 50;
-
-/** Maximum nesting depth within an expression. */
-export const EXPR_MAX_NESTING = 10;
-
-/** Maximum nesting depth for if/then/else conditions. */
-export const EXPR_MAX_CONDITION_NESTING = 3;
-
-/** Maximum character length of a string literal inside an expression. */
-export const EXPR_MAX_STRING_LITERAL = 1_000;
-
-/** Maximum depth of variable reference paths (e.g. `$a.b.c.d.e`). */
-export const EXPR_MAX_REF_DEPTH = 5;
-
-/** Maximum allowed array index in variable references. */
-export const EXPR_MAX_ARRAY_INDEX = 9_999;
-
-/** Maximum digits after the decimal point in number literals. */
-export const EXPR_MAX_FRACTIONAL_DIGITS = 10;
-
-// ---------------------------------------------------------------------------
-// 6.4 Style limits
+// 6.3 Style limits
 // ---------------------------------------------------------------------------
 
 /** Minimum allowed z-index value. */

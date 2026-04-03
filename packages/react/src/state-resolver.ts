@@ -1,10 +1,9 @@
 /**
  * @safe-ugc-ui/react — State Resolver
  *
- * Resolves $ref and $expr values from card state.
+ * Resolves $ref values from card state.
  *
  * - $ref: looks up a dotted path in the state object
- * - $expr: returns undefined (Phase 2 — expression evaluation not yet implemented)
  * - Literal values pass through unchanged
  */
 
@@ -101,10 +100,9 @@ export function resolveRef(
 }
 
 /**
- * Resolve a value that might be a literal, $ref, or $expr.
+ * Resolve a value that might be a literal or $ref.
  * - Literal: return as-is
  * - $ref: resolve from state
- * - $expr: return undefined (Phase 2)
  */
 export function resolveValue(
   value: unknown,
@@ -115,10 +113,6 @@ export function resolveValue(
   if (typeof value === 'object' && value !== null) {
     if ('$ref' in value && typeof (value as Record<string, unknown>).$ref === 'string') {
       return resolveRef((value as Record<string, unknown>).$ref as string, state, locals);
-    }
-    if ('$expr' in value) {
-      // Phase 2: expression evaluation
-      return undefined;
     }
   }
   return value;

@@ -9,8 +9,6 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 - Phase 2 is implemented.
 - Published packages are currently `0.3.1`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
 - `packages/demo` is a private playground app used for local development.
-- `$expr` is still reserved for future use. The schema accepts it, the validator constrains it,
-  and the React renderer does not evaluate it.
 
 ## Packages
 
@@ -18,7 +16,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 |---------|---------|
 | `@safe-ugc-ui/types` | Zod schemas, inferred TypeScript types, constants, helpers |
 | `@safe-ugc-ui/schema` | JSON Schema generation and the built `ugc-card.schema.json` artifact |
-| `@safe-ugc-ui/validator` | Structural, style, security, limit, and expression validation |
+| `@safe-ugc-ui/validator` | Structural, style, security, and limit validation |
 | `@safe-ugc-ui/react` | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers |
 | `@safe-ugc-ui/demo` | Vite-based playground for editing card JSON and previewing output |
 
@@ -149,10 +147,6 @@ Supported card-level features:
 - directional `borderRadius`
 - `objectFit` and `objectPosition`
 
-Reserved behavior:
-
-- `$expr` is accepted by the schema for forward compatibility but should not be used in cards today
-
 For full details, see:
 
 - [`safe-ugc-ui-card-spec.md`](./safe-ugc-ui-card-spec.md)
@@ -171,7 +165,6 @@ The validation pipeline enforces:
 - layout isolation rules like forbidding `position: fixed` and `position: sticky`
 - runtime-oriented limits for card size, node count, loop count, text size, and style size
 - prototype-pollution protection in `$ref` paths
-- constrained placeholder support for `$expr`
 
 `UGCContainer` adds renderer-side isolation with `overflow: hidden`, `isolation: isolate`,
 `contain: content`, and `position: relative`.

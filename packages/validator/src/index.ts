@@ -15,7 +15,7 @@
  *   2. (validateRaw only) JSON.parse — parse error → ValidationResult
  *   3. Schema validation → fail → early return
  *   4. All remaining checks run, errors accumulated:
- *      node → value-types → style → security → limits → expr-constraints
+ *      node → value-types → style → security → limits
  */
 
 import { CARD_JSON_MAX_BYTES } from '@safe-ugc-ui/types';
@@ -32,7 +32,6 @@ import { validateValueTypes } from './value-types.js';
 import { validateStyles } from './style-validator.js';
 import { validateSecurity } from './security.js';
 import { validateLimits } from './limits.js';
-import { validateExprConstraints } from './expr-constraints.js';
 
 // ---------------------------------------------------------------------------
 // Re-exports
@@ -63,7 +62,6 @@ export { validateValueTypes } from './value-types.js';
 export { validateStyles } from './style-validator.js';
 export { validateSecurity } from './security.js';
 export { validateLimits } from './limits.js';
-export { validateExprConstraints } from './expr-constraints.js';
 
 // ---------------------------------------------------------------------------
 // UTF-8 byte length (platform-agnostic)
@@ -112,7 +110,6 @@ function runAllChecks(input: unknown): ValidationError[] {
     cardStyles,
   }));
   errors.push(...validateLimits({ state: obj.state as Record<string, unknown> | undefined, views, cardStyles }));
-  errors.push(...validateExprConstraints(views));
 
   return errors;
 }
@@ -128,7 +125,7 @@ function runAllChecks(input: unknown): ValidationError[] {
  *
  * Pipeline:
  *   1. Schema validation → fail → early return
- *   2. All remaining checks (node, value-types, style, security, limits, expr)
+ *   2. All remaining checks (node, value-types, style, security, limits)
  *
  * @param input - An unknown value (typically parsed JSON).
  * @returns A ValidationResult — safe to render only if `valid` is true.

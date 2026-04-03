@@ -37,7 +37,6 @@ import {
   TRANSITION_MAX_COUNT,
   ALLOWED_TRANSITION_PROPERTIES,
   isRef,
-  isExpr,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -77,25 +76,25 @@ const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> = {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns true only if the value is a literal number (not a $ref or $expr).
+ * Returns true only if the value is a literal number (not a $ref).
  */
 function isLiteralNumber(value: unknown): value is number {
   return typeof value === 'number';
 }
 
 /**
- * Returns true only if the value is a literal string (not a $ref or $expr).
+ * Returns true only if the value is a literal string (not a $ref).
  */
 function isLiteralString(value: unknown): value is string {
   return typeof value === 'string';
 }
 
 /**
- * Returns true if the value is a dynamic binding ($ref or $expr) that should
+ * Returns true if the value is a dynamic binding ($ref) that should
  * be skipped for static range checks.
  */
 function isDynamic(value: unknown): boolean {
-  return isRef(value) || isExpr(value);
+  return isRef(value);
 }
 
 /**
@@ -167,7 +166,7 @@ function parseLengthValue(value: string): number | null {
 /**
  * Recursively scan all string values in a value (which may be a string,
  * object, or array) for dangerous CSS function patterns.
- * Skips $ref and $expr objects entirely.
+ * Skips $ref objects entirely.
  */
 function collectDangerousCssErrors(
   value: unknown,
@@ -192,8 +191,8 @@ function collectDangerousCssErrors(
     return;
   }
 
-  // Skip $ref / $expr objects — they are not user-authored strings
-  if (isRef(value) || isExpr(value)) {
+  // Skip $ref objects — they are not user-authored strings
+  if (isRef(value)) {
     return;
   }
 

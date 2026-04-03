@@ -1,19 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
   isRef,
-  isExpr,
   isDynamic,
   isAssetPath,
   refSchema,
-  exprSchema,
   assetPathSchema,
 } from './values.js';
 import {
   CARD_JSON_MAX_BYTES,
   MAX_NODE_COUNT,
   MAX_LOOP_ITERATIONS,
-  EXPR_MAX_LENGTH,
-  EXPR_MAX_TOKENS,
   ZINDEX_MIN,
   ZINDEX_MAX,
   ALL_COMPONENT_TYPES,
@@ -86,71 +82,9 @@ describe('isRef', () => {
   });
 });
 
-describe('isExpr', () => {
-  it('returns true for a valid Expr object', () => {
-    expect(isExpr({ $expr: 'x + 1' })).toBe(true);
-  });
-
-  it('returns true for an Expr with an empty string', () => {
-    expect(isExpr({ $expr: '' })).toBe(true);
-  });
-
-  it('returns true for an Expr with extra properties', () => {
-    expect(isExpr({ $expr: 'a > b', other: true })).toBe(true);
-  });
-
-  it('returns false for null', () => {
-    expect(isExpr(null)).toBe(false);
-  });
-
-  it('returns false for undefined', () => {
-    expect(isExpr(undefined)).toBe(false);
-  });
-
-  it('returns false for a string', () => {
-    expect(isExpr('expr')).toBe(false);
-  });
-
-  it('returns false for a number', () => {
-    expect(isExpr(99)).toBe(false);
-  });
-
-  it('returns false for an empty object', () => {
-    expect(isExpr({})).toBe(false);
-  });
-
-  it('returns false for an object without $expr', () => {
-    expect(isExpr({ $ref: 'foo' })).toBe(false);
-  });
-
-  it('returns false when $expr is not a string (number)', () => {
-    expect(isExpr({ $expr: 123 })).toBe(false);
-  });
-
-  it('returns false when $expr is not a string (null)', () => {
-    expect(isExpr({ $expr: null })).toBe(false);
-  });
-
-  it('returns false when $expr is not a string (boolean)', () => {
-    expect(isExpr({ $expr: false })).toBe(false);
-  });
-
-  it('returns false when $expr is not a string (array)', () => {
-    expect(isExpr({ $expr: ['a', 'b'] })).toBe(false);
-  });
-
-  it('returns false for an array', () => {
-    expect(isExpr([1, 2, 3])).toBe(false);
-  });
-});
-
 describe('isDynamic', () => {
   it('returns true for a Ref', () => {
     expect(isDynamic({ $ref: 'state.count' })).toBe(true);
-  });
-
-  it('returns true for an Expr', () => {
-    expect(isDynamic({ $expr: '$count + 1' })).toBe(true);
   });
 
   it('returns false for a plain object', () => {
@@ -181,12 +115,8 @@ describe('isDynamic', () => {
     expect(isDynamic({ $ref: 123 })).toBe(false);
   });
 
-  it('returns false when $expr is not a string', () => {
-    expect(isDynamic({ $expr: null })).toBe(false);
-  });
-
-  it('returns true for an object with both $ref and $expr (matches $ref first)', () => {
-    expect(isDynamic({ $ref: 'x', $expr: 'y' })).toBe(true);
+  it('returns true for an object with both $ref and extra keys (matches $ref)', () => {
+    expect(isDynamic({ $ref: 'x', extra: 'y' })).toBe(true);
   });
 });
 
@@ -288,54 +218,6 @@ describe('refSchema', () => {
   });
 });
 
-describe('exprSchema', () => {
-  it('accepts a valid Expr object', () => {
-    const result = exprSchema.safeParse({ $expr: 'bar' });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toEqual({ $expr: 'bar' });
-    }
-  });
-
-  it('accepts an Expr with an empty string value', () => {
-    const result = exprSchema.safeParse({ $expr: '' });
-    expect(result.success).toBe(true);
-  });
-
-  it('rejects when $expr is a number', () => {
-    const result = exprSchema.safeParse({ $expr: 42 });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects an empty object (missing $expr)', () => {
-    const result = exprSchema.safeParse({});
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects when $expr is null', () => {
-    const result = exprSchema.safeParse({ $expr: null });
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects a plain string', () => {
-    const result = exprSchema.safeParse('bar');
-    expect(result.success).toBe(false);
-  });
-
-  it('rejects when $expr is a boolean', () => {
-    const result = exprSchema.safeParse({ $expr: true });
-    expect(result.success).toBe(false);
-  });
-
-  it('strips extra keys', () => {
-    const result = exprSchema.safeParse({ $expr: 'a + b', debug: true });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toEqual({ $expr: 'a + b' });
-    }
-  });
-});
-
 describe('assetPathSchema', () => {
   it('accepts a valid asset path', () => {
     const result = assetPathSchema.safeParse('@assets/img.png');
@@ -401,14 +283,6 @@ describe('constants', () => {
 
   it('MAX_LOOP_ITERATIONS equals 1,000', () => {
     expect(MAX_LOOP_ITERATIONS).toBe(1_000);
-  });
-
-  it('EXPR_MAX_LENGTH equals 500', () => {
-    expect(EXPR_MAX_LENGTH).toBe(500);
-  });
-
-  it('EXPR_MAX_TOKENS equals 50', () => {
-    expect(EXPR_MAX_TOKENS).toBe(50);
   });
 
   it('ZINDEX_MIN equals 0', () => {

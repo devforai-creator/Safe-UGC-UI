@@ -23,9 +23,8 @@ Interaction: `Button`, `Toggle`
 
 ## 3) Dynamic Values
 - Use `$ref` only: `{ "$ref": "$stateKey" }`
-- `$expr` **must not be used** (reserved; not evaluated)
-- `Icon.name` is **static only** (no `$ref`)
-- `Image.src` / `Avatar.src` are **@assets only** (no external URLs, no `$expr`)
+- `Icon.name` may be a literal string or `$ref`
+- `Image.src` / `Avatar.src` are **@assets only** (no external URLs)
 
 ## 4) Style Rules (Core)
 - Most style values allow literal or `$ref`.
@@ -34,6 +33,8 @@ Interaction: `Button`, `Toggle`
   `border*`, `boxShadow`, `backgroundGradient`  
   **All nested fields are also literal-only** (e.g., `borderLeft.color` cannot be `$ref`).
 - **Image fit/position props**: `objectFit` (`cover|contain|fill|none|scale-down`) and `objectPosition` (CSS object-position string) are allowed, including inside `hoverStyle`.
+- **Alignment aliases**: `"start"` / `"end"` are preferred, but `"flex-start"` / `"flex-end"` are also accepted.
+- **fontWeight**: accepts `"normal"`, `"bold"`, numeric values `100`–`900`, and numeric strings like `"900"`.
 - **Hover effects**: `style.hoverStyle` is allowed on every component. It follows the same validation rules as `style`, but `hoverStyle` cannot contain another `hoverStyle` and cannot use `$style`.
 - **Transitions**: use structured objects only, for example
   `{ "transition": { "property": "height", "duration": 600, "easing": "ease" } }`.
@@ -61,13 +62,11 @@ Inside template: `$item` and `$index`.
 `in` must resolve to an array (state or loop-local). `undefined` → empty render.
 
 ## 7) Common Mistakes (Avoid)
-1) `Icon.name` with `$ref`  
-2) `borderLeft.color` with `$ref`  
-3) `padding: "6px 8px"` (shorthand not allowed)  
-4) `fontWeight: "900"` (must be number 900)  
-5) `Image.src` not starting with `@assets/`
-6) Raw CSS `"transition": "height 0.6s ease"` instead of structured transition objects
-7) Putting `$style` or nested `hoverStyle` inside `hoverStyle`
+1) `borderLeft.color` with `$ref`  
+2) `padding: "6px 8px"` (shorthand not allowed)  
+3) `Image.src` not starting with `@assets/`
+4) Raw CSS `"transition": "height 0.6s ease"` instead of structured transition objects
+5) Putting `$style` or nested `hoverStyle` inside `hoverStyle`
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

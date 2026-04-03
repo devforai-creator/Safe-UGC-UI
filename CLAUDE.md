@@ -21,7 +21,7 @@ pick up the same project context.
 
 - `packages/types/src` — Zod schemas, inferred TS types, and constraints.
 - `packages/schema/src` — JSON Schema generation and the static schema artifact.
-- `packages/validator/src` — schema, node, value, style, security, limits, and expr validation.
+- `packages/validator/src` — schema, node, value, style, security, and limit validation.
 - `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, components, asset/style/state helpers.
 - `packages/demo` — JSON editor plus live preview app.
 
@@ -55,11 +55,3 @@ pick up the same project context.
 - JSON Schema is structural only; enforcement lives in the validator.
 - Asset references must use `@assets/...`.
 - `UGCContainer` supplies renderer-side layout isolation.
-- `$expr` is still a placeholder: accepted by schema, constrained by validator, not evaluated by the renderer.
-
-## Open Decision
-
-### $expr: keep or remove? (pending)
-
-`$expr` is implemented as a forward-compatibility placeholder. If the decision changes, update the
-spec and the three repository docs together: `README.md`, `AGENTS.md`, and `CLAUDE.md`.

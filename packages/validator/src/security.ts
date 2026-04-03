@@ -304,7 +304,6 @@ export function validateSecurity(card: {
     delete nodeFields.type;
     delete nodeFields.style;
     delete nodeFields.children;
-    delete nodeFields.condition;
 
     // -----------------------------------------------------------------
     // 1. External URL blocking — Image and Avatar `src`

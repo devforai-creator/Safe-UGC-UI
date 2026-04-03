@@ -19,7 +19,6 @@ import {
   MAX_STACK_NESTING,
   PROTOTYPE_POLLUTION_SEGMENTS,
   isRef,
-  isExpr,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -142,9 +141,9 @@ function countTemplateMetrics(
   // Text bytes
   if (node.type === 'Text') {
     const content = (node as Record<string, unknown>).content;
-    if (typeof content === 'string' && !isRef(content) && !isExpr(content)) {
-      result.textBytes = utf8ByteLength(content);
-    }
+      if (typeof content === 'string' && !isRef(content)) {
+        result.textBytes = utf8ByteLength(content);
+      }
   }
 
   // Style bytes (merged with $style)
@@ -251,7 +250,7 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     if (node.type === 'Text') {
       const content = (node as Record<string, unknown>).content;
-      if (typeof content === 'string' && !isRef(content) && !isExpr(content)) {
+      if (typeof content === 'string' && !isRef(content)) {
         textContentBytes += utf8ByteLength(content);
       }
     }

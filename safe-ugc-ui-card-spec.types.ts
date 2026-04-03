@@ -4,7 +4,6 @@
  * Use this as the LLM-facing type guide. It matches the current card spec
  * (safe-ugc-ui-card-spec.md) and is intentionally strict.
  *
- * NOTE: `$expr` is reserved and must not be used.
  * NOTE: Component fields live directly on the node (no `props` wrapper).
  */
 
@@ -41,18 +40,54 @@ export type DisplayValue = 'flex' | 'block' | 'none';
 export type FlexDirectionValue = 'row' | 'column' | 'row-reverse' | 'column-reverse';
 export type JustifyContentValue =
   | 'start'
+  | 'flex-start'
   | 'center'
   | 'end'
+  | 'flex-end'
   | 'space-between'
   | 'space-around'
   | 'space-evenly';
-export type AlignItemsValue = 'start' | 'center' | 'end' | 'stretch' | 'baseline';
-export type AlignSelfValue = 'auto' | 'start' | 'center' | 'end' | 'stretch';
+export type AlignItemsValue =
+  | 'start'
+  | 'flex-start'
+  | 'center'
+  | 'end'
+  | 'flex-end'
+  | 'stretch'
+  | 'baseline';
+export type AlignSelfValue =
+  | 'auto'
+  | 'start'
+  | 'flex-start'
+  | 'center'
+  | 'end'
+  | 'flex-end'
+  | 'stretch';
 export type FlexWrapValue = 'nowrap' | 'wrap' | 'wrap-reverse';
 export type TextAlignValue = 'left' | 'center' | 'right' | 'justify';
 export type TextDecorationValue = 'none' | 'underline' | 'line-through';
 export type FontStyleValue = 'normal' | 'italic';
-export type FontWeightValue = 'normal' | 'bold' | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+export type FontWeightValue =
+  | 'normal'
+  | 'bold'
+  | '100'
+  | '200'
+  | '300'
+  | '400'
+  | '500'
+  | '600'
+  | '700'
+  | '800'
+  | '900'
+  | 100
+  | 200
+  | 300
+  | 400
+  | 500
+  | 600
+  | 700
+  | 800
+  | 900;
 export type PositionValue = 'static' | 'relative' | 'absolute';
 export type OverflowValue = 'visible' | 'hidden' | 'auto';
 
@@ -218,7 +253,7 @@ export interface TextFields {
 }
 
 export interface ImageFields {
-  src: Dynamic<AssetPath>; // no $expr, no external URLs
+  src: Dynamic<AssetPath>; // no external URLs
   alt?: Dynamic<string>;
 }
 
@@ -229,12 +264,12 @@ export interface ProgressBarFields {
 }
 
 export interface AvatarFields {
-  src: Dynamic<AssetPath>; // no $expr, no external URLs
+  src: Dynamic<AssetPath>; // no external URLs
   size?: Dynamic<Length>;
 }
 
 export interface IconFields {
-  name: string; // static only
+  name: Dynamic<string>;
   size?: Dynamic<Length>;
   color?: Dynamic<Color>;
 }

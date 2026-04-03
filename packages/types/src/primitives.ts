@@ -17,7 +17,6 @@
  */
 
 import { z } from 'zod';
-import { exprSchema } from './values.js';
 import { stylePropsSchema } from './styles.js';
 import {
   textPropsSchema,
@@ -76,7 +75,6 @@ type Children = UGCNode[] | ForLoop;
 
 const baseFields = {
   style: stylePropsSchema.optional(),
-  condition: exprSchema.optional(),
 };
 
 // ===========================================================================
@@ -97,7 +95,6 @@ export type BoxNode = {
   type: 'Box';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -114,7 +111,6 @@ export type RowNode = {
   type: 'Row';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -131,7 +127,6 @@ export type ColumnNode = {
   type: 'Column';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -148,7 +143,6 @@ export type StackNode = {
   type: 'Stack';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -165,7 +159,6 @@ export type GridNode = {
   type: 'Grid';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ===========================================================================
@@ -186,7 +179,6 @@ export type TextNode = {
   type: 'Text';
 } & z.infer<typeof textPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -203,7 +195,6 @@ export type ImageNode = {
   type: 'Image';
 } & z.infer<typeof imagePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ===========================================================================
@@ -224,7 +215,6 @@ export type ProgressBarNode = {
   type: 'ProgressBar';
 } & z.infer<typeof progressBarPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -241,7 +231,6 @@ export type AvatarNode = {
   type: 'Avatar';
 } & z.infer<typeof avatarPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -258,7 +247,6 @@ export type IconNode = {
   type: 'Icon';
 } & z.infer<typeof iconPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -275,7 +263,6 @@ export type BadgeNode = {
   type: 'Badge';
 } & z.infer<typeof badgePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -292,7 +279,6 @@ export type ChipNode = {
   type: 'Chip';
 } & z.infer<typeof chipPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -309,7 +295,6 @@ export type DividerNode = {
   type: 'Divider';
 } & z.infer<typeof dividerPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -326,7 +311,6 @@ export type SpacerNode = {
   type: 'Spacer';
 } & z.infer<typeof spacerPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ===========================================================================
@@ -347,7 +331,6 @@ export type ButtonNode = {
   type: 'Button';
 } & z.infer<typeof buttonPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -364,7 +347,6 @@ export type ToggleNode = {
   type: 'Toggle';
 } & z.infer<typeof togglePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
-  condition?: z.infer<typeof exprSchema>;
 };
 
 // ===========================================================================

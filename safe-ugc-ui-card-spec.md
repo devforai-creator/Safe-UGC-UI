@@ -131,7 +131,7 @@ Displays an image from local assets only.
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref (no $expr) |
+| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref |
 | `alt` | No | string | literal or $ref |
 
 To control image dimensions, use `style.width` and `style.height` on the Image node. There are no `width` / `height` fields on Image nodes.
@@ -140,7 +140,6 @@ To control image dimensions, use `style.width` and `style.height` on the Image n
 - Must start with `@assets/`
 - No external URLs — `https://`, `http://`, `//`, `data:`, `javascript:` are all forbidden
 - No path traversal (`../`)
-- `$expr` is forbidden for src (security)
 
 #### Avatar
 Circular image, typically used for profile pictures. Follows the same `@assets/` rules as Image.
@@ -154,11 +153,11 @@ Circular image, typically used for profile pictures. Follows the same `@assets/`
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref (no $expr) |
+| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref |
 | `size` | No | length | literal or $ref |
 
 #### Icon
-Platform-provided icon. The icon name must be a static string — no dynamic binding allowed.
+Platform-provided icon. The icon name may be a literal string or a `$ref`.
 
 ```json
 {
@@ -169,7 +168,7 @@ Platform-provided icon. The icon name must be a static string — no dynamic bin
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `name` | Yes | string | static only (no $ref, no $expr) |
+| `name` | Yes | string | literal or $ref |
 | `size` | No | length | literal or $ref |
 | `color` | No | color | literal or $ref |
 
@@ -268,7 +267,7 @@ Boolean toggle switch that triggers a callback when flipped.
 
 ## 3. Style System
 
-Every component accepts an optional `style` object. Most style values can be literal or `$ref` (see Section 4), but some properties are **static-only** — they must be literal values, no `$ref` or `$expr`.
+Every component accepts an optional `style` object. Most style values can be literal or `$ref` (see Section 4), but some properties are **static-only** — they must be literal values, no `$ref`.
 
 **Static-only style properties** (literal values only):
 - `position`, `top`, `right`, `bottom`, `left`, `zIndex`
@@ -279,7 +278,7 @@ Every component accepts an optional `style` object. Most style values can be lit
 - `backgroundGradient`
 
 **Important:** For static-only object properties (e.g., `border*`, `boxShadow`, `backgroundGradient`), **all nested fields are also literal-only**.  
-Example: `borderLeft.color` cannot use `$ref` or `$expr`.
+Example: `borderLeft.color` cannot use `$ref`.
 
 All other style properties accept literal values or `$ref`.
 
@@ -302,14 +301,14 @@ All other style properties accept literal values or `$ref`.
 |----------|--------|
 | `display` | `"flex"` \| `"block"` \| `"none"` |
 | `flexDirection` | `"row"` \| `"column"` \| `"row-reverse"` \| `"column-reverse"` |
-| `justifyContent` | `"start"` \| `"center"` \| `"end"` \| `"space-between"` \| `"space-around"` \| `"space-evenly"` |
-| `alignItems` | `"start"` \| `"center"` \| `"end"` \| `"stretch"` \| `"baseline"` |
-| `alignSelf` | `"auto"` \| `"start"` \| `"center"` \| `"end"` \| `"stretch"` |
+| `justifyContent` | `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"space-between"` \| `"space-around"` \| `"space-evenly"` |
+| `alignItems` | `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"stretch"` \| `"baseline"` |
+| `alignSelf` | `"auto"` \| `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"stretch"` |
 | `flexWrap` | `"nowrap"` \| `"wrap"` \| `"wrap-reverse"` |
 | `flex` | number |
 | `gap` | number or length string |
 
-**IMPORTANT:** Use `"start"` and `"end"`, NOT `"flex-start"` or `"flex-end"`.
+`"start"` / `"end"` are preferred, but `"flex-start"` / `"flex-end"` are also accepted.
 
 ### 3.2 Sizing Properties
 
@@ -379,7 +378,7 @@ Accepted color formats:
 | Property | Values | Constraints |
 |----------|--------|-------------|
 | `fontSize` | number or length string | 8–72 px |
-| `fontWeight` | `"normal"` \| `"bold"` \| 100–900 (hundreds) | — |
+| `fontWeight` | `"normal"` \| `"bold"` \| `"100"`–`"900"` \| 100–900 (hundreds) | — |
 | `fontStyle` | `"normal"` \| `"italic"` | — |
 | `textAlign` | `"left"` \| `"center"` \| `"right"` \| `"justify"` | — |
 | `textDecoration` | `"none"` \| `"underline"` \| `"line-through"` | — |
@@ -707,8 +706,6 @@ In this example, the Text node receives all properties from the `heading` style,
 ## 4. State Binding ($ref)
 
 Use `state` to define data, and `$ref` to bind it into fields or style values.
-
-> **Important:** `$expr` is reserved for future use and **must not be used**. The schema accepts `$expr` for forward compatibility, but the renderer does not evaluate it — any `$expr` value will render as empty. Always use `$ref` with pre-computed state values instead.
 
 ### 4.1 Defining State
 
@@ -1332,22 +1329,22 @@ Before outputting a card, verify:
 - [ ] `Text.content` is present
 - [ ] `Image.src` starts with `@assets/` — no external URLs
 - [ ] `Avatar.src` starts with `@assets/` — no external URLs
-- [ ] `Icon.name` is a static string (no $ref, no $expr)
+- [ ] `Icon.name` is a string literal or `$ref`
 - [ ] `Button.action` and `Toggle.onToggle` are static strings
 
 **Dynamic values:**
-- [ ] Dynamic values use `$ref` only (`$expr` is reserved for future use — do not use)
+- [ ] Dynamic values use `$ref`
 - [ ] State values referenced by `$ref` exist in the `state` object
 
 **Styles:**
-- [ ] Alignment uses `"start"` / `"end"`, NOT `"flex-start"` / `"flex-end"`
+- [ ] Alignment uses valid layout keywords (`"start"`, `"end"`, `"flex-start"`, `"flex-end"`, etc.)
 - [ ] `fontSize` is between 8 and 72
 - [ ] `opacity` is between 0 and 1
 - [ ] No forbidden style properties (animation, filter, cursor, etc.)
 - [ ] No forbidden CSS functions in style strings (calc, var, url, env, expression)
 - [ ] All color values are valid (hex, rgb, hsl, or named color)
 - [ ] `assets` values (if any) all start with `@assets/` and contain no `../`
-- [ ] Static-only style properties use literal values (no `$ref`/`$expr` on position, border, transform, etc., including nested fields like `borderLeft.color`)
+- [ ] Static-only style properties use literal values (no `$ref` on position, border, transform, etc., including nested fields like `borderLeft.color`)
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
 - [ ] Grid properties use string values
 

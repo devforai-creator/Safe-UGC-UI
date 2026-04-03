@@ -91,10 +91,6 @@ describe('resolveValue', () => {
     expect(resolveValue({ $ref: '$hp' }, { hp: 50 })).toBe(50);
   });
 
-  it('returns undefined for $expr (Phase 2)', () => {
-    expect(resolveValue({ $expr: '$hp + 10' }, { hp: 50 })).toBeUndefined();
-  });
-
   it('returns undefined as-is', () => {
     expect(resolveValue(undefined, {})).toBeUndefined();
   });
@@ -104,7 +100,7 @@ describe('resolveValue', () => {
     expect(resolveValue(false, {})).toBe(false);
   });
 
-  it('returns plain objects without $ref or $expr as-is', () => {
+  it('returns plain objects without $ref as-is', () => {
     const obj = { foo: 'bar' };
     expect(resolveValue(obj, {})).toBe(obj);
   });
@@ -159,6 +155,16 @@ describe('mapStyle', () => {
     expect(result.flexDirection).toBe('column');
     expect(result.justifyContent).toBe('center');
     expect(result.alignItems).toBe('stretch');
+  });
+
+  it('preserves flex-start/flex-end alignment aliases', () => {
+    const result = mapStyle(
+      { justifyContent: 'flex-end', alignItems: 'flex-start', alignSelf: 'flex-end' },
+      {},
+    );
+    expect(result.justifyContent).toBe('flex-end');
+    expect(result.alignItems).toBe('flex-start');
+    expect(result.alignSelf).toBe('flex-end');
   });
 
   it('maps positioning properties', () => {
@@ -941,6 +947,15 @@ describe('New components rendering', () => {
     );
     expect(screen.getByTestId('icon')).not.toBeNull();
     expect(screen.getByTestId('icon').textContent).toBe('star');
+  });
+
+  it('Icon resolves name from $ref when iconResolver is provided', () => {
+    const iconResolver = (name: string) => <span data-testid="icon">{name}</span>;
+    const node = { type: 'Icon', name: { $ref: '$iconName' } };
+    const { container } = render(
+      <>{renderTree(node, { iconName: 'heart' }, {}, undefined, iconResolver)}</>,
+    );
+    expect(container.textContent).toContain('heart');
   });
 
   it('Icon returns null when iconResolver is not provided', () => {
