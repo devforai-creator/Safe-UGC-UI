@@ -1303,6 +1303,46 @@ describe('Hover rendering', () => {
     expect(box.style.height).toBe('200px');
   });
 
+  it('merges hoverStyle $style from card.styles and applies inline overrides on hover', () => {
+    const root = {
+      type: 'Box',
+      style: {
+        height: 200,
+        hoverStyle: {
+          $style: '  hoverCard  ',
+          height: 500,
+        },
+      },
+      children: [{ type: 'Text', content: 'hover me' }],
+    };
+
+    const cardStyles = {
+      hoverCard: {
+        backgroundColor: '#123456',
+        opacity: 0.6,
+        height: 400,
+      },
+    };
+
+    const { container } = render(
+      <>{renderTree(root, {}, {}, cardStyles)}</>,
+    );
+
+    const box = container.firstChild as HTMLElement;
+    expect(box).toBeTruthy();
+    expect(box.style.height).toBe('200px');
+    expect(box.style.backgroundColor).toBe('');
+
+    fireEvent.mouseEnter(box);
+    expect(box.style.height).toBe('500px');
+    expect(box.style.backgroundColor).toBe('rgb(18, 52, 86)');
+    expect(box.style.opacity).toBe('0.6');
+
+    fireEvent.mouseLeave(box);
+    expect(box.style.height).toBe('200px');
+    expect(box.style.backgroundColor).toBe('');
+  });
+
   it('renders without hover handlers when hoverStyle is absent', () => {
     const root = {
       type: 'Box',

@@ -35,7 +35,7 @@ Interaction: `Button`, `Toggle`
 - **Image fit/position props**: `objectFit` (`cover|contain|fill|none|scale-down`) and `objectPosition` (CSS object-position string) are allowed, including inside `hoverStyle`.
 - **Alignment aliases**: `"start"` / `"end"` are preferred, but `"flex-start"` / `"flex-end"` are also accepted.
 - **fontWeight**: accepts `"normal"`, `"bold"`, numeric values `100`–`900`, and numeric strings like `"900"`.
-- **Hover effects**: `style.hoverStyle` is allowed on every component. It follows the same validation rules as `style`, but `hoverStyle` cannot contain another `hoverStyle` and cannot use `$style`.
+- **Hover effects**: `style.hoverStyle` is allowed on every component. It follows the same validation rules as `style`, cannot contain another `hoverStyle`, and may use `$style` with the same merge semantics as base `style`.
 - **Transitions**: use structured objects only, for example
   `{ "transition": { "property": "height", "duration": 600, "easing": "ease" } }`.
   Raw CSS strings like `"height 0.6s ease"` are forbidden.
@@ -52,7 +52,7 @@ Interaction: `Button`, `Toggle`
 ```
 - Names: `/^[A-Za-z][A-Za-z0-9_-]*$/`
 - Inline overrides win
-- `$style` **not allowed inside** `styles` definitions
+- `$style` **not allowed anywhere inside** `styles` definitions, including `hoverStyle`
 
 ## 6) for...in Loops
 ```json
@@ -66,7 +66,7 @@ Inside template: `$item` and `$index`.
 2) `padding: "6px 8px"` (shorthand not allowed)  
 3) `Image.src` not starting with `@assets/`
 4) Raw CSS `"transition": "height 0.6s ease"` instead of structured transition objects
-5) Putting `$style` or nested `hoverStyle` inside `hoverStyle`
+5) Putting nested `hoverStyle` inside `hoverStyle`, or using `$style` anywhere inside `styles` definitions
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

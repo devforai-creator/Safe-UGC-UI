@@ -1972,6 +1972,34 @@ describe('validateStyles — hoverStyle', () => {
     const errors = validateStyles(views);
     expect(codes(errors)).toContain('INVALID_COLOR');
   });
+
+  it('accepts hoverStyle with a valid $style reference', () => {
+    const cardStyles = {
+      hoverCard: { height: 400, opacity: 0.8 },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { $style: '  hoverCard  ', backgroundColor: '#000' },
+      },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('reports errors from the merged hoverStyle result', () => {
+    const cardStyles = {
+      hoverCard: { fontSize: 999 },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { $style: 'hoverCard' },
+      },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
 });
 
 describe('validateStyles — transition', () => {
@@ -2058,15 +2086,15 @@ describe('validateStyles — transition', () => {
   });
 });
 
-describe('validateStyles — hoverStyle $style rejection', () => {
-  it('rejects $style inside hoverStyle', () => {
-    const views = makeViews({
-      type: 'Box',
-      style: {
-        hoverStyle: { $style: 'foo', opacity: 0.5 },
-      },
-    });
-    const errors = validateStyles(views);
-    expect(codes(errors)).toContain('INVALID_STYLE_REF');
+describe('validateStyles — hoverStyle $style restrictions', () => {
+  it('rejects $style inside card.styles hoverStyle definitions', () => {
+    const cardStyles = {
+      card: {
+        hoverStyle: { $style: 'other', opacity: 0.5 },
+      } as Record<string, unknown>,
+    };
+    const views = makeViews({ type: 'Box' });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('STYLE_CIRCULAR_REF');
   });
 });

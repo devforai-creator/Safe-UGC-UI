@@ -554,7 +554,8 @@ Every component's `style` object can include a `hoverStyle` sub-object. When the
 | Rule | Description |
 |------|-------------|
 | No nesting | `hoverStyle` cannot contain another `hoverStyle` |
-| No `$style` | `$style` references are not allowed inside `hoverStyle` |
+| `$style` allowed | `$style` references are allowed inside `hoverStyle`, using the same trim-and-merge semantics as base `style` |
+| No `$style` in `card.styles` | `card.styles` definitions cannot contain `$style` at the top level or inside `hoverStyle` |
 | Same validation | Forbidden properties, value ranges, and color validation apply exactly as they do in the base style |
 
 The renderer implements hover by swapping inline style objects on `onMouseEnter`/`onMouseLeave` and merging `hoverStyle` on top of the base style. No raw CSS `:hover` pseudo-class is used.
@@ -862,6 +863,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | transition duration | 0–2000 ms |
 | transition delay | 0–1000 ms |
 | hoverStyle nesting | forbidden (no hoverStyle inside hoverStyle) |
+| `$style` inside card.styles definitions | forbidden, including `hoverStyle.$style` |
 
 ---
 
@@ -1351,7 +1353,8 @@ Before outputting a card, verify:
 **Hover & Transition:**
 - [ ] `hoverStyle` is inside `style`, not at node level
 - [ ] No nested `hoverStyle` (hoverStyle inside hoverStyle is forbidden)
-- [ ] No `$style` inside `hoverStyle`
+- [ ] `$style` inside `hoverStyle` references a valid `styles` entry
+- [ ] No `$style` anywhere inside `styles` definitions
 - [ ] `transition` uses structured object(s), not raw CSS strings
 - [ ] `transition.property` is in the allowed property list
 - [ ] `transition.duration` is 0–2000 ms

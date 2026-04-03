@@ -303,7 +303,7 @@ const lineHeightValueSchema = z.union([z.number(), lengthSchema]);
 
 /**
  * Core style shape shared by both stylePropsSchema and hoverStylePropsSchema.
- * Extracted to avoid duplication and prevent recursive nesting of hoverStyle.
+ * Extracted to avoid duplication and keep hoverStyle aligned with base style.
  */
 const coreStyleShape = {
   // -----------------------------------------------------------------------
@@ -443,11 +443,8 @@ const coreStyleShape = {
 // (prevents infinite nesting)
 // ---------------------------------------------------------------------------
 
-// Destructure out $style from coreStyleShape — it's not allowed in hoverStyle
-const { $style: _$styleField, ...coreStyleShapeWithout$style } = coreStyleShape;
-
 export const hoverStylePropsSchema = z.object({
-  ...coreStyleShapeWithout$style,
+  ...coreStyleShape,
   transition: transitionFieldSchema,
 });
 

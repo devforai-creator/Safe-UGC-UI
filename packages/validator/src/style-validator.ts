@@ -263,6 +263,89 @@ function validateShadowObject(
 
 const STYLE_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
+function reportStyleRefError(
+  rawRef: string,
+  stylePath: string,
+  cardStyles: Record<string, Record<string, unknown>> | undefined,
+  errors: ValidationError[],
+): string | undefined {
+  const trimmedRef = rawRef.trim();
+
+  if (!STYLE_NAME_PATTERN.test(trimmedRef)) {
+    errors.push(
+      createError(
+        'INVALID_STYLE_REF',
+        `$style value "${rawRef}" is invalid; must match /^[A-Za-z][A-Za-z0-9_-]*$/ at "${stylePath}.$style"`,
+        `${stylePath}.$style`,
+      ),
+    );
+    return undefined;
+  }
+
+  if (!cardStyles || !(trimmedRef in cardStyles)) {
+    errors.push(
+      createError(
+        'STYLE_REF_NOT_FOUND',
+        `$style references "${trimmedRef}" which is not defined in card.styles at "${stylePath}.$style"`,
+        `${stylePath}.$style`,
+      ),
+    );
+    return undefined;
+  }
+
+  return trimmedRef;
+}
+
+function resolveStyleRef(
+  style: Record<string, unknown>,
+  stylePath: string,
+  cardStyles: Record<string, Record<string, unknown>> | undefined,
+  errors: ValidationError[],
+): Record<string, unknown> | undefined {
+  if (typeof style.$style !== 'string') {
+    return style;
+  }
+
+  const trimmedRef = reportStyleRefError(style.$style, stylePath, cardStyles, errors);
+  if (!trimmedRef || !cardStyles) {
+    return undefined;
+  }
+
+  return mergeStyleWithRef(cardStyles[trimmedRef], style);
+}
+
+function collectNestedStyleRefErrors(
+  value: unknown,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      collectNestedStyleRefErrors(value[i], `${path}[${i}]`, errors);
+    }
+    return;
+  }
+
+  if (typeof value !== 'object' || value === null) {
+    return;
+  }
+
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    const childPath = `${path}.${key}`;
+    if (key === '$style') {
+      errors.push(
+        createError(
+          'STYLE_CIRCULAR_REF',
+          `$style cannot be used inside card.styles definitions at "${childPath}"`,
+          childPath,
+        ),
+      );
+      continue;
+    }
+    collectNestedStyleRefErrors(child, childPath, errors);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // validateSingleStyle — reusable per-style validation logic
 // ---------------------------------------------------------------------------
@@ -287,6 +370,8 @@ function validateSingleStyle(
   style: Record<string, unknown>,
   stylePath: string,
   errors: ValidationError[],
+  cardStyles?: Record<string, Record<string, unknown>>,
+  allowHoverStyleRefs: boolean = true,
 ): void {
   // ------------------------------------------------------------------
   // 1. Forbidden properties (spec 3.8)
@@ -692,19 +777,20 @@ function validateSingleStyle(
         );
       }
 
-      // $style is not allowed inside hoverStyle (no resolution path)
-      if ('$style' in hoverObj) {
-        errors.push(
-          createError(
-            'INVALID_STYLE_REF',
-            `$style is not allowed inside hoverStyle at "${hoverPath}.$style"`,
-            `${hoverPath}.$style`,
-          ),
+      const mergedHoverStyle = allowHoverStyleRefs
+        ? resolveStyleRef(hoverObj, hoverPath, cardStyles, errors)
+        : hoverObj;
+
+      if (mergedHoverStyle) {
+        // Validate hoverStyle with the same rules (recursive call)
+        validateSingleStyle(
+          mergedHoverStyle,
+          hoverPath,
+          errors,
+          cardStyles,
+          allowHoverStyleRefs,
         );
       }
-
-      // Validate hoverStyle with the same rules (recursive call)
-      validateSingleStyle(hoverObj, hoverPath, errors);
     }
   }
 
@@ -854,19 +940,11 @@ export function validateStyles(
         );
       }
 
-      // $style cannot be used inside card.styles definitions (circular ref)
-      if ('$style' in styleEntry) {
-        errors.push(
-          createError(
-            'STYLE_CIRCULAR_REF',
-            `$style cannot be used inside card.styles definitions at "${entryPath}.$style"`,
-            `${entryPath}.$style`,
-          ),
-        );
-      }
+      // $style cannot be used anywhere inside card.styles definitions
+      collectNestedStyleRefErrors(styleEntry, entryPath, errors);
 
       // Run all per-style validations on this entry
-      validateSingleStyle(styleEntry, entryPath, errors);
+      validateSingleStyle(styleEntry, entryPath, errors, undefined, false);
     }
   }
 
@@ -881,43 +959,10 @@ export function validateStyles(
 
     const stylePath = `${ctx.path}.style`;
 
-    // Check for $style reference
-    if ('$style' in style && typeof style.$style === 'string') {
-      const rawRef = style.$style;
-      const trimmedRef = rawRef.trim();
-
-      // Validate $style value format
-      if (!STYLE_NAME_PATTERN.test(trimmedRef)) {
-        errors.push(
-          createError(
-            'INVALID_STYLE_REF',
-            `$style value "${rawRef}" is invalid; must match /^[A-Za-z][A-Za-z0-9_-]*$/ at "${stylePath}.$style"`,
-            `${stylePath}.$style`,
-          ),
-        );
-        return;
-      }
-
-      // Check that the referenced style exists
-      if (!cardStyles || !(trimmedRef in cardStyles)) {
-        errors.push(
-          createError(
-            'STYLE_REF_NOT_FOUND',
-            `$style references "${trimmedRef}" which is not defined in card.styles at "${stylePath}.$style"`,
-            `${stylePath}.$style`,
-          ),
-        );
-        return;
-      }
-
-      // Merge: card.styles[name] as base, inline styles (minus $style) as overrides
-      const mergedStyle = mergeStyleWithRef(cardStyles[trimmedRef], style);
-
-      // Validate the merged result
-      validateSingleStyle(mergedStyle, stylePath, errors);
-    } else {
-      // No $style — validate the inline style directly
-      validateSingleStyle(style, stylePath, errors);
+    const mergedStyle = resolveStyleRef(style, stylePath, cardStyles, errors);
+    if (mergedStyle) {
+      // No $style or valid $style — validate the effective style
+      validateSingleStyle(mergedStyle, stylePath, errors, cardStyles);
     }
   });
 

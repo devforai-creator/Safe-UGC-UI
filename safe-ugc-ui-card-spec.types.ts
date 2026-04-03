@@ -232,10 +232,9 @@ export interface BaseStyle {
 /**
  * Hover style supports the same style fields as the base style, except:
  * - no nested hoverStyle
- * - no $style references
  * - objectFit/objectPosition are allowed
  */
-export type HoverStyle = Omit<BaseStyle, '$style'> & {
+export type HoverStyle = BaseStyle & {
   transition?: TransitionField;
 };
 

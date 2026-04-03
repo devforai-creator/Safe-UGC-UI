@@ -2,12 +2,12 @@
  * @safe-ugc-ui/react --- Node Renderer
  *
  * Recursive renderer that maps UGC node types to React components.
- * Supports all 16 component types, for-loop rendering, $style merge,
+ * Supports all 16 component types, for-loop rendering, style reference merge,
  * and runtime limits pre-check.
  *
  * For each node:
  *   1. Pre-check runtime limits (node count, style bytes, overflow, text bytes)
- *   2. Merge $style with inline styles
+ *   2. Merge $style with inline styles (including hoverStyle.$style)
  *   3. Resolve $ref values in node fields using state-resolver (with locals)
  *   4. Map style fields to React CSSProperties using style-mapper
  *   5. Resolve asset paths for Image/Avatar src using asset-resolver
@@ -118,33 +118,63 @@ function utf8ByteLength(str: string): number {
 }
 
 /**
- * Merge $style from cardStyles with inline style.
+ * Merge a single style object from cardStyles with inline style overrides.
  * Returns the merged raw style (unresolved $ref values) and the style
  * without $style key.
+ */
+function mergeNamedStyle(
+  style: Record<string, unknown> | undefined,
+  cardStyles: Record<string, Record<string, unknown>> | undefined,
+): Record<string, unknown> | undefined {
+  if (!style) return undefined;
+
+  const rawStyleName = style.$style;
+  const styleName = typeof rawStyleName === 'string' ? rawStyleName.trim() : rawStyleName;
+  if (!styleName || typeof styleName !== 'string' || !cardStyles) {
+    // Return style without $style key if present
+    if (style.$style !== undefined) {
+      const { $style: _, ...rest } = style;
+      return rest;
+    }
+    return style;
+  }
+
+  const baseStyle = cardStyles[styleName];
+  if (!baseStyle) return style;
+
+  // Merge: base from cardStyles, overridden by inline (excluding $style key)
+  const { $style: _, ...inlineWithout$style } = style;
+  return { ...baseStyle, ...inlineWithout$style };
+}
+
+/**
+ * Merge node style and nested hoverStyle against cardStyles.
  */
 function mergeStyleWithCardStyles(
   nodeStyle: Record<string, unknown> | undefined,
   cardStyles: Record<string, Record<string, unknown>> | undefined,
 ): Record<string, unknown> | undefined {
-  if (!nodeStyle) return undefined;
+  const mergedStyle = mergeNamedStyle(nodeStyle, cardStyles);
+  if (!mergedStyle) return undefined;
 
-  const rawStyleName = nodeStyle.$style;
-  const styleName = typeof rawStyleName === 'string' ? rawStyleName.trim() : rawStyleName;
-  if (!styleName || typeof styleName !== 'string' || !cardStyles) {
-    // Return style without $style key if present
-    if (nodeStyle.$style !== undefined) {
-      const { $style: _, ...rest } = nodeStyle;
-      return rest;
-    }
-    return nodeStyle;
+  const rawHoverStyle = mergedStyle.hoverStyle;
+  if (typeof rawHoverStyle !== 'object' || rawHoverStyle === null || Array.isArray(rawHoverStyle)) {
+    return mergedStyle;
   }
 
-  const baseStyle = cardStyles[styleName];
-  if (!baseStyle) return nodeStyle;
+  const mergedHoverStyle = mergeNamedStyle(
+    rawHoverStyle as Record<string, unknown>,
+    cardStyles,
+  );
 
-  // Merge: base from cardStyles, overridden by inline (excluding $style key)
-  const { $style: _, ...inlineWithout$style } = nodeStyle;
-  return { ...baseStyle, ...inlineWithout$style };
+  if (!mergedHoverStyle) {
+    return mergedStyle;
+  }
+
+  return {
+    ...mergedStyle,
+    hoverStyle: mergedHoverStyle,
+  };
 }
 
 // ---------------------------------------------------------------------------
