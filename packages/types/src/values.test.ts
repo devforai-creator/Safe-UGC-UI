@@ -13,6 +13,8 @@ import {
   ZINDEX_MIN,
   ZINDEX_MAX,
   ALL_COMPONENT_TYPES,
+  ALLOWED_FONT_FAMILIES,
+  ALLOWED_TRANSITION_PROPERTIES,
   FORBIDDEN_STYLE_PROPERTIES,
 } from './constants.js';
 
@@ -341,5 +343,20 @@ describe('constants', () => {
 
   it('FORBIDDEN_STYLE_PROPERTIES contains exactly 11 entries', () => {
     expect(FORBIDDEN_STYLE_PROPERTIES).toHaveLength(11);
+  });
+
+  it('ALLOWED_FONT_FAMILIES contains the expected font tokens', () => {
+    expect(ALLOWED_FONT_FAMILIES).toEqual([
+      'sans',
+      'serif',
+      'mono',
+      'rounded',
+      'display',
+      'handwriting',
+    ]);
+  });
+
+  it('ALLOWED_TRANSITION_PROPERTIES includes textShadow', () => {
+    expect(ALLOWED_TRANSITION_PROPERTIES).toContain('textShadow');
   });
 });

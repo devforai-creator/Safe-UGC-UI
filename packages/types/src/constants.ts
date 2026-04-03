@@ -74,6 +74,22 @@ export const FONT_SIZE_MIN = 8;
 /** Maximum allowed font size (px). */
 export const FONT_SIZE_MAX = 72;
 
+/** Font family tokens exposed by the style system. */
+export const ALLOWED_FONT_FAMILIES = [
+  'sans',
+  'serif',
+  'mono',
+  'rounded',
+  'display',
+  'handwriting',
+] as const;
+
+/** Maximum number of text-shadow entries. */
+export const TEXT_SHADOW_MAX_COUNT = 5;
+
+/** Maximum blur radius for a text-shadow (px). */
+export const TEXT_SHADOW_BLUR_MAX = 100;
+
 /** Maximum number of box-shadow entries. */
 export const BOX_SHADOW_MAX_COUNT = 5;
 
@@ -123,7 +139,7 @@ export const ALLOWED_TRANSITION_PROPERTIES = [
   'lineHeight', 'letterSpacing', 'opacity', 'overflow', 'position',
   'top', 'right', 'bottom', 'left', 'zIndex',
   'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
-  'objectFit', 'objectPosition',
+  'objectFit', 'objectPosition', 'textShadow',
 ] as const;
 
 // ---------------------------------------------------------------------------

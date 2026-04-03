@@ -17,7 +17,7 @@
  * | zIndex            |   yes   |  no  |
  * | structured style objects | object literal | top-level $ref no |
  *
- * Structured style objects such as border/transform/boxShadow/backgroundGradient
+ * Structured style objects such as border/transform/boxShadow/textShadow/backgroundGradient
  * must remain object literals, but selected leaf fields inside them may use $ref.
  */
 
@@ -67,6 +67,7 @@ const STRUCTURED_OBJECT_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
 
   // Shadow
   'boxShadow',
+  'textShadow',
 ]);
 
 /**

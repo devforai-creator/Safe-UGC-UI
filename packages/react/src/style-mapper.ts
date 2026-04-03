@@ -8,7 +8,9 @@
  *   - border / borderTop/Right/Bottom/Left objects -> CSS shorthand strings
  *   - transform object -> CSS transform string
  *   - boxShadow object(s) -> CSS box-shadow string
+ *   - textShadow object(s) -> CSS text-shadow string
  *   - backgroundGradient object -> CSS background string
+ *   - fontFamily token -> CSS font-family stack
  *   - Dynamic values ($ref) are resolved via state-resolver
  */
 
@@ -34,6 +36,15 @@ const DIRECT_MAP_PROPS = [
   'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
   'objectFit', 'objectPosition',
 ] as const;
+
+const FONT_FAMILY_STACKS: Record<string, string> = {
+  sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  serif: 'ui-serif, Georgia, Cambria, "Times New Roman", serif',
+  mono: 'ui-monospace, "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+  rounded: '"SF Pro Rounded", ui-rounded, "Hiragino Maru Gothic ProN", "Nunito", system-ui, sans-serif',
+  display: '"Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif',
+  handwriting: '"Bradley Hand", "Segoe Print", "Comic Sans MS", "Marker Felt", cursive',
+};
 
 // ---------------------------------------------------------------------------
 // Forbidden CSS functions (defense-in-depth)
@@ -197,6 +208,67 @@ function resolveBoxShadowValue(
 }
 
 // ---------------------------------------------------------------------------
+// Helper: text shadow object(s) -> CSS text-shadow string
+// ---------------------------------------------------------------------------
+
+function singleTextShadowToCss(shadow: Record<string, unknown>): string {
+  const offsetX = shadow.offsetX ?? 0;
+  const offsetY = shadow.offsetY ?? 0;
+  const blur = shadow.blur ?? 0;
+  const color = shadow.color ?? '#000';
+  return `${String(offsetX)}px ${String(offsetY)}px ${String(blur)}px ${String(color)}`;
+}
+
+function resolveTextShadowObject(
+  shadow: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(shadow)) {
+    return undefined;
+  }
+
+  const resolved: Record<string, unknown> = {};
+  const offsetX = resolveStructuredNumber(shadow.offsetX, state, locals);
+  const offsetY = resolveStructuredNumber(shadow.offsetY, state, locals);
+  const blur = resolveStructuredNumber(shadow.blur, state, locals);
+  const color = resolveStructuredString(shadow.color, state, locals);
+
+  if (offsetX !== undefined) resolved.offsetX = offsetX;
+  if (offsetY !== undefined) resolved.offsetY = offsetY;
+  if (blur !== undefined) resolved.blur = blur;
+  if (color !== undefined) resolved.color = color;
+
+  return resolved;
+}
+
+function textShadowToCss(shadow: unknown): string {
+  if (Array.isArray(shadow)) {
+    return shadow
+      .map((s) => singleTextShadowToCss(s as Record<string, unknown>))
+      .join(', ');
+  }
+  if (typeof shadow === 'object' && shadow !== null) {
+    return singleTextShadowToCss(shadow as Record<string, unknown>);
+  }
+  return '';
+}
+
+function resolveTextShadowValue(
+  shadow: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): unknown {
+  if (Array.isArray(shadow)) {
+    return shadow
+      .map((item) => resolveTextShadowObject(item, state, locals))
+      .filter((item): item is Record<string, unknown> => item !== undefined);
+  }
+
+  return resolveTextShadowObject(shadow, state, locals);
+}
+
+// ---------------------------------------------------------------------------
 // Helper: gradient object -> CSS background string
 // ---------------------------------------------------------------------------
 
@@ -210,6 +282,11 @@ function gradientToCss(gradient: Record<string, unknown>): string {
 
   if (gradient.type === 'radial') {
     return `radial-gradient(circle, ${stopsStr})`;
+  }
+
+  if (gradient.type === 'repeating-linear') {
+    const direction = (gradient.direction as string) ?? '180deg';
+    return `repeating-linear-gradient(${direction}, ${stopsStr})`;
   }
 
   // Default to linear
@@ -353,6 +430,11 @@ export function mapStyle(
     }
   }
 
+  const fontFamilyToken = resolveStructuredString(style.fontFamily, state, locals);
+  if (fontFamilyToken && fontFamilyToken in FONT_FAMILY_STACKS) {
+    css.fontFamily = FONT_FAMILY_STACKS[fontFamilyToken];
+  }
+
   // Transform object -> CSS transform string
   const resolvedTransform = resolveTransformObject(style.transform, state, locals);
   if (resolvedTransform) {
@@ -382,6 +464,15 @@ export function mapStyle(
     const shadowCss = shadowToCss(resolvedShadow);
     if (shadowCss) {
       css.boxShadow = shadowCss;
+    }
+  }
+
+  // Text shadow
+  if (style.textShadow) {
+    const resolvedShadow = resolveTextShadowValue(style.textShadow, state, locals);
+    const shadowCss = textShadowToCss(resolvedShadow);
+    if (shadowCss) {
+      css.textShadow = shadowCss;
     }
   }
 

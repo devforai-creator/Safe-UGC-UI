@@ -13,6 +13,7 @@
  */
 
 import { z } from 'zod';
+import { ALLOWED_FONT_FAMILIES } from './constants.js';
 import {
   refSchema,
   dynamicSchema,
@@ -60,18 +61,31 @@ export const radialGradientSchema = z.object({
 export type RadialGradient = z.infer<typeof radialGradientSchema>;
 
 // ---------------------------------------------------------------------------
-// 1.4 GradientObject (union)
+// 1.4 RepeatingLinearGradient
+// ---------------------------------------------------------------------------
+
+export const repeatingLinearGradientSchema = z.object({
+  type: z.literal('repeating-linear'),
+  direction: dynamicSchema(z.string()), // e.g. "180deg"
+  stops: z.array(gradientStopSchema),
+});
+
+export type RepeatingLinearGradient = z.infer<typeof repeatingLinearGradientSchema>;
+
+// ---------------------------------------------------------------------------
+// 1.5 GradientObject (union)
 // ---------------------------------------------------------------------------
 
 export const gradientObjectSchema = z.union([
   linearGradientSchema,
   radialGradientSchema,
+  repeatingLinearGradientSchema,
 ]);
 
 export type GradientObject = z.infer<typeof gradientObjectSchema>;
 
 // ---------------------------------------------------------------------------
-// 1.5 ShadowObject
+// 1.6 ShadowObject
 // ---------------------------------------------------------------------------
 
 export const shadowObjectSchema = z.object({
@@ -85,7 +99,20 @@ export const shadowObjectSchema = z.object({
 export type ShadowObject = z.infer<typeof shadowObjectSchema>;
 
 // ---------------------------------------------------------------------------
-// 1.6 BorderObject
+// 1.7 TextShadowObject
+// ---------------------------------------------------------------------------
+
+export const textShadowObjectSchema = z.object({
+  offsetX: dynamicSchema(z.number()),
+  offsetY: dynamicSchema(z.number()),
+  blur: dynamicSchema(z.number()).optional(),
+  color: dynamicSchema(z.string()),
+});
+
+export type TextShadowObject = z.infer<typeof textShadowObjectSchema>;
+
+// ---------------------------------------------------------------------------
+// 1.8 BorderObject
 // ---------------------------------------------------------------------------
 
 export const borderStyleValueSchema = z.enum(['solid', 'dashed', 'dotted', 'none']);
@@ -99,7 +126,7 @@ export const borderObjectSchema = z.object({
 export type BorderObject = z.infer<typeof borderObjectSchema>;
 
 // ---------------------------------------------------------------------------
-// 1.7 TransformObject (skew intentionally excluded — forbidden by spec 3.6)
+// 1.9 TransformObject (skew intentionally excluded — forbidden by spec 3.6)
 // ---------------------------------------------------------------------------
 
 export const transformObjectSchema = z.object({
@@ -232,7 +259,14 @@ export const fontStyleValueSchema = z.enum(['normal', 'italic']);
 export type FontStyleValue = z.infer<typeof fontStyleValueSchema>;
 
 // ---------------------------------------------------------------------------
-// 2.12 FontWeightValue
+// 2.12 FontFamilyValue
+// ---------------------------------------------------------------------------
+
+export const fontFamilyValueSchema = z.enum(ALLOWED_FONT_FAMILIES);
+export type FontFamilyValue = z.infer<typeof fontFamilyValueSchema>;
+
+// ---------------------------------------------------------------------------
+// 2.13 FontWeightValue
 // ---------------------------------------------------------------------------
 
 export const fontWeightValueSchema = z.union([
@@ -362,6 +396,7 @@ const coreStyleShape = {
   // -----------------------------------------------------------------------
   // Typography — Dynamic
   // -----------------------------------------------------------------------
+  fontFamily: dynamicSchema(fontFamilyValueSchema).optional(),
   fontSize: dynamicSchema(lengthSchema).optional(),
   fontWeight: dynamicSchema(fontWeightValueSchema).optional(),
   fontStyle: dynamicSchema(fontStyleValueSchema).optional(),
@@ -385,6 +420,13 @@ const coreStyleShape = {
   // -----------------------------------------------------------------------
   boxShadow: z
     .union([shadowObjectSchema, z.array(shadowObjectSchema)])
+    .optional(),
+
+  // -----------------------------------------------------------------------
+  // Text shadow — Static only (single or array of shadows)
+  // -----------------------------------------------------------------------
+  textShadow: z
+    .union([textShadowObjectSchema, z.array(textShadowObjectSchema)])
     .optional(),
 
   // -----------------------------------------------------------------------

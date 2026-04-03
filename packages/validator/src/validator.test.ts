@@ -1974,6 +1974,96 @@ describe('validateLimits — loop source resolution policy', () => {
 // hoverStyle and transition validation
 // ===========================================================================
 
+describe('validateStyles — new style fields', () => {
+  it('accepts fontFamily, textShadow, and repeating-linear gradient together', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Text',
+          content: 'styled',
+          style: {
+            fontFamily: 'handwriting',
+            textShadow: {
+              offsetX: 1,
+              offsetY: 2,
+              blur: 6,
+              color: 'rgba(0,0,0,0.35)',
+            },
+            backgroundGradient: {
+              type: 'repeating-linear',
+              direction: '180deg',
+              stops: [
+                { color: '#fff7c2', position: '0%' },
+                { color: '#fff7c2', position: '24px' },
+                { color: '#f3e6a5', position: '24px' },
+                { color: '#f3e6a5', position: '25px' },
+              ],
+            },
+          },
+        },
+      },
+    };
+
+    const result = validate(card);
+    expect(result.valid).toBe(true);
+  });
+});
+
+describe('validateStyles — textShadow', () => {
+  it('accepts valid textShadow', () => {
+    const views = makeViews({
+      type: 'Text',
+      content: 'glow',
+      style: {
+        textShadow: { offsetX: 1, offsetY: 2, blur: 8, color: '#000' },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects textShadow array with more than 5 entries', () => {
+    const shadows = Array.from({ length: 6 }, (_, i) => ({
+      offsetX: i,
+      offsetY: i,
+      blur: 2,
+      color: '#000',
+    }));
+    const views = makeViews({
+      type: 'Text',
+      content: 'glow',
+      style: { textShadow: shadows },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects textShadow blur exceeding max', () => {
+    const views = makeViews({
+      type: 'Text',
+      content: 'glow',
+      style: {
+        textShadow: { offsetX: 0, offsetY: 0, blur: 120, color: '#000' },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+  });
+
+  it('rejects invalid textShadow color', () => {
+    const views = makeViews({
+      type: 'Text',
+      content: 'glow',
+      style: {
+        textShadow: { offsetX: 0, offsetY: 0, blur: 8, color: 'badcolor' },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_COLOR');
+  });
+});
+
 describe('validateStyles — hoverStyle', () => {
   it('accepts valid hoverStyle', () => {
     const views = makeViews({
@@ -2083,6 +2173,21 @@ describe('validateStyles — transition', () => {
           { property: 'height', duration: 600 },
           { property: 'opacity', duration: 300, easing: 'ease-in-out' },
         ],
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('accepts textShadow as a transition property', () => {
+    const views = makeViews({
+      type: 'Text',
+      content: 'hover me',
+      style: {
+        transition: { property: 'textShadow', duration: 300, easing: 'ease-out' },
+        hoverStyle: {
+          textShadow: { offsetX: 0, offsetY: 0, blur: 12, color: '#ffcc66' },
+        },
       },
     });
     const errors = validateStyles(views);

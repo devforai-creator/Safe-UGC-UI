@@ -277,6 +277,7 @@ Every component accepts an optional `style` object. Most style values can be lit
 - `transform.rotate`, `transform.scale`, `transform.translateX`, `transform.translateY`
 - `border*.width`, `border*.style`, `border*.color`
 - `boxShadow.offsetX`, `boxShadow.offsetY`, `boxShadow.blur`, `boxShadow.spread`, `boxShadow.color`
+- `textShadow.offsetX`, `textShadow.offsetY`, `textShadow.blur`, `textShadow.color`
 - `backgroundGradient.direction`, `backgroundGradient.stops[].color`, `backgroundGradient.stops[].position`
 
 Example: `borderLeft.color` may use `$ref`, but `borderLeft` itself cannot be a `$ref`.
@@ -366,6 +367,7 @@ Accepted color formats:
 
 ```json
 {
+  "fontFamily": "handwriting",
   "fontSize": 16,
   "fontWeight": "bold",
   "fontStyle": "italic",
@@ -378,6 +380,7 @@ Accepted color formats:
 
 | Property | Values | Constraints |
 |----------|--------|-------------|
+| `fontFamily` | `"sans"` \| `"serif"` \| `"mono"` \| `"rounded"` \| `"display"` \| `"handwriting"` | mapped to renderer-provided safe font stacks |
 | `fontSize` | number or length string | 8–72 px |
 | `fontWeight` | `"normal"` \| `"bold"` \| `"100"`–`"900"` \| 100–900 (hundreds) | — |
 | `fontStyle` | `"normal"` \| `"italic"` | — |
@@ -427,11 +430,16 @@ Each directional borderRadius has the same max 9999 constraint as `borderRadius`
   "boxShadow": {
     "offsetX": 0, "offsetY": 4, "blur": 12, "spread": 0,
     "color": "rgba(0,0,0,0.15)"
+  },
+  "textShadow": {
+    "offsetX": 0, "offsetY": 1, "blur": 8,
+    "color": "rgba(255,255,255,0.85)"
   }
 }
 ```
 
 Multiple shadows use an array. Max 5 shadows. Blur max 100, spread max 50.
+`textShadow` uses the same object-or-array pattern, but has no `spread` field. Max 5 text shadows. Blur max 100.
 
 ### 3.8 Gradient
 
@@ -449,6 +457,7 @@ Multiple shadows use an array. Max 5 shadows. Blur max 100, spread max 50.
 ```
 
 Types: `"linear"` (requires `direction`) or `"radial"`.
+`"repeating-linear"` is also allowed and uses the same `direction` + `stops` shape as `"linear"`.
 
 ### 3.9 Transform
 
@@ -607,7 +616,7 @@ It is most commonly placed on the base `style` to animate changes when `hoverSty
 
 **Allowed transition properties:**
 
-`display`, `flexDirection`, `justifyContent`, `alignItems`, `alignSelf`, `flexWrap`, `flex`, `gap`, `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`, `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft`, `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft`, `backgroundColor`, `color`, `borderRadius`, `borderRadiusTopLeft`, `borderRadiusTopRight`, `borderRadiusBottomLeft`, `borderRadiusBottomRight`, `fontSize`, `fontWeight`, `fontStyle`, `textAlign`, `textDecoration`, `lineHeight`, `letterSpacing`, `opacity`, `overflow`, `position`, `top`, `right`, `bottom`, `left`, `zIndex`, `gridTemplateColumns`, `gridTemplateRows`, `gridColumn`, `gridRow`, `objectFit`, `objectPosition`
+`display`, `flexDirection`, `justifyContent`, `alignItems`, `alignSelf`, `flexWrap`, `flex`, `gap`, `width`, `height`, `minWidth`, `maxWidth`, `minHeight`, `maxHeight`, `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft`, `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft`, `backgroundColor`, `color`, `borderRadius`, `borderRadiusTopLeft`, `borderRadiusTopRight`, `borderRadiusBottomLeft`, `borderRadiusBottomRight`, `fontSize`, `fontWeight`, `fontStyle`, `textAlign`, `textDecoration`, `lineHeight`, `letterSpacing`, `opacity`, `overflow`, `position`, `top`, `right`, `bottom`, `left`, `zIndex`, `gridTemplateColumns`, `gridTemplateRows`, `gridColumn`, `gridRow`, `objectFit`, `objectPosition`, `textShadow`
 
 Any property not in this list will be rejected by the validator.
 
@@ -859,6 +868,8 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | boxShadow count | max 5 |
 | boxShadow blur | max 100 |
 | boxShadow spread | max 50 |
+| textShadow count | max 5 |
+| textShadow blur | max 100 |
 | overflow: auto count | max 2 per card, no nesting |
 | transition definitions per style | max 10 |
 | transition duration | 0–2000 ms |
@@ -1349,6 +1360,7 @@ Before outputting a card, verify:
 - [ ] `assets` values (if any) all start with `@assets/` and contain no `../`
 - [ ] `position`, offsets, `overflow`, and `zIndex` use literal values (no `$ref`)
 - [ ] Structured style objects are object literals; if dynamic values are needed, use `$ref` inside leaf fields like `borderLeft.color`
+- [ ] `fontFamily` uses one of the allowed tokens
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
 - [ ] Grid properties use string values
 

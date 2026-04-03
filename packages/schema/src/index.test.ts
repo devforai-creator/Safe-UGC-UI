@@ -54,6 +54,8 @@ describe('generateCardSchema', () => {
     expect(styleProps?.border?.properties?.color?.anyOf).toHaveLength(2);
     expect(styleProps?.transform?.properties?.scale?.anyOf).toHaveLength(2);
     expect(styleProps?.boxShadow?.anyOf?.[0]?.properties?.color?.anyOf).toHaveLength(2);
+    expect(styleProps?.textShadow?.anyOf?.[0]?.properties?.color?.anyOf).toHaveLength(2);
+    expect(styleProps?.fontFamily?.anyOf).toHaveLength(2);
     expect(
       styleProps?.backgroundGradient?.anyOf?.[0]?.properties?.stops?.items?.properties?.color?.anyOf,
     ).toHaveLength(2);

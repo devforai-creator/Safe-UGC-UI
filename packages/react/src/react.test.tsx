@@ -286,6 +286,27 @@ describe('mapStyle', () => {
     expect(result.background).toBe('radial-gradient(circle, white 0%, black 100%)');
   });
 
+  it('converts backgroundGradient to CSS background (repeating-linear)', () => {
+    const result = mapStyle(
+      {
+        backgroundGradient: {
+          type: 'repeating-linear',
+          direction: '180deg',
+          stops: [
+            { color: '#fff7c2', position: '0%' },
+            { color: '#fff7c2', position: '24px' },
+            { color: '#f3e6a5', position: '24px' },
+            { color: '#f3e6a5', position: '25px' },
+          ],
+        },
+      },
+      {},
+    );
+    expect(result.background).toBe(
+      'repeating-linear-gradient(180deg, #fff7c2 0%, #fff7c2 24px, #f3e6a5 24px, #f3e6a5 25px)',
+    );
+  });
+
   it('converts transform with rotate', () => {
     const result = mapStyle({ transform: { rotate: '45deg' } }, {});
     expect(result.transform).toContain('rotate(45deg)');
@@ -354,6 +375,42 @@ describe('mapStyle', () => {
     );
     expect(result.boxShadow).toContain('2px 4px 6px');
     expect(result.boxShadow).toContain('#000');
+  });
+
+  it('converts textShadow to CSS string', () => {
+    const result = mapStyle(
+      { textShadow: { offsetX: 1, offsetY: 2, blur: 4, color: '#000' } },
+      {},
+    );
+    expect(result.textShadow).toBe('1px 2px 4px #000');
+  });
+
+  it('resolves nested $ref in textShadow fields', () => {
+    const result = mapStyle(
+      {
+        textShadow: {
+          offsetX: { $ref: '$shadow.x' },
+          offsetY: { $ref: '$shadow.y' },
+          blur: { $ref: '$shadow.blur' },
+          color: { $ref: '$shadow.color' },
+        },
+      },
+      {
+        shadow: {
+          x: 0,
+          y: 0,
+          blur: 12,
+          color: '#ffaa33',
+        },
+      },
+    );
+    expect(result.textShadow).toBe('0px 0px 12px #ffaa33');
+  });
+
+  it('maps fontFamily token to a CSS font stack', () => {
+    const result = mapStyle({ fontFamily: 'handwriting' }, {});
+    expect(result.fontFamily).toContain('cursive');
+    expect(result.fontFamily).toContain('Comic Sans MS');
   });
 
   it('resolves $ref values in style properties', () => {
@@ -1321,6 +1378,11 @@ describe('mapTransition', () => {
   it('converts borderRadiusTopLeft to correct CSS name', () => {
     const result = mapTransition({ property: 'borderRadiusTopLeft', duration: 300 });
     expect(result).toBe('border-top-left-radius 300ms');
+  });
+
+  it('converts textShadow to the correct CSS property name', () => {
+    const result = mapTransition({ property: 'textShadow', duration: 300 });
+    expect(result).toBe('text-shadow 300ms');
   });
 
   it('converts transition with delay', () => {

@@ -4,6 +4,7 @@
  * Validates style properties according to the spec's style restrictions:
  *   - Forbidden CSS properties (spec 3.8)
  *   - Numeric range limits (spec 6.4)
+ *   - Text-shadow count and value limits
  *   - Box-shadow count and value limits
  *   - Transform skew prohibition
  *   - Dangerous CSS function injection detection
@@ -23,6 +24,8 @@ import {
   TRANSFORM_TRANSLATE_MAX,
   FONT_SIZE_MIN,
   FONT_SIZE_MAX,
+  TEXT_SHADOW_MAX_COUNT,
+  TEXT_SHADOW_BLUR_MAX,
   BOX_SHADOW_MAX_COUNT,
   BOX_SHADOW_BLUR_MAX,
   BOX_SHADOW_SPREAD_MAX,
@@ -257,6 +260,38 @@ function validateShadowObject(
   }
 }
 
+/**
+ * Validate a single text-shadow object's blur value and color.
+ */
+function validateTextShadowObject(
+  shadow: Record<string, unknown>,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (
+    isLiteralNumber(shadow.blur) &&
+    shadow.blur > TEXT_SHADOW_BLUR_MAX
+  ) {
+    errors.push(
+      createError(
+        'STYLE_VALUE_OUT_OF_RANGE',
+        `textShadow blur (${shadow.blur}) exceeds maximum of ${TEXT_SHADOW_BLUR_MAX} at "${path}.blur"`,
+        `${path}.blur`,
+      ),
+    );
+  }
+
+  if (isLiteralString(shadow.color) && !isValidColor(shadow.color)) {
+    errors.push(
+      createError(
+        'INVALID_COLOR',
+        `Invalid color "${shadow.color}" at "${path}.color"`,
+        `${path}.color`,
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Regex for valid $style references and style names
 // ---------------------------------------------------------------------------
@@ -357,14 +392,15 @@ function collectNestedStyleRefErrors(
  *   1. Forbidden style properties (spec 3.8)
  *   2. Numeric range limits (spec 6.4)
  *   3. Box-shadow count and value limits
- *   4. Transform skew prohibition
- *   5. CSS function injection in string values
- *   6. Overflow: scroll prohibition (defense-in-depth)
- *   7. Color format validation
- *   8. Length format validation
- *   9. Range checks on string length values
- *  10. Border color validation
- *  11. Background gradient stop color validation
+ *   4. Text-shadow count and value limits
+ *   5. Transform skew prohibition
+ *   6. CSS function injection in string values
+ *   7. Overflow: scroll prohibition (defense-in-depth)
+ *   8. Color format validation
+ *   9. Length format validation
+ *  10. Range checks on string length values
+ *  11. Border color validation
+ *  12. Background gradient stop color validation
  */
 function validateSingleStyle(
   style: Record<string, unknown>,
@@ -583,14 +619,51 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 5. CSS function injection — scan all string values
+  // 4. Text-shadow limits
+  // ------------------------------------------------------------------
+  if ('textShadow' in style && style.textShadow != null) {
+    const textShadow = style.textShadow;
+    const textShadowPath = `${stylePath}.textShadow`;
+
+    if (Array.isArray(textShadow)) {
+      if (textShadow.length > TEXT_SHADOW_MAX_COUNT) {
+        errors.push(
+          createError(
+            'STYLE_VALUE_OUT_OF_RANGE',
+            `textShadow has ${textShadow.length} entries, maximum is ${TEXT_SHADOW_MAX_COUNT} at "${textShadowPath}"`,
+            textShadowPath,
+          ),
+        );
+      }
+
+      for (let i = 0; i < textShadow.length; i++) {
+        const shadow = textShadow[i];
+        if (typeof shadow === 'object' && shadow !== null) {
+          validateTextShadowObject(
+            shadow as Record<string, unknown>,
+            `${textShadowPath}[${i}]`,
+            errors,
+          );
+        }
+      }
+    } else if (typeof textShadow === 'object' && textShadow !== null) {
+      validateTextShadowObject(
+        textShadow as Record<string, unknown>,
+        textShadowPath,
+        errors,
+      );
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // 6. CSS function injection — scan all string values
   // ------------------------------------------------------------------
   for (const [key, value] of Object.entries(style)) {
     collectDangerousCssErrors(value, `${stylePath}.${key}`, errors);
   }
 
   // ------------------------------------------------------------------
-  // 6. Overflow: scroll forbidden (defense-in-depth)
+  // 7. Overflow: scroll forbidden (defense-in-depth)
   // ------------------------------------------------------------------
   if ('overflow' in style && style.overflow === 'scroll') {
     errors.push(
@@ -603,7 +676,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 7. Color format validation
+  // 8. Color format validation
   // ------------------------------------------------------------------
   for (const prop of COLOR_PROPERTIES) {
     if (
@@ -624,7 +697,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 8. Length format validation
+  // 9. Length format validation
   // ------------------------------------------------------------------
   for (const prop of LENGTH_PROPERTIES) {
     if (
@@ -656,7 +729,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 9. Range checks on string length values
+  // 10. Range checks on string length values
   // ------------------------------------------------------------------
   for (const [prop, range] of Object.entries(RANGE_LENGTH_PROPERTIES)) {
     if (
@@ -680,7 +753,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 10. Border color validation (border + borderTop/Right/Bottom/Left)
+  // 11. Border color validation (border + borderTop/Right/Bottom/Left)
   // ------------------------------------------------------------------
   const borderKeys = ['border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft'] as const;
   for (const borderKey of borderKeys) {
@@ -710,7 +783,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 11. Background gradient stop color validation
+  // 12. Background gradient stop color validation
   // ------------------------------------------------------------------
   if (
     'backgroundGradient' in style &&
@@ -749,7 +822,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 12. hoverStyle validation (spec 3.9)
+  // 13. hoverStyle validation (spec 3.9)
   // ------------------------------------------------------------------
   if ('hoverStyle' in style && style.hoverStyle != null) {
     const hoverStyle = style.hoverStyle;
@@ -795,7 +868,7 @@ function validateSingleStyle(
   }
 
   // ------------------------------------------------------------------
-  // 13. transition validation (spec 3.9)
+  // 14. transition validation (spec 3.9)
   // ------------------------------------------------------------------
   if ('transition' in style && style.transition != null) {
     const transition = style.transition;
