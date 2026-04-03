@@ -17,7 +17,7 @@
  */
 
 import { z } from 'zod';
-import { stylePropsSchema } from './styles.js';
+import { responsivePropsSchema, stylePropsSchema } from './styles.js';
 import {
   textPropsSchema,
   imagePropsSchema,
@@ -75,6 +75,7 @@ type Children = UGCNode[] | ForLoop;
 
 const baseFields = {
   style: stylePropsSchema.optional(),
+  responsive: responsivePropsSchema.optional(),
 };
 
 // ===========================================================================
@@ -95,6 +96,7 @@ export type BoxNode = {
   type: 'Box';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -111,6 +113,7 @@ export type RowNode = {
   type: 'Row';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -127,6 +130,7 @@ export type ColumnNode = {
   type: 'Column';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -143,6 +147,7 @@ export type StackNode = {
   type: 'Stack';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -159,6 +164,7 @@ export type GridNode = {
   type: 'Grid';
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ===========================================================================
@@ -179,6 +185,7 @@ export type TextNode = {
   type: 'Text';
 } & z.infer<typeof textPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -195,6 +202,7 @@ export type ImageNode = {
   type: 'Image';
 } & z.infer<typeof imagePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ===========================================================================
@@ -215,6 +223,7 @@ export type ProgressBarNode = {
   type: 'ProgressBar';
 } & z.infer<typeof progressBarPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -231,6 +240,7 @@ export type AvatarNode = {
   type: 'Avatar';
 } & z.infer<typeof avatarPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -247,6 +257,7 @@ export type IconNode = {
   type: 'Icon';
 } & z.infer<typeof iconPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -263,6 +274,7 @@ export type BadgeNode = {
   type: 'Badge';
 } & z.infer<typeof badgePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -279,6 +291,7 @@ export type ChipNode = {
   type: 'Chip';
 } & z.infer<typeof chipPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -295,6 +308,7 @@ export type DividerNode = {
   type: 'Divider';
 } & z.infer<typeof dividerPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -311,6 +325,7 @@ export type SpacerNode = {
   type: 'Spacer';
 } & z.infer<typeof spacerPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ===========================================================================
@@ -331,6 +346,7 @@ export type ButtonNode = {
   type: 'Button';
 } & z.infer<typeof buttonPropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ---------------------------------------------------------------------------
@@ -347,6 +363,7 @@ export type ToggleNode = {
   type: 'Toggle';
 } & z.infer<typeof togglePropsSchema> & {
   style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
 // ===========================================================================

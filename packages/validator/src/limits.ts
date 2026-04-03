@@ -23,6 +23,12 @@ import {
 
 import { type ValidationError, createError } from './result.js';
 import { type TraversableNode, type TraversalContext, traverseCard } from './traverse.js';
+import {
+  type ResponsiveMode,
+  RESPONSIVE_MODES,
+  getEffectiveStyleForMode,
+  getMergedCompactResponsiveStyle,
+} from './responsive-utils.js';
 
 // ---------------------------------------------------------------------------
 // UTF-8 byte length — platform-agnostic (no DOM/Node dependency)
@@ -118,7 +124,7 @@ interface TemplateMetrics {
   nodes: number;
   textBytes: number;
   styleBytes: number;
-  overflowAutoCount: number;
+  overflowAutoCount: Record<ResponsiveMode, number>;
 }
 
 /**
@@ -130,7 +136,15 @@ function countTemplateMetrics(
   template: unknown,
   cardStyles?: Record<string, Record<string, unknown>>,
 ): TemplateMetrics {
-  const result: TemplateMetrics = { nodes: 0, textBytes: 0, styleBytes: 0, overflowAutoCount: 0 };
+  const result: TemplateMetrics = {
+    nodes: 0,
+    textBytes: 0,
+    styleBytes: 0,
+    overflowAutoCount: {
+      default: 0,
+      compact: 0,
+    },
+  };
   if (template == null || typeof template !== 'object') return result;
 
   const node = template as Record<string, unknown>;
@@ -147,37 +161,33 @@ function countTemplateMetrics(
   }
 
   // Style bytes (merged with $style)
-  if (node.style != null && typeof node.style === 'object') {
-    const style = node.style as Record<string, unknown>;
-    let styleForBytes = style;
-    if (
-      typeof style.$style === 'string' &&
-      cardStyles &&
-      style.$style.trim() in cardStyles
-    ) {
-      const refName = (style.$style as string).trim();
-      const merged: Record<string, unknown> = { ...cardStyles[refName] };
-      for (const [key, value] of Object.entries(style)) {
-        if (key !== '$style') merged[key] = value;
-      }
-      styleForBytes = merged;
+  {
+    const baseStyleForBytes = getEffectiveStyleForMode(
+      node as TraversableNode,
+      cardStyles,
+      'default',
+    );
+    if (baseStyleForBytes) {
+      result.styleBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
     }
-    result.styleBytes = utf8ByteLength(JSON.stringify(styleForBytes));
 
-    // Overflow auto
-    let effectiveOverflow = style.overflow;
-    if (
-      typeof style.$style === 'string' &&
-      cardStyles &&
-      style.$style.trim() in cardStyles
-    ) {
-      const refName = (style.$style as string).trim();
-      if (!('overflow' in style) || style.overflow === undefined) {
-        effectiveOverflow = cardStyles[refName].overflow;
-      }
+    const compactStyleForBytes = getMergedCompactResponsiveStyle(
+      node as TraversableNode,
+      cardStyles,
+    );
+    if (compactStyleForBytes) {
+      result.styleBytes += utf8ByteLength(JSON.stringify(compactStyleForBytes));
     }
-    if (effectiveOverflow === 'auto') {
-      result.overflowAutoCount = 1;
+
+    for (const mode of RESPONSIVE_MODES) {
+      const effectiveStyle = getEffectiveStyleForMode(
+        node as TraversableNode,
+        cardStyles,
+        mode,
+      );
+      if (effectiveStyle?.overflow === 'auto') {
+        result.overflowAutoCount[mode]++;
+      }
     }
   }
 
@@ -189,7 +199,9 @@ function countTemplateMetrics(
       result.nodes += childMetrics.nodes;
       result.textBytes += childMetrics.textBytes;
       result.styleBytes += childMetrics.styleBytes;
-      result.overflowAutoCount += childMetrics.overflowAutoCount;
+      for (const mode of RESPONSIVE_MODES) {
+        result.overflowAutoCount[mode] += childMetrics.overflowAutoCount[mode];
+      }
     }
   } else if (
     children != null &&
@@ -204,7 +216,9 @@ function countTemplateMetrics(
     result.nodes += innerMetrics.nodes;
     result.textBytes += innerMetrics.textBytes;
     result.styleBytes += innerMetrics.styleBytes;
-    result.overflowAutoCount += innerMetrics.overflowAutoCount;
+    for (const mode of RESPONSIVE_MODES) {
+      result.overflowAutoCount[mode] += innerMetrics.overflowAutoCount[mode];
+    }
   }
 
   return result;
@@ -237,7 +251,10 @@ export function validateLimits(
   let nodeCount = 0;
   let textContentBytes = 0;
   let styleObjectsBytes = 0;
-  let overflowAutoCount = 0;
+  const overflowAutoCount: Record<ResponsiveMode, number> = {
+    default: 0,
+    compact: 0,
+  };
 
   traverseCard(card.views, (node: TraversableNode, context: TraversalContext) => {
     // -----------------------------------------------------------------------
@@ -258,24 +275,23 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     // 3. Style objects total bytes (use merged style if $style is present)
     // -----------------------------------------------------------------------
-    if (node.style != null && typeof node.style === 'object') {
-      let styleForBytes = node.style;
-      if (
-        typeof node.style.$style === 'string' &&
-        card.cardStyles &&
-        node.style.$style.trim() in card.cardStyles
-      ) {
-        const refName = node.style.$style.trim();
-        const merged: Record<string, unknown> = { ...card.cardStyles[refName] };
-        for (const [key, value] of Object.entries(node.style)) {
-          if (key !== '$style') {
-            merged[key] = value;
-          }
-        }
-        styleForBytes = merged;
+    {
+      const baseStyleForBytes = getEffectiveStyleForMode(
+        node,
+        card.cardStyles,
+        'default',
+      );
+      if (baseStyleForBytes) {
+        styleObjectsBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
       }
-      const serialized = JSON.stringify(styleForBytes);
-      styleObjectsBytes += utf8ByteLength(serialized);
+
+      const compactStyleForBytes = getMergedCompactResponsiveStyle(
+        node,
+        card.cardStyles,
+      );
+      if (compactStyleForBytes) {
+        styleObjectsBytes += utf8ByteLength(JSON.stringify(compactStyleForBytes));
+      }
     }
 
     // -----------------------------------------------------------------------
@@ -337,7 +353,9 @@ export function validateLimits(
             nodeCount += tplMetrics.nodes * multiplier;
             textContentBytes += tplMetrics.textBytes * multiplier;
             styleObjectsBytes += tplMetrics.styleBytes * multiplier;
-            overflowAutoCount += tplMetrics.overflowAutoCount * multiplier;
+            for (const mode of RESPONSIVE_MODES) {
+              overflowAutoCount[mode] += tplMetrics.overflowAutoCount[mode] * multiplier;
+            }
           }
         }
       }
@@ -359,22 +377,10 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     // 6. overflow: auto count (use merged style if $style is present)
     // -----------------------------------------------------------------------
-    {
-      let effectiveOverflow = node.style?.overflow;
-      if (
-        node.style &&
-        typeof node.style.$style === 'string' &&
-        card.cardStyles &&
-        node.style.$style.trim() in card.cardStyles
-      ) {
-        const refName = node.style.$style.trim();
-        // Inline overflow takes precedence; if not set, use card.styles value
-        if (!('overflow' in node.style) || node.style.overflow === undefined) {
-          effectiveOverflow = card.cardStyles[refName].overflow as string | undefined;
-        }
-      }
-      if (effectiveOverflow === 'auto') {
-        overflowAutoCount++;
+    for (const mode of RESPONSIVE_MODES) {
+      const effectiveStyle = getEffectiveStyleForMode(node, card.cardStyles, mode);
+      if (effectiveStyle?.overflow === 'auto') {
+        overflowAutoCount[mode]++;
       }
     }
 
@@ -426,11 +432,16 @@ export function validateLimits(
     );
   }
 
-  if (overflowAutoCount > MAX_OVERFLOW_AUTO_COUNT) {
+  const maxOverflowAutoCount = Math.max(
+    overflowAutoCount.default,
+    overflowAutoCount.compact,
+  );
+
+  if (maxOverflowAutoCount > MAX_OVERFLOW_AUTO_COUNT) {
     errors.push(
       createError(
         'OVERFLOW_AUTO_COUNT_EXCEEDED',
-        `Card has ${overflowAutoCount} elements with overflow:auto, max is ${MAX_OVERFLOW_AUTO_COUNT}`,
+        `Card has ${maxOverflowAutoCount} elements with overflow:auto in at least one responsive mode, max is ${MAX_OVERFLOW_AUTO_COUNT}`,
         'views',
       ),
     );

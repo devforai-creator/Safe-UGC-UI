@@ -10,6 +10,7 @@
  *   - position: relative — establishes positioning context for children
  */
 
+import { forwardRef } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 interface UGCContainerProps {
@@ -28,10 +29,12 @@ const containerStyle: CSSProperties = {
  * Security isolation wrapper for UGC content.
  * All UGC card renderings should be wrapped in this container.
  */
-export function UGCContainer({ children, style }: UGCContainerProps) {
-  const mergedStyle: CSSProperties = style
-    ? { ...containerStyle, ...style }
-    : containerStyle;
+export const UGCContainer = forwardRef<HTMLDivElement, UGCContainerProps>(
+  function UGCContainer({ children, style }, ref) {
+    const mergedStyle: CSSProperties = style
+      ? { ...containerStyle, ...style }
+      : containerStyle;
 
-  return <div style={mergedStyle}>{children}</div>;
-}
+    return <div ref={ref} style={mergedStyle}>{children}</div>;
+  },
+);

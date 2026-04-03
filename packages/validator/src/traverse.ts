@@ -53,6 +53,7 @@ export interface TraversableNode {
   type: string;
   children?: TraversableNode[] | ForLoopLike;
   style?: Record<string, unknown>;
+  responsive?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -74,6 +75,10 @@ export type NodeVisitor = (
   node: TraversableNode,
   context: TraversalContext,
 ) => void | false;
+
+export type StyleResolver = (
+  node: TraversableNode,
+) => Record<string, unknown> | undefined;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -106,6 +111,7 @@ export function traverseNode(
   node: TraversableNode,
   context: TraversalContext,
   visitor: NodeVisitor,
+  styleResolver?: StyleResolver,
 ): void {
   const result = visitor(node, context);
 
@@ -122,7 +128,7 @@ export function traverseNode(
   const nextStackDepth =
     node.type === 'Stack' ? context.stackDepth + 1 : context.stackDepth;
   const nextOverflowAuto =
-    context.overflowAutoAncestor || hasOverflowAuto(node.style);
+    context.overflowAutoAncestor || hasOverflowAuto(styleResolver ? styleResolver(node) : node.style);
 
   if (isForLoop(children)) {
     // ForLoop: traverse the template node
@@ -134,7 +140,7 @@ export function traverseNode(
       overflowAutoAncestor: nextOverflowAuto,
       stackDepth: nextStackDepth,
     };
-    traverseNode(children.template, childCtx, visitor);
+    traverseNode(children.template, childCtx, visitor, styleResolver);
   } else if (Array.isArray(children)) {
     // Array of child nodes
     for (let i = 0; i < children.length; i++) {
@@ -148,7 +154,7 @@ export function traverseNode(
           overflowAutoAncestor: nextOverflowAuto,
           stackDepth: nextStackDepth,
         };
-        traverseNode(child as TraversableNode, childCtx, visitor);
+        traverseNode(child as TraversableNode, childCtx, visitor, styleResolver);
       }
     }
   }
@@ -167,6 +173,7 @@ export function traverseNode(
 export function traverseCard(
   views: Record<string, unknown>,
   visitor: NodeVisitor,
+  styleResolver?: StyleResolver,
 ): void {
   for (const [viewName, rootNode] of Object.entries(views)) {
     if (
@@ -186,6 +193,6 @@ export function traverseCard(
       stackDepth: 0,
     };
 
-    traverseNode(rootNode as TraversableNode, context, visitor);
+    traverseNode(rootNode as TraversableNode, context, visitor, styleResolver);
   }
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { resolveRef, resolveValue } from './state-resolver.js';
@@ -7,6 +7,19 @@ import { resolveAsset } from './asset-resolver.js';
 import { renderTree } from './node-renderer.js';
 import { UGCContainer } from './UGCContainer.js';
 import { UGCRenderer } from './UGCRenderer.js';
+
+const originalResizeObserver = globalThis.ResizeObserver;
+const originalInnerWidth = window.innerWidth;
+
+afterEach(() => {
+  globalThis.ResizeObserver = originalResizeObserver;
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    value: originalInnerWidth,
+    writable: true,
+  });
+  vi.restoreAllMocks();
+});
 
 // =============================================================================
 // 1. state-resolver
@@ -1161,6 +1174,47 @@ describe('$style rendering', () => {
   });
 });
 
+describe('responsive rendering', () => {
+  it('applies compact overrides when renderTree receives compact responsive state', () => {
+    const node = {
+      type: 'Box',
+      style: { width: '360px', padding: 24 },
+      responsive: {
+        compact: { width: '100%', padding: 12, flexDirection: 'column' },
+      },
+      children: [],
+    };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: true })}</>,
+    );
+    const div = container.querySelector('div');
+    expect(div?.style.width).toBe('100%');
+    expect(div?.style.padding).toBe('12px');
+    expect(div?.style.flexDirection).toBe('column');
+  });
+
+  it('keeps base hoverStyle active while using compact overrides', () => {
+    const node = {
+      type: 'Box',
+      style: {
+        height: 200,
+        hoverStyle: { height: 300 },
+      },
+      responsive: {
+        compact: { height: 120 },
+      },
+      children: [],
+    };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: true })}</>,
+    );
+    const div = container.querySelector('div') as HTMLElement;
+    expect(div.style.height).toBe('120px');
+    fireEvent.mouseEnter(div);
+    expect(div.style.height).toBe('300px');
+  });
+});
+
 describe('Runtime limits', () => {
   it('stops rendering when node count exceeds limit', () => {
     // Create a tree with > 10001 nodes via deeply nested for-loop
@@ -1248,6 +1302,7 @@ describe('UGCRenderer with new fields', () => {
     const boxDiv = innerDivs[innerDivs.length - 1];
     expect(boxDiv).not.toBeNull();
   });
+
 });
 
 // ===========================================================================

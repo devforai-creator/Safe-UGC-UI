@@ -19,10 +19,10 @@
  *   - onAction:       Optional callback for Button/Toggle actions
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { validate, validateRaw } from '@safe-ugc-ui/validator';
-import type { UGCCard } from '@safe-ugc-ui/types';
+import { COMPACT_BREAKPOINT_MAX_WIDTH, type UGCCard } from '@safe-ugc-ui/types';
 
 import { UGCContainer } from './UGCContainer.js';
 import { renderTree } from './node-renderer.js';
@@ -78,6 +78,11 @@ export function UGCRenderer({
   iconResolver,
   onAction,
 }: UGCRendererProps) {
+  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(
+    typeof window === 'undefined' ? null : window.innerWidth,
+  );
+
   const result = useMemo(() => {
     // 1. Validate
     const validationResult =
@@ -121,6 +126,44 @@ export function UGCRenderer({
     };
   }, [card, viewName, stateOverride]);
 
+  useEffect(() => {
+    if (!containerElement) {
+      return;
+    }
+
+    const updateWidth = (nextWidth?: number) => {
+      if (typeof nextWidth === 'number' && Number.isFinite(nextWidth)) {
+        setContainerWidth(nextWidth);
+        return;
+      }
+      setContainerWidth(containerElement.getBoundingClientRect().width);
+    };
+
+    updateWidth();
+
+    if (typeof ResizeObserver === 'function') {
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        updateWidth(entry?.contentRect?.width);
+      });
+      observer.observe(containerElement);
+      return () => observer.disconnect();
+    }
+
+    const handleResize = () => updateWidth();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [containerElement]);
+
+  const responsive = useMemo(
+    () => ({
+      compact:
+        containerWidth != null &&
+        containerWidth <= COMPACT_BREAKPOINT_MAX_WIDTH,
+    }),
+    [containerWidth],
+  );
+
   // Handle invalid cards
   if (!result.valid) {
     if (onError && result.errors.length > 0) {
@@ -131,7 +174,7 @@ export function UGCRenderer({
 
   // Render the view tree inside the secure container
   return (
-    <UGCContainer style={containerStyle}>
+    <UGCContainer ref={setContainerElement} style={containerStyle}>
       {renderTree(
         result.rootNode,
         result.state,
@@ -140,6 +183,7 @@ export function UGCRenderer({
         iconResolver,
         onAction,
         onError,
+        responsive,
       )}
     </UGCContainer>
   );

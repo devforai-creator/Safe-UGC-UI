@@ -74,6 +74,12 @@ const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> = {
   borderRadiusBottomRight: { min: 0, max: BORDER_RADIUS_MAX },
 };
 
+interface StyleValidationOptions {
+  allowHoverStyle?: boolean;
+  allowTransition?: boolean;
+  allowHoverStyleRefs?: boolean;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -407,14 +413,22 @@ function validateSingleStyle(
   stylePath: string,
   errors: ValidationError[],
   cardStyles?: Record<string, Record<string, unknown>>,
-  allowHoverStyleRefs: boolean = true,
+  options: StyleValidationOptions = {},
 ): void {
+  const {
+    allowHoverStyle = true,
+    allowTransition = true,
+    allowHoverStyleRefs = true,
+  } = options;
+
   // ------------------------------------------------------------------
   // 1. Forbidden properties (spec 3.8)
   //    Note: 'transition' and 'hoverStyle' are handled as structured
   //    fields (sections 12-13), not raw CSS properties.
   // ------------------------------------------------------------------
-  const STRUCTURED_FIELDS = new Set(['transition', 'hoverStyle']);
+  const STRUCTURED_FIELDS = new Set<string>();
+  if (allowTransition) STRUCTURED_FIELDS.add('transition');
+  if (allowHoverStyle) STRUCTURED_FIELDS.add('hoverStyle');
   for (const key of Object.keys(style)) {
     if (
       !STRUCTURED_FIELDS.has(key) &&
@@ -428,6 +442,26 @@ function validateSingleStyle(
         ),
       );
     }
+  }
+
+  if (!allowHoverStyle && 'hoverStyle' in style) {
+    errors.push(
+      createError(
+        'INVALID_VALUE',
+        `hoverStyle is not allowed inside responsive overrides at "${stylePath}.hoverStyle"`,
+        `${stylePath}.hoverStyle`,
+      ),
+    );
+  }
+
+  if (!allowTransition && 'transition' in style) {
+    errors.push(
+      createError(
+        'INVALID_VALUE',
+        `transition is not allowed inside responsive overrides at "${stylePath}.transition"`,
+        `${stylePath}.transition`,
+      ),
+    );
   }
 
   // ------------------------------------------------------------------
@@ -824,7 +858,7 @@ function validateSingleStyle(
   // ------------------------------------------------------------------
   // 13. hoverStyle validation (spec 3.9)
   // ------------------------------------------------------------------
-  if ('hoverStyle' in style && style.hoverStyle != null) {
+  if (allowHoverStyle && 'hoverStyle' in style && style.hoverStyle != null) {
     const hoverStyle = style.hoverStyle;
     const hoverPath = `${stylePath}.hoverStyle`;
 
@@ -861,7 +895,11 @@ function validateSingleStyle(
           hoverPath,
           errors,
           cardStyles,
-          allowHoverStyleRefs,
+          {
+            allowHoverStyle,
+            allowTransition,
+            allowHoverStyleRefs,
+          },
         );
       }
     }
@@ -870,7 +908,7 @@ function validateSingleStyle(
   // ------------------------------------------------------------------
   // 14. transition validation (spec 3.9)
   // ------------------------------------------------------------------
-  if ('transition' in style && style.transition != null) {
+  if (allowTransition && 'transition' in style && style.transition != null) {
     const transition = style.transition;
     const transPath = `${stylePath}.transition`;
 
@@ -1017,7 +1055,9 @@ export function validateStyles(
       collectNestedStyleRefErrors(styleEntry, entryPath, errors);
 
       // Run all per-style validations on this entry
-      validateSingleStyle(styleEntry, entryPath, errors, undefined, false);
+      validateSingleStyle(styleEntry, entryPath, errors, undefined, {
+        allowHoverStyleRefs: false,
+      });
     }
   }
 
@@ -1026,16 +1066,48 @@ export function validateStyles(
   // ------------------------------------------------------------------
   traverseCard(views, (node: TraversableNode, ctx: TraversalContext) => {
     const style = node.style;
-    if (style == null || typeof style !== 'object') {
+    if (style != null && typeof style === 'object') {
+      const stylePath = `${ctx.path}.style`;
+
+      const mergedStyle = resolveStyleRef(style, stylePath, cardStyles, errors);
+      if (mergedStyle) {
+        // No $style or valid $style — validate the effective style
+        validateSingleStyle(mergedStyle, stylePath, errors, cardStyles);
+      }
+    }
+
+    const responsive = node.responsive;
+    if (
+      responsive == null ||
+      typeof responsive !== 'object' ||
+      Array.isArray(responsive)
+    ) {
       return;
     }
 
-    const stylePath = `${ctx.path}.style`;
+    const compact = (responsive as Record<string, unknown>).compact;
+    if (
+      compact == null ||
+      typeof compact !== 'object' ||
+      Array.isArray(compact)
+    ) {
+      return;
+    }
 
-    const mergedStyle = resolveStyleRef(style, stylePath, cardStyles, errors);
-    if (mergedStyle) {
-      // No $style or valid $style — validate the effective style
-      validateSingleStyle(mergedStyle, stylePath, errors, cardStyles);
+    const compactPath = `${ctx.path}.responsive.compact`;
+    const mergedCompact = resolveStyleRef(
+      compact as Record<string, unknown>,
+      compactPath,
+      cardStyles,
+      errors,
+    );
+
+    if (mergedCompact) {
+      validateSingleStyle(mergedCompact, compactPath, errors, cardStyles, {
+        allowHoverStyle: false,
+        allowTransition: false,
+        allowHoverStyleRefs: false,
+      });
     }
   });
 

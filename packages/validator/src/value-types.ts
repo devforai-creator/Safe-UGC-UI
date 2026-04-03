@@ -74,11 +74,10 @@ const STRUCTURED_OBJECT_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
  * Validate the `style` of a node according to the value type table.
  */
 function validateNodeStyle(
-  node: TraversableNode,
-  ctx: TraversalContext,
+  style: Record<string, unknown> | undefined,
+  path: string,
   errors: ValidationError[],
 ): void {
-  const style = node.style;
   if (!style) {
     return;
   }
@@ -99,7 +98,7 @@ function validateNodeStyle(
           createError(
             'DYNAMIC_NOT_ALLOWED',
             `Style property "${prop}" must be a static literal; $ref is not allowed.`,
-            `${ctx.path}.style.${prop}`,
+            `${path}.${prop}`,
           ),
         );
       }
@@ -109,7 +108,7 @@ function validateNodeStyle(
           createError(
             'DYNAMIC_NOT_ALLOWED',
             `Style property "${prop}" must be an object literal; use $ref only inside its nested fields.`,
-            `${ctx.path}.style.${prop}`,
+            `${path}.${prop}`,
           ),
         );
       }
@@ -134,7 +133,27 @@ export function validateValueTypes(
   const errors: ValidationError[] = [];
 
   traverseCard(views, (node: TraversableNode, ctx: TraversalContext) => {
-    validateNodeStyle(node, ctx, errors);
+    validateNodeStyle(node.style, `${ctx.path}.style`, errors);
+
+    const responsive = node.responsive;
+    if (
+      responsive != null &&
+      typeof responsive === 'object' &&
+      !Array.isArray(responsive)
+    ) {
+      const compact = (responsive as Record<string, unknown>).compact;
+      if (
+        compact != null &&
+        typeof compact === 'object' &&
+        !Array.isArray(compact)
+      ) {
+        validateNodeStyle(
+          compact as Record<string, unknown>,
+          `${ctx.path}.responsive.compact`,
+          errors,
+        );
+      }
+    }
   });
 
   return errors;

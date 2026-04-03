@@ -56,6 +56,7 @@ import { Toggle } from './components/Toggle.js';
 interface UGCNodeLike {
   type: string;
   style?: Record<string, unknown>;
+  responsive?: Record<string, unknown>;
   children?: unknown;
   [key: string]: unknown;
 }
@@ -86,6 +87,9 @@ export interface RenderContext {
   onAction?: (type: string, actionId: string, payload?: unknown) => void;
   onError?: (errors: Array<{ code: string; message: string; path: string }>) => void;
   limits: RuntimeLimits;
+  responsive: {
+    compact: boolean;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -177,6 +181,53 @@ function mergeStyleWithCardStyles(
   };
 }
 
+function getCompactResponsiveStyle(
+  nodeResponsive: Record<string, unknown> | undefined,
+): Record<string, unknown> | undefined {
+  if (!nodeResponsive) return undefined;
+
+  const compact = nodeResponsive.compact;
+  if (
+    compact == null ||
+    typeof compact !== 'object' ||
+    Array.isArray(compact)
+  ) {
+    return undefined;
+  }
+
+  return compact as Record<string, unknown>;
+}
+
+function mergeEffectiveNodeStyle(
+  node: UGCNodeLike,
+  ctx: RenderContext,
+): Record<string, unknown> | undefined {
+  const baseStyle = mergeStyleWithCardStyles(node.style, ctx.cardStyles);
+  if (!ctx.responsive.compact) {
+    return baseStyle;
+  }
+
+  const compactOverride = mergeNamedStyle(
+    getCompactResponsiveStyle(node.responsive),
+    ctx.cardStyles,
+  );
+
+  if (!compactOverride) {
+    return baseStyle;
+  }
+
+  const {
+    hoverStyle: _hoverStyle,
+    transition: _transition,
+    ...compactStyleWithoutInteractiveFields
+  } = compactOverride;
+
+  return {
+    ...(baseStyle ?? {}),
+    ...compactStyleWithoutInteractiveFields,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // renderNode --- recursive node renderer
 // ---------------------------------------------------------------------------
@@ -198,7 +249,7 @@ export function renderNode(
   if (!n.type) return null;
 
   // --- Compute all deltas before committing any ---
-  const mergedRawStyle = mergeStyleWithCardStyles(n.style, ctx.cardStyles);
+  const mergedRawStyle = mergeEffectiveNodeStyle(n, ctx);
   const rv = (val: unknown) => resolveValue(val, ctx.state, ctx.locals);
 
   const styleDelta = mergedRawStyle ? utf8ByteLength(JSON.stringify(mergedRawStyle)) : 0;
@@ -484,6 +535,7 @@ export function renderTree(
   iconResolver?: (name: string) => ReactNode,
   onAction?: (type: string, actionId: string, payload?: unknown) => void,
   onError?: (errors: Array<{ code: string; message: string; path: string }>) => void,
+  responsive: { compact: boolean } = { compact: false },
 ): ReactNode {
   const limits: RuntimeLimits = {
     nodeCount: 0,
@@ -499,6 +551,7 @@ export function renderTree(
     onAction,
     onError,
     limits,
+    responsive,
   };
   return renderNode(rootNode, ctx, 'root');
 }

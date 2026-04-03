@@ -126,6 +126,23 @@ describe('validateSchema', () => {
     expect(codes(result.errors)).toContain('MISSING_FIELD');
     expect(result.errors.some((e) => e.path === 'meta.version')).toBe(true);
   });
+
+  it('accepts node-level responsive compact overrides', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          style: { width: '360px' },
+          responsive: {
+            compact: { width: '100%', padding: 12 },
+          },
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
 });
 
 // ===========================================================================
@@ -261,6 +278,18 @@ describe('validateValueTypes', () => {
     const errors = validateValueTypes(views);
     expect(errors.length).toBeGreaterThan(0);
     expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
+  });
+
+  it('rejects $ref on a static-only responsive compact property', () => {
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        compact: { position: { $ref: '$pos' } },
+      },
+    });
+    const errors = validateValueTypes(views);
+    expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
+    expect(errors.some((e) => e.path.includes('responsive.compact.position'))).toBe(true);
   });
 
   it('rejects $ref on a static-only style property (overflow)', () => {
@@ -2262,5 +2291,118 @@ describe('validateStyles — hoverStyle $style restrictions', () => {
     const views = makeViews({ type: 'Box' });
     const errors = validateStyles(views, cardStyles);
     expect(codes(errors)).toContain('STYLE_CIRCULAR_REF');
+  });
+});
+
+describe('validateStyles — responsive compact', () => {
+  it('accepts a valid responsive compact override', () => {
+    const cardStyles = {
+      compactCard: { width: '100%', padding: 12 },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { width: '360px', padding: 24 },
+      responsive: {
+        compact: { $style: 'compactCard', backgroundColor: '#000' },
+      },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects hoverStyle inside responsive compact overrides', () => {
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        compact: {
+          hoverStyle: { opacity: 0.5 },
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path.includes('responsive.compact.hoverStyle'))).toBe(true);
+  });
+
+  it('rejects transition inside responsive compact overrides', () => {
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        compact: {
+          transition: { property: 'opacity', duration: 300 },
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path.includes('responsive.compact.transition'))).toBe(true);
+  });
+
+  it('rejects responsive compact $style that injects hoverStyle', () => {
+    const cardStyles = {
+      badCompact: {
+        hoverStyle: { opacity: 0.5 },
+      } as Record<string, unknown>,
+    };
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        compact: { $style: 'badCompact' },
+      },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+  });
+});
+
+describe('validateSecurity — responsive compact', () => {
+  it('rejects position fixed inside responsive compact overrides', () => {
+    const card = makeCard(makeViews({
+      type: 'Box',
+      responsive: {
+        compact: { position: 'fixed' },
+      },
+    }));
+    const errors = validateSecurity({
+      views: card.views as Record<string, unknown>,
+    });
+    expect(codes(errors)).toContain('POSITION_FIXED_FORBIDDEN');
+  });
+
+  it('rejects nested overflow:auto created only in compact mode', () => {
+    const card = makeCard(makeViews({
+      type: 'Box',
+      responsive: {
+        compact: { overflow: 'auto' },
+      },
+      children: [
+        {
+          type: 'Box',
+          style: { overflow: 'auto' },
+        },
+      ],
+    }));
+    const errors = validateSecurity({
+      views: card.views as Record<string, unknown>,
+    });
+    expect(codes(errors)).toContain('OVERFLOW_AUTO_NESTED');
+  });
+});
+
+describe('validateLimits — responsive compact', () => {
+  it('counts overflow:auto against the max using the compact mode maximum', () => {
+    const card = {
+      state: {},
+      views: makeViews({
+        type: 'Box',
+        children: [
+          { type: 'Box', responsive: { compact: { overflow: 'auto' } } },
+          { type: 'Box', responsive: { compact: { overflow: 'auto' } } },
+          { type: 'Box', responsive: { compact: { overflow: 'auto' } } },
+        ],
+      }),
+    };
+    const errors = validateLimits(card);
+    expect(codes(errors)).toContain('OVERFLOW_AUTO_COUNT_EXCEEDED');
   });
 });

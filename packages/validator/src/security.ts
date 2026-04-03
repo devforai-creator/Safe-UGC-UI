@@ -23,6 +23,11 @@ import {
   type TraversalContext,
   traverseCard,
 } from './traverse.js';
+import {
+  type ResponsiveMode,
+  RESPONSIVE_MODES,
+  getEffectiveStyleForMode,
+} from './responsive-utils.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -243,6 +248,108 @@ function checkSrcValue(
   }
 }
 
+function pushUniqueError(
+  errors: ValidationError[],
+  seen: Set<string>,
+  error: ValidationError,
+): void {
+  const key = `${error.code}|${error.path}|${error.message}`;
+  if (seen.has(key)) {
+    return;
+  }
+  seen.add(key);
+  errors.push(error);
+}
+
+function scanStyleStringsForUrl(
+  style: Record<string, unknown> | undefined,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (!style) {
+    return;
+  }
+
+  for (const [prop, value] of Object.entries(style)) {
+    if (typeof value === 'string' && value.toLowerCase().includes('url(')) {
+      errors.push(
+        createError(
+          'FORBIDDEN_CSS_FUNCTION',
+          `CSS url() function is forbidden in style values. Found in "${prop}".`,
+          `${path}.${prop}`,
+        ),
+      );
+    }
+  }
+}
+
+function validateEffectiveStylesForMode(
+  mode: ResponsiveMode,
+  views: Record<string, unknown>,
+  cardStyles: Record<string, Record<string, unknown>> | undefined,
+  errors: ValidationError[],
+  seen: Set<string>,
+): void {
+  const styleResolver = (node: TraversableNode) =>
+    getEffectiveStyleForMode(node, cardStyles, mode);
+
+  traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
+    const effectiveStyle = styleResolver(node);
+
+    if (effectiveStyle && typeof effectiveStyle.position === 'string') {
+      const position = effectiveStyle.position;
+
+      if (position === 'fixed') {
+        pushUniqueError(
+          errors,
+          seen,
+          createError(
+            'POSITION_FIXED_FORBIDDEN',
+            'CSS position "fixed" is not allowed.',
+            `${context.path}.style.position`,
+          ),
+        );
+      } else if (position === 'sticky') {
+        pushUniqueError(
+          errors,
+          seen,
+          createError(
+            'POSITION_STICKY_FORBIDDEN',
+            'CSS position "sticky" is not allowed.',
+            `${context.path}.style.position`,
+          ),
+        );
+      } else if (position === 'absolute' && context.parentType !== 'Stack') {
+        pushUniqueError(
+          errors,
+          seen,
+          createError(
+            'POSITION_ABSOLUTE_NOT_IN_STACK',
+            'CSS position "absolute" is only allowed inside a Stack component.',
+            `${context.path}.style.position`,
+          ),
+        );
+      }
+    }
+
+    if (
+      effectiveStyle &&
+      effectiveStyle.overflow === 'auto' &&
+      context.overflowAutoAncestor
+    ) {
+      pushUniqueError(
+        errors,
+        seen,
+        createError(
+          'OVERFLOW_AUTO_NESTED',
+          'Nested overflow:auto is not allowed. An ancestor already has overflow:auto.',
+          `${context.path}.style.overflow`,
+        ),
+      );
+    }
+  }, styleResolver);
+}
+
 // ---------------------------------------------------------------------------
 // validateSecurity
 // ---------------------------------------------------------------------------
@@ -269,6 +376,7 @@ export function validateSecurity(card: {
   cardStyles?: Record<string, Record<string, unknown>>;
 }): ValidationError[] {
   const errors: ValidationError[] = [];
+  const seen = new Set<string>();
   const { views, state, cardAssets, cardStyles } = card;
 
   // -----------------------------------------------------------------
@@ -332,98 +440,47 @@ export function validateSecurity(card: {
     // -----------------------------------------------------------------
     // 2. Scan all style string values for `url()` pattern
     // -----------------------------------------------------------------
-    if (style) {
-      for (const [prop, value] of Object.entries(style)) {
-        if (typeof value === 'string' && value.toLowerCase().includes('url(')) {
-          errors.push(
-            createError(
-              'FORBIDDEN_CSS_FUNCTION',
-              `CSS url() function is forbidden in style values. Found in "${prop}".`,
-              `${path}.style.${prop}`,
-            ),
-          );
-        }
-      }
-    }
+    scanStyleStringsForUrl(style, `${path}.style`, errors);
 
-    // -----------------------------------------------------------------
-    // 3. Position rules (use merged style if $style is present)
-    // -----------------------------------------------------------------
-    // Build effective style by merging with card.styles if $style is present
-    let effectiveStyle = style;
+    const responsive = node.responsive;
     if (
-      style &&
-      typeof style.$style === 'string' &&
-      cardStyles &&
-      style.$style.trim() in cardStyles
+      responsive != null &&
+      typeof responsive === 'object' &&
+      !Array.isArray(responsive)
     ) {
-      const refName = style.$style.trim();
-      const merged: Record<string, unknown> = { ...cardStyles[refName] };
-      for (const [key, value] of Object.entries(style)) {
-        if (key !== '$style') {
-          merged[key] = value;
-        }
-      }
-      effectiveStyle = merged;
-    }
-
-    if (effectiveStyle && typeof effectiveStyle.position === 'string') {
-      const position = effectiveStyle.position;
-
-      if (position === 'fixed') {
-        errors.push(
-          createError(
-            'POSITION_FIXED_FORBIDDEN',
-            'CSS position "fixed" is not allowed.',
-            `${path}.style.position`,
-          ),
+      const compact = (responsive as Record<string, unknown>).compact;
+      if (
+        compact != null &&
+        typeof compact === 'object' &&
+        !Array.isArray(compact)
+      ) {
+        scanStyleStringsForUrl(
+          compact as Record<string, unknown>,
+          `${path}.responsive.compact`,
+          errors,
         );
-      } else if (position === 'sticky') {
-        errors.push(
-          createError(
-            'POSITION_STICKY_FORBIDDEN',
-            'CSS position "sticky" is not allowed.',
-            `${path}.style.position`,
-          ),
-        );
-      } else if (position === 'absolute') {
-        if (context.parentType !== 'Stack') {
-          errors.push(
-            createError(
-              'POSITION_ABSOLUTE_NOT_IN_STACK',
-              'CSS position "absolute" is only allowed inside a Stack component.',
-              `${path}.style.position`,
-            ),
-          );
-        }
       }
     }
 
     // -----------------------------------------------------------------
-    // 4. Overflow auto nesting (use merged style)
-    // -----------------------------------------------------------------
-    if (
-      effectiveStyle &&
-      effectiveStyle.overflow === 'auto' &&
-      context.overflowAutoAncestor
-    ) {
-      errors.push(
-        createError(
-          'OVERFLOW_AUTO_NESTED',
-          'Nested overflow:auto is not allowed. An ancestor already has overflow:auto.',
-          `${path}.style.overflow`,
-        ),
-      );
-    }
-
-    // -----------------------------------------------------------------
-    // 5. Prototype pollution check on $ref values in node fields and style
+    // 3. Prototype pollution check on $ref values in node fields and style
     // -----------------------------------------------------------------
     scanForRefs(nodeFields, path, errors);
     if (style) {
       scanForRefs(style, `${path}.style`, errors);
     }
+    if (
+      node.responsive != null &&
+      typeof node.responsive === 'object' &&
+      !Array.isArray(node.responsive)
+    ) {
+      scanForRefs(node.responsive, `${path}.responsive`, errors);
+    }
   });
+
+  for (const mode of RESPONSIVE_MODES) {
+    validateEffectiveStylesForMode(mode, views, cardStyles, errors, seen);
+  }
 
   return errors;
 }

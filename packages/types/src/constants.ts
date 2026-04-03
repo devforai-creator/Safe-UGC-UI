@@ -46,6 +46,9 @@ export const MAX_OVERFLOW_AUTO_COUNT = 2;
 /** Maximum depth of nested Stack components. */
 export const MAX_STACK_NESTING = 3;
 
+/** Container width threshold for the `compact` responsive override (px). */
+export const COMPACT_BREAKPOINT_MAX_WIDTH = 480;
+
 // ---------------------------------------------------------------------------
 // 6.3 Style limits
 // ---------------------------------------------------------------------------

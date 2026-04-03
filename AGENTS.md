@@ -22,8 +22,8 @@ untrusted UI cards.
 ## Project Status
 
 - Phase 2 is implemented.
-- Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` at `0.5.0`.
-- The style system includes font family tokens, text shadow, and repeating linear gradients.
+- Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` at `0.5.1`.
+- The style system includes font family tokens, text shadow, repeating linear gradients, and node-level `responsive.compact` overrides.
 - `@safe-ugc-ui/demo` is private and remains at `0.1.0`.
 
 ## Build, Test, and Development Commands

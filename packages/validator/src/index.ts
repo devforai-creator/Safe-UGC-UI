@@ -49,6 +49,7 @@ export {
 } from './result.js';
 
 export {
+  type StyleResolver,
   type TraversalContext,
   type TraversableNode,
   type NodeVisitor,

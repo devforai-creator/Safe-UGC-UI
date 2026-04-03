@@ -98,6 +98,7 @@ CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to
 | `type` | Yes | `"Box"` \| `"Row"` \| `"Column"` \| `"Stack"` \| `"Grid"` |
 | `children` | No | Array of child nodes, or a `for...in` loop object |
 | `style` | No | Style object (see Section 3) |
+| `responsive` | No | Node-level breakpoint overrides (see Section 3.18) |
 
 ### 2.2 Content Components
 
@@ -267,7 +268,7 @@ Boolean toggle switch that triggers a callback when flipped.
 
 ## 3. Style System
 
-Every component accepts an optional `style` object. Most style values can be literal or `$ref` (see Section 4), but some properties remain **static-only** — they must be literal values, no `$ref`.
+Every component accepts an optional `style` object. Every component may also include an optional node-level `responsive` object for container-width overrides (see Section 3.18). Most style values can be literal or `$ref` (see Section 4), but some properties remain **static-only** — they must be literal values, no `$ref`.
 
 **Static-only style properties** (literal values only):
 - `position`, `top`, `right`, `bottom`, `left`, `zIndex`
@@ -712,6 +713,50 @@ In this example, the Text node receives all properties from the `heading` style,
 - The merged result (base + inline) is validated against all style rules
 - A `$style` reference must point to a name that exists in the card's `styles` section
 
+### 3.18 Responsive Overrides
+
+Nodes may include an optional `responsive` object. It contains breakpoint-specific style overrides that are merged on top of the node's base `style`.
+
+Version 1 supports one breakpoint:
+
+| Breakpoint | Activates When |
+|------------|----------------|
+| `compact` | The rendered card container is `480px` wide or narrower |
+
+```json
+{
+  "type": "Row",
+  "style": {
+    "width": "360px",
+    "padding": 24,
+    "gap": 16
+  },
+  "responsive": {
+    "compact": {
+      "width": "100%",
+      "padding": 12,
+      "flexDirection": "column"
+    }
+  }
+}
+```
+
+**Merge behavior:**
+
+- The base `style` is resolved first, including any `$style` reference
+- The active `responsive.compact` style is resolved next, including any `$style` reference
+- The responsive override is then merged **shallowly** on top of the base style
+- Structured values such as `transform`, `border`, `backgroundGradient`, `boxShadow`, and `textShadow` are replaced as whole values when overridden
+
+**Rules:**
+
+- `responsive` lives on the node, not inside `style`
+- Only the `compact` breakpoint is currently supported
+- `responsive.compact` accepts the same style properties as the base style, plus optional `$style`
+- `hoverStyle` and `transition` are **not allowed** inside `responsive.compact`
+- The merged responsive override is validated with the same property allowlist, value ranges, and security rules as any other style object
+- Base `hoverStyle` and base `transition` continue to work in compact mode unless the card is otherwise invalid
+
 ---
 
 ## 4. State Binding ($ref)
@@ -876,6 +921,9 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | transition delay | 0–1000 ms |
 | hoverStyle nesting | forbidden (no hoverStyle inside hoverStyle) |
 | `$style` inside card.styles definitions | forbidden, including `hoverStyle.$style` |
+| responsive breakpoints | `compact` only |
+| compact breakpoint threshold | container width ≤ 480 px |
+| `hoverStyle` / `transition` inside `responsive.compact` | forbidden |
 
 ---
 
@@ -1369,6 +1417,9 @@ Before outputting a card, verify:
 - [ ] No nested `hoverStyle` (hoverStyle inside hoverStyle is forbidden)
 - [ ] `$style` inside `hoverStyle` references a valid `styles` entry
 - [ ] No `$style` anywhere inside `styles` definitions
+- [ ] `responsive` is at node level, not inside `style`
+- [ ] Only `responsive.compact` is used
+- [ ] `responsive.compact` does not contain `hoverStyle` or `transition`
 - [ ] `transition` uses structured object(s), not raw CSS strings
 - [ ] `transition.property` is in the allowed property list
 - [ ] `transition.duration` is 0–2000 ms

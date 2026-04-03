@@ -495,6 +495,26 @@ export const hoverStylePropsSchema = z.object({
 export type HoverStyleProps = z.infer<typeof hoverStylePropsSchema>;
 
 // ---------------------------------------------------------------------------
+// ResponsiveStyleProps — core style only (no hoverStyle / transition)
+// ---------------------------------------------------------------------------
+
+export const responsiveStylePropsSchema = z.object({
+  ...coreStyleShape,
+});
+
+export type ResponsiveStyleProps = z.infer<typeof responsiveStylePropsSchema>;
+
+// ---------------------------------------------------------------------------
+// ResponsiveProps — node-level breakpoint overrides
+// ---------------------------------------------------------------------------
+
+export const responsivePropsSchema = z.object({
+  compact: responsiveStylePropsSchema.optional(),
+}).strict();
+
+export type ResponsiveProps = z.infer<typeof responsivePropsSchema>;
+
+// ---------------------------------------------------------------------------
 // StyleProps — core style + hoverStyle + transition
 // ---------------------------------------------------------------------------
 
