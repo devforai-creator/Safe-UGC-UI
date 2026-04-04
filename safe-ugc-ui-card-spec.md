@@ -1,4 +1,4 @@
-# Safe UGC UI — Card JSON Specification (Phase 2)
+# Safe UGC UI — Card JSON Specification (Current Behavior)
 
 You are generating a **Safe UGC UI card** — a JSON document that describes a UI layout rendered safely in a sandboxed environment. Follow this specification exactly.
 
@@ -52,7 +52,7 @@ The `assets` field declares which local assets the card references. Each value m
 
 ## 2. Components
 
-Sixteen component types are available, organized into three categories.
+Seventeen component types are available, organized into three categories.
 
 ### 2.1 Layout Components
 
@@ -264,7 +264,7 @@ Label with a border outline, similar to Badge but outlined rather than filled.
 
 ### 2.3 Interaction Components
 
-Interaction components use fields and trigger callbacks.
+Interaction components use fields and may trigger host callbacks or renderer-owned local state.
 
 #### Button
 Triggers an action callback when pressed. The `action` string identifies which callback to invoke.
@@ -291,6 +291,51 @@ Boolean toggle switch that triggers a callback when flipped.
 | `value` | Yes | boolean | literal or $ref |
 | `onToggle` | Yes | string | static only |
 | `disabled` | No | boolean | literal or $ref |
+
+#### Accordion
+Renderer-owned collapsible section list. Item content is standard renderable card content, so it may use loops, `$if`, and `$use`.
+
+```json
+{
+  "type": "Accordion",
+  "defaultExpanded": ["profile"],
+  "items": [
+    {
+      "id": "profile",
+      "label": "Profile",
+      "content": { "type": "Text", "content": "Pilot details" }
+    },
+    {
+      "id": "inventory",
+      "label": { "$template": ["Inventory ", 3] },
+      "content": { "$use": "inventoryPanel" }
+    }
+  ]
+}
+```
+
+| Field | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `items` | Yes | array | static structure only |
+| `allowMultiple` | No | boolean | literal only |
+| `defaultExpanded` | No | string[] | literal only |
+
+Each `items[*]` entry must contain:
+
+| Field | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `id` | Yes | string | static only |
+| `label` | Yes | string-like value | literal, $ref, or `$template` |
+| `content` | Yes | renderable node | static node or `$use` |
+| `disabled` | No | boolean | literal or $ref |
+
+Rules:
+
+- `items` must contain at least 1 item
+- item ids must be unique within the accordion
+- `defaultExpanded` ids must exist in `items`
+- unless `allowMultiple` is `true`, `defaultExpanded` may contain at most one id
+- hidden accordion content still counts toward validator and runtime limits
 
 ---
 
@@ -893,6 +938,7 @@ Output semantics:
 - `Badge.label`
 - `Chip.label`
 - `Button.label`
+- `Accordion.items[*].label`
 
 `$template` is **not** allowed in security-sensitive fields such as `Image.src`, `Avatar.src`, `Button.action`, or `Toggle.onToggle`.
 
@@ -1543,7 +1589,7 @@ Before outputting a card, verify:
 **Components:**
 - [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array of nodes / `$use`, or for-loop object)
 - [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
-- [ ] Interaction nodes (`Button`, `Toggle`) use top-level fields (no `props` object)
+- [ ] Interaction nodes (`Button`, `Toggle`, `Accordion`) use top-level fields (no `props` object)
 - [ ] `Text` defines exactly one of `content` or `spans`
 - [ ] `Text.maxLines`, if present, is between 1 and 10
 - [ ] `Text.truncate`, if present, is `"ellipsis"` or `"clip"`
@@ -1552,10 +1598,14 @@ Before outputting a card, verify:
 - [ ] `Icon.name` is a string literal or `$ref`
 - [ ] `Button.action` and `Toggle.onToggle` are static strings
 - [ ] `Button.disabled` and `Toggle.disabled` are boolean literals or `$ref`
+- [ ] `Accordion.items[*]` defines `id`, `label`, and `content`
+- [ ] `Accordion.items[*].id` values are unique
+- [ ] `Accordion.defaultExpanded`, if present, refers only to declared item ids
+- [ ] `Accordion.defaultExpanded` contains at most one id unless `allowMultiple` is `true`
 
 **Dynamic values:**
 - [ ] Dynamic values use `$ref` or structured `$template` where allowed
-- [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, or `Button.label`
+- [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, or `Accordion.items[*].label`
 - [ ] Node-level `$if` uses a boolean literal, boolean `$ref`, or a supported condition object
 - [ ] `$use` names are static strings and resolve to an existing fragment
 - [ ] `fragments.*` does not contain nested `$use`

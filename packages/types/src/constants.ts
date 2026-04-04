@@ -34,6 +34,9 @@ export const ASSET_TOTAL_MAX_BYTES = 50_000_000;
 /** Maximum number of rendered DOM nodes. */
 export const MAX_NODE_COUNT = 10_000;
 
+/** Maximum number of items in a single interactive container. */
+export const MAX_INTERACTIVE_ITEMS = 16;
+
 /** Maximum iterations for a single `for...in` loop. */
 export const MAX_LOOP_ITERATIONS = 1_000;
 
@@ -168,12 +171,12 @@ export const PHASE1_COMPONENT_TYPES = [
 ] as const;
 
 /**
- * All 16 component types defined in spec section 2.
+ * All currently implemented component types defined in spec section 2.
  *
  * Layout (2.1): Box, Row, Column, Stack, Grid, Spacer
  * Content (2.2): Text, Image, Icon, Divider
  * Display (2.3): ProgressBar, Badge, Avatar, Chip
- * Interaction (2.4): Button, Toggle
+ * Interaction (2.4): Button, Toggle, Accordion
  */
 export const ALL_COMPONENT_TYPES = [
   // 2.1 Layout
@@ -196,6 +199,7 @@ export const ALL_COMPONENT_TYPES = [
   // 2.4 Interaction (optional)
   'Button',
   'Toggle',
+  'Accordion',
 ] as const;
 
 // ---------------------------------------------------------------------------

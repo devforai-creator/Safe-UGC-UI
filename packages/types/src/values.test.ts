@@ -9,6 +9,7 @@ import {
 import {
   CARD_JSON_MAX_BYTES,
   MAX_NODE_COUNT,
+  MAX_INTERACTIVE_ITEMS,
   MAX_LOOP_ITERATIONS,
   ZINDEX_MIN,
   ZINDEX_MAX,
@@ -287,6 +288,10 @@ describe('constants', () => {
     expect(MAX_LOOP_ITERATIONS).toBe(1_000);
   });
 
+  it('MAX_INTERACTIVE_ITEMS equals 16', () => {
+    expect(MAX_INTERACTIVE_ITEMS).toBe(16);
+  });
+
   it('ZINDEX_MIN equals 0', () => {
     expect(ZINDEX_MIN).toBe(0);
   });
@@ -295,8 +300,8 @@ describe('constants', () => {
     expect(ZINDEX_MAX).toBe(100);
   });
 
-  it('ALL_COMPONENT_TYPES contains exactly 16 entries', () => {
-    expect(ALL_COMPONENT_TYPES).toHaveLength(16);
+  it('ALL_COMPONENT_TYPES contains exactly 17 entries', () => {
+    expect(ALL_COMPONENT_TYPES).toHaveLength(17);
   });
 
   it('ALL_COMPONENT_TYPES includes all expected layout components', () => {
@@ -325,6 +330,7 @@ describe('constants', () => {
   it('ALL_COMPONENT_TYPES includes interaction components', () => {
     expect(ALL_COMPONENT_TYPES).toContain('Button');
     expect(ALL_COMPONENT_TYPES).toContain('Toggle');
+    expect(ALL_COMPONENT_TYPES).toContain('Accordion');
   });
 
   it('FORBIDDEN_STYLE_PROPERTIES contains expected entries', () => {

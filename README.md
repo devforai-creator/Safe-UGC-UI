@@ -6,12 +6,13 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 
 ## Status
 
-- Phase 2 is implemented.
+- Phase 2 plus the first `v1.0` interactive slice are implemented.
 - Published packages are currently `0.6.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
+- `Accordion` is implemented as the first renderer-owned interactive container.
 - `packages/demo` is a private playground app used for local development.
 
 ## Packages
@@ -128,24 +129,27 @@ The build also emits a static file at `packages/schema/dist/ugc-card.schema.json
 
 ## Card Model
 
-A card is a JSON object with four main areas:
+A card is a JSON object with these main areas:
 
 - `meta`: card identity and version metadata
 - `assets`: named asset references that must use `@assets/...`
 - `state`: precomputed values referenced via `{ "$ref": "$path.to.value" }`
+- `styles`: named style presets for `$style` reuse
+- `fragments`: reusable node subtrees referenced via `$use`
 - `views`: one or more renderable trees
 
-Phase 2 components:
+Currently implemented components:
 
 - `Box`, `Row`, `Column`, `Text`, `Image`
 - `Stack`, `Grid`, `Spacer`, `Divider`, `Icon`
-- `ProgressBar`, `Avatar`, `Badge`, `Chip`, `Button`, `Toggle`
+- `ProgressBar`, `Avatar`, `Badge`, `Chip`, `Button`, `Toggle`, `Accordion`
 
 Supported card-level features:
 
 - `$ref` state binding
 - node-level `$if` conditional rendering
 - `for...in` loops
+- `fragments` plus `$use` subtree reuse
 - reusable `styles` plus `$style` references
 - node-level `responsive.compact` overrides for container widths up to `480px`
 - `hoverStyle`
@@ -153,6 +157,7 @@ Supported card-level features:
 - directional `borderRadius`
 - `objectFit`, `objectPosition`, and `aspectRatio`
 - `Button` / `Toggle` disabled state
+- `Accordion` local interactive state with hidden-content budgeting
 
 For full details, see:
 

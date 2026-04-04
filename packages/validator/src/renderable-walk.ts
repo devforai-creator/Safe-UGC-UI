@@ -5,7 +5,11 @@
  * `$use` wrappers and fragment definitions directly.
  */
 
-import { isFragmentUseLike, isTraversableNode } from './traverse.js';
+import {
+  getEmbeddedRenderables,
+  isFragmentUseLike,
+  isTraversableNode,
+} from './traverse.js';
 
 export interface RenderableWalkContext {
   path: string;
@@ -53,7 +57,6 @@ function walkRenderableNode(
         visitor,
       );
     }
-    return;
   }
 
   if (isForLoopLike(children)) {
@@ -66,6 +69,15 @@ function walkRenderableNode(
         visitor,
       );
     }
+  }
+
+  for (const entry of getEmbeddedRenderables(node)) {
+    walkRenderableNode(
+      entry.renderable as Record<string, unknown>,
+      `${path}.${entry.pathSuffix}`,
+      inFragments,
+      visitor,
+    );
   }
 }
 

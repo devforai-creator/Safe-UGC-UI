@@ -9,7 +9,7 @@
  *   - Layout:      Box, Row, Column, Stack, Grid  (have children)
  *   - Content:     Text, Image                     (have fields, no children)
  *   - Display:     ProgressBar, Avatar, Icon, Badge, Chip, Divider, Spacer
- *   - Interaction: Button, Toggle
+ *   - Interaction: Button, Toggle, Accordion
  *
  * Naming convention:
  *   - Zod schema  -> `fooNodeSchema`
@@ -17,8 +17,10 @@
  */
 
 import { z } from 'zod';
+import { MAX_INTERACTIVE_ITEMS } from './constants.js';
 import { conditionSchema } from './conditions.js';
 import { responsivePropsSchema, stylePropsSchema } from './styles.js';
+import { dynamicSchema, templatedStringSchema } from './values.js';
 import {
   textPropsSchema,
   imagePropsSchema,
@@ -398,6 +400,50 @@ export type ToggleNode = {
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
 
+// ---------------------------------------------------------------------------
+// 7.3 AccordionNode
+// ---------------------------------------------------------------------------
+
+const interactiveItemIdSchema = z.string().min(1).max(64);
+
+export const accordionItemSchema: z.ZodType<{
+  id: string;
+  label: z.infer<typeof templatedStringSchema>;
+  content: RenderableNode;
+  disabled?: boolean | { $ref: string };
+}> = z.object({
+  id: interactiveItemIdSchema,
+  label: templatedStringSchema,
+  content: z.lazy(() => renderableNodeSchema),
+  disabled: dynamicSchema(z.boolean()).optional(),
+}).strict();
+
+export type AccordionItem = {
+  id: string;
+  label: z.infer<typeof templatedStringSchema>;
+  content: RenderableNode;
+  disabled?: boolean | { $ref: string };
+};
+
+export const accordionNodeSchema = z.object({
+  type: z.literal('Accordion'),
+  items: z.array(accordionItemSchema).min(1).max(MAX_INTERACTIVE_ITEMS),
+  allowMultiple: z.boolean().optional(),
+  defaultExpanded: z.array(interactiveItemIdSchema).max(MAX_INTERACTIVE_ITEMS).optional(),
+  ...baseFields,
+});
+
+export type AccordionNode = {
+  type: 'Accordion';
+  items: AccordionItem[];
+  allowMultiple?: boolean;
+  defaultExpanded?: string[];
+} & {
+  $if?: z.infer<typeof conditionSchema>;
+  style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
+};
+
 // ===========================================================================
 // 9. UGCNode — discriminated union of all node types
 // ===========================================================================
@@ -422,7 +468,8 @@ export type UGCNode =
   | DividerNode
   | SpacerNode
   | ButtonNode
-  | ToggleNode;
+  | ToggleNode
+  | AccordionNode;
 
 export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
   z.discriminatedUnion('type', [
@@ -442,6 +489,7 @@ export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
     spacerNodeSchema,
     buttonNodeSchema,
     toggleNodeSchema,
+    accordionNodeSchema,
   ]),
 );
 

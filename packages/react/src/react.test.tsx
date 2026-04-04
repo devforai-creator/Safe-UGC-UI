@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
+import { TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
 import {
   resolveRef,
   resolveTemplate,
@@ -1316,6 +1317,79 @@ describe('New components rendering', () => {
     const btn = container.querySelector('button') as HTMLButtonElement | null;
     expect(btn).not.toBeNull();
     expect(btn?.disabled).toBe(true);
+  });
+
+  it('Accordion toggles item content locally', () => {
+    const node = {
+      type: 'Accordion',
+      defaultExpanded: ['profile'],
+      items: [
+        {
+          id: 'profile',
+          label: 'Profile',
+          content: { type: 'Text', content: 'Profile body' },
+        },
+        {
+          id: 'inventory',
+          label: 'Inventory',
+          content: { type: 'Text', content: 'Inventory body' },
+        },
+      ],
+    };
+    render(<>{renderTree(node, {}, {})}</>);
+
+    expect(screen.getByText('Profile body')).toBeTruthy();
+    expect(screen.queryByText('Inventory body')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Inventory/ }));
+    expect(screen.getByText('Inventory body')).toBeTruthy();
+    expect(screen.queryByText('Profile body')).toBeNull();
+  });
+
+  it('Accordion does not toggle disabled items', () => {
+    const node = {
+      type: 'Accordion',
+      items: [
+        {
+          id: 'locked',
+          label: 'Locked',
+          disabled: true,
+          content: { type: 'Text', content: 'Hidden body' },
+        },
+      ],
+    };
+    render(<>{renderTree(node, {}, {})}</>);
+
+    const button = screen.getByRole('button', { name: /Locked/ }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    fireEvent.click(button);
+    expect(screen.queryByText('Hidden body')).toBeNull();
+  });
+
+  it('Accordion reserves runtime budget for hidden item content', () => {
+    const onError = vi.fn();
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const node = {
+      type: 'Accordion',
+      items: [
+        {
+          id: 'summary',
+          label: 'Summary',
+          content: { type: 'Text', content: 'visible' },
+        },
+        {
+          id: 'hidden',
+          label: 'Hidden',
+          content: { type: 'Text', content: huge },
+        },
+      ],
+    };
+
+    render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>);
+
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' }),
+    ]);
   });
 
   it('ProgressBar renders with value and max', () => {

@@ -15,18 +15,19 @@ untrusted UI cards.
 - `packages/types/src` — Zod schemas, inferred TS types, and numeric/string constraints.
 - `packages/schema/src` — JSON Schema generation; build output lands at `packages/schema/dist/ugc-card.schema.json`.
 - `packages/validator/src` — validation pipeline for schema, nodes, values, styles, security, and limits.
-- `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, asset/style/state helpers, and 16 React components.
+- `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, asset/style/state helpers, and 17 React components.
 - `packages/demo` — Vite playground that edits JSON and previews rendered cards.
 - Build outputs land in `packages/*/dist`. Tests live next to source as `*.test.ts` or `*.test.tsx`.
 
 ## Project Status
 
-- Phase 2 is implemented.
+- Phase 2 plus the first `v1.0` interactive slice are implemented.
 - Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` at `0.6.0`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
+- `Accordion` is implemented as the first renderer-owned interactive container.
 - `@safe-ugc-ui/demo` is private and remains at `0.1.0`.
 
 ## Build, Test, and Development Commands

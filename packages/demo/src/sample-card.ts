@@ -1161,7 +1161,136 @@ export const SAMPLE_V09_FRAGMENTS = {
   },
 };
 
+export const SAMPLE_V10_ACCORDION = {
+  meta: { name: 'v1-0-accordion', version: '1.0.0' },
+  state: {
+    title: 'v1.0 Accordion',
+    subtitle: 'renderer-owned local state',
+    pilotName: 'Hana Lee',
+    pilotRole: 'Recon Lead',
+    inventoryCount: 3,
+    inventory: [
+      { name: 'Signal Beacon', qty: 2 },
+      { name: 'Med Patch', qty: 5 },
+      { name: 'Battery Cell', qty: 3 },
+    ],
+  },
+  styles: {
+    shell: {
+      width: '390px',
+      backgroundColor: '#020617',
+      borderRadius: 20,
+      padding: 20,
+      color: '#e2e8f0',
+    },
+    panel: {
+      backgroundColor: '#0f172a',
+      borderRadius: 16,
+      padding: 16,
+    },
+    muted: {
+      fontSize: 12,
+      color: '#94a3b8',
+      lineHeight: 18,
+    },
+  },
+  fragments: {
+    profilePanel: {
+      type: 'Column',
+      style: { gap: 6 },
+      children: [
+        {
+          type: 'Text',
+          content: { $ref: '$pilotName' },
+          style: { fontSize: 18, fontWeight: 'bold', color: '#f8fafc' },
+        },
+        {
+          type: 'Text',
+          content: { $ref: '$pilotRole' },
+          style: { '$style': 'muted' },
+        },
+      ],
+    },
+    inventoryRow: {
+      type: 'Row',
+      style: { justifyContent: 'space-between', alignItems: 'center' },
+      children: [
+        {
+          type: 'Text',
+          content: { $ref: '$item.name' },
+          style: { fontSize: 14, color: '#e2e8f0' },
+        },
+        {
+          type: 'Badge',
+          label: { $template: ['x', { $ref: '$item.qty' }] },
+          color: '#22d3ee',
+        },
+      ],
+    },
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: { '$style': 'shell', gap: 14 },
+      children: [
+        {
+          type: 'Column',
+          style: { gap: 4 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$title' },
+              style: { fontSize: 22, fontWeight: 'bold', color: '#f8fafc' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$subtitle' },
+              style: { fontSize: 12, color: '#22d3ee', letterSpacing: 1 },
+            },
+          ],
+        },
+        {
+          type: 'Accordion',
+          defaultExpanded: ['profile'],
+          style: { '$style': 'panel', overflow: 'hidden' },
+          items: [
+            {
+              id: 'profile',
+              label: 'Profile',
+              content: { $use: 'profilePanel' },
+            },
+            {
+              id: 'inventory',
+              label: { $template: ['Inventory ', { $ref: '$inventoryCount' }] },
+              content: {
+                type: 'Column',
+                style: { gap: 8 },
+                children: {
+                  for: 'item',
+                  in: '$inventory',
+                  template: { $use: 'inventoryRow' },
+                },
+              },
+            },
+            {
+              id: 'locked',
+              label: 'Locked Section',
+              disabled: true,
+              content: {
+                type: 'Text',
+                content: 'Disabled accordion items do not open.',
+                style: { '$style': 'muted' },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
 export const SAMPLES: Record<string, unknown> = {
+  'v1.0 Accordion': SAMPLE_V10_ACCORDION,
   'v0.9 Fragments': SAMPLE_V09_FRAGMENTS,
   'v0.8 Text Authoring': SAMPLE_V08_TEXT,
   'v0.7 Features': SAMPLE_V07_FEATURES,

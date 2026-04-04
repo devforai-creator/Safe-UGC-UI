@@ -1,5 +1,5 @@
 /**
- * Safe UGC UI — Card Spec (TypeScript, Phase 2)
+ * Safe UGC UI — Card Spec (TypeScript, Current Behavior)
  *
  * Use this as the LLM-facing type guide. It matches the current card spec
  * (safe-ugc-ui-card-spec.md) and is intentionally strict.
@@ -352,6 +352,19 @@ export interface ToggleFields {
   disabled?: Dynamic<boolean>;
 }
 
+export interface AccordionItem {
+  id: string;
+  label: TextValue;
+  content: RenderableNode;
+  disabled?: Dynamic<boolean>;
+}
+
+export interface AccordionFields {
+  items: AccordionItem[];
+  allowMultiple?: boolean;
+  defaultExpanded?: string[];
+}
+
 // ---------------------------------------------------------------------------
 // 4) Nodes (discriminated union)
 // ---------------------------------------------------------------------------
@@ -415,6 +428,9 @@ export interface ButtonNode extends BaseNode, ButtonFields {
 export interface ToggleNode extends BaseNode, ToggleFields {
   type: 'Toggle';
 }
+export interface AccordionNode extends BaseNode, AccordionFields {
+  type: 'Accordion';
+}
 
 export interface FragmentUseNode {
   $use: string;
@@ -437,7 +453,8 @@ export type UGCNode =
   | DividerNode
   | SpacerNode
   | ButtonNode
-  | ToggleNode;
+  | ToggleNode
+  | AccordionNode;
 
 export type RenderableNode = UGCNode | FragmentUseNode;
 

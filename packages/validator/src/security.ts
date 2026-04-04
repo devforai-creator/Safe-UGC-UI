@@ -262,6 +262,32 @@ function pushUniqueError(
   errors.push(error);
 }
 
+function getScannableNodeFields(
+  node: TraversableNode,
+): Record<string, unknown> {
+  const nodeFields = { ...node } as Record<string, unknown>;
+  delete nodeFields.type;
+  delete nodeFields.style;
+  delete nodeFields.children;
+
+  if (node.type === 'Accordion' && Array.isArray(node.items)) {
+    nodeFields.items = node.items.map((item) => {
+      if (
+        item == null ||
+        typeof item !== 'object' ||
+        Array.isArray(item)
+      ) {
+        return item;
+      }
+
+      const { content: _content, ...rest } = item as Record<string, unknown>;
+      return rest;
+    });
+  }
+
+  return nodeFields;
+}
+
 function scanStyleStringsForUrl(
   style: Record<string, unknown> | undefined,
   path: string,
@@ -413,18 +439,16 @@ export function validateSecurity(card: {
       return;
     }
 
+    const traversableNode = node as TraversableNode;
     const { path } = context;
     const style =
-      node.style != null &&
-      typeof node.style === 'object' &&
-      !Array.isArray(node.style)
-        ? node.style as Record<string, unknown>
+      traversableNode.style != null &&
+      typeof traversableNode.style === 'object' &&
+      !Array.isArray(traversableNode.style)
+        ? traversableNode.style as Record<string, unknown>
         : undefined;
-    const type = node.type;
-    const nodeFields = { ...node } as Record<string, unknown>;
-    delete nodeFields.type;
-    delete nodeFields.style;
-    delete nodeFields.children;
+    const type = traversableNode.type;
+    const nodeFields = getScannableNodeFields(traversableNode);
 
     // -----------------------------------------------------------------
     // 1. External URL blocking — Image and Avatar `src`
@@ -455,7 +479,7 @@ export function validateSecurity(card: {
     // -----------------------------------------------------------------
     scanStyleStringsForUrl(style, `${path}.style`, errors);
 
-    const responsive = node.responsive;
+    const responsive = traversableNode.responsive;
     if (
       responsive != null &&
       typeof responsive === 'object' &&
@@ -475,8 +499,8 @@ export function validateSecurity(card: {
       }
     }
 
-    if (type === 'Text' && Array.isArray((node as Record<string, unknown>).spans)) {
-      const spans = (node as Record<string, unknown>).spans as unknown[];
+    if (type === 'Text' && Array.isArray((traversableNode as Record<string, unknown>).spans)) {
+      const spans = (traversableNode as Record<string, unknown>).spans as unknown[];
       for (let i = 0; i < spans.length; i++) {
         const span = spans[i];
         if (

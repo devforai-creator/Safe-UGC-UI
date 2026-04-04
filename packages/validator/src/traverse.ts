@@ -65,6 +65,11 @@ export interface FragmentUseLike {
 
 export type TraversableRenderable = TraversableNode | FragmentUseLike;
 
+export interface EmbeddedRenderableEntry {
+  pathSuffix: string;
+  renderable: TraversableRenderable;
+}
+
 interface ForLoopLike {
   for: string;
   in: string;
@@ -120,6 +125,35 @@ export function isFragmentUseLike(value: unknown): value is FragmentUseLike {
     '$use' in value &&
     typeof (value as Record<string, unknown>).$use === 'string'
   );
+}
+
+export function getEmbeddedRenderables(
+  node: TraversableNode,
+): EmbeddedRenderableEntry[] {
+  const entries: EmbeddedRenderableEntry[] = [];
+
+  if (node.type === 'Accordion' && Array.isArray(node.items)) {
+    for (let i = 0; i < node.items.length; i++) {
+      const item = node.items[i];
+      if (
+        item == null ||
+        typeof item !== 'object' ||
+        Array.isArray(item)
+      ) {
+        continue;
+      }
+
+      const content = (item as Record<string, unknown>).content;
+      if (isTraversableNode(content) || isFragmentUseLike(content)) {
+        entries.push({
+          pathSuffix: `items[${i}].content`,
+          renderable: content,
+        });
+      }
+    }
+  }
+
+  return entries;
 }
 
 function resolveRenderableNode(
@@ -179,43 +213,60 @@ export function traverseNode(
     return;
   }
 
-  const children = resolvedNode.children;
-  if (children == null) {
-    return;
-  }
-
   const nextStackDepth =
     resolvedNode.type === 'Stack' ? context.stackDepth + 1 : context.stackDepth;
   const nextOverflowAuto =
     context.overflowAutoAncestor || hasOverflowAuto(styleResolver ? styleResolver(resolvedNode) : resolvedNode.style);
 
-  if (isForLoop(children)) {
-    // ForLoop: traverse the template node
-    const childCtx: TraversalContext = {
-      path: `${context.path}.children.template`,
+  const children = resolvedNode.children;
+  if (children != null) {
+    if (isForLoop(children)) {
+      // ForLoop: traverse the template node
+      const childCtx: TraversalContext = {
+        path: `${context.path}.children.template`,
+        depth: context.depth + 1,
+        parentType: resolvedNode.type,
+        loopDepth: context.loopDepth + 1,
+        overflowAutoAncestor: nextOverflowAuto,
+        stackDepth: nextStackDepth,
+      };
+      traverseNode(children.template, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
+    } else if (Array.isArray(children)) {
+      // Array of child nodes
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i];
+        if (isTraversableNode(child) || isFragmentUseLike(child)) {
+          const childCtx: TraversalContext = {
+            path: `${context.path}.children[${i}]`,
+            depth: context.depth + 1,
+            parentType: resolvedNode.type,
+            loopDepth: context.loopDepth,
+            overflowAutoAncestor: nextOverflowAuto,
+            stackDepth: nextStackDepth,
+          };
+          traverseNode(child, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
+        }
+      }
+    }
+  }
+
+  for (const entry of getEmbeddedRenderables(resolvedNode)) {
+    const embeddedCtx: TraversalContext = {
+      path: `${context.path}.${entry.pathSuffix}`,
       depth: context.depth + 1,
       parentType: resolvedNode.type,
-      loopDepth: context.loopDepth + 1,
+      loopDepth: context.loopDepth,
       overflowAutoAncestor: nextOverflowAuto,
       stackDepth: nextStackDepth,
     };
-    traverseNode(children.template, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
-  } else if (Array.isArray(children)) {
-    // Array of child nodes
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      if (isTraversableNode(child) || isFragmentUseLike(child)) {
-        const childCtx: TraversalContext = {
-          path: `${context.path}.children[${i}]`,
-          depth: context.depth + 1,
-          parentType: resolvedNode.type,
-          loopDepth: context.loopDepth,
-          overflowAutoAncestor: nextOverflowAuto,
-          stackDepth: nextStackDepth,
-        };
-        traverseNode(child, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
-      }
-    }
+    traverseNode(
+      entry.renderable,
+      embeddedCtx,
+      visitor,
+      styleResolver,
+      fragments,
+      nextFragmentStack,
+    );
   }
 }
 

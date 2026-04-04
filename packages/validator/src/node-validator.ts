@@ -9,7 +9,7 @@
  *   4. Validates ForLoop structure when children use `for`/`in`/`template`.
  */
 
-import { ALL_COMPONENT_TYPES } from '@safe-ugc-ui/types';
+import { ALL_COMPONENT_TYPES, MAX_INTERACTIVE_ITEMS } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
 import { walkRenderableCard } from './renderable-walk.js';
@@ -33,6 +33,7 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
   Chip: ['label'],
   Button: ['label', 'action'],
   Toggle: ['value', 'onToggle'],
+  Accordion: ['items'],
 };
 
 // ---------------------------------------------------------------------------
@@ -188,6 +189,75 @@ function validateNode(
         path,
       ),
     );
+  }
+
+  if (node.type === 'Accordion') {
+    const items = Array.isArray(node.items) ? node.items : undefined;
+    if (items) {
+      if (items.length > MAX_INTERACTIVE_ITEMS) {
+        errors.push(
+          createError(
+            'INVALID_VALUE',
+            `"Accordion" node may define at most ${MAX_INTERACTIVE_ITEMS} items.`,
+            `${path}.items`,
+          ),
+        );
+      }
+
+      const itemIds = new Set<string>();
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (
+          item == null ||
+          typeof item !== 'object' ||
+          Array.isArray(item)
+        ) {
+          continue;
+        }
+
+        const itemId = (item as Record<string, unknown>).id;
+        if (typeof itemId !== 'string' || itemId.length === 0) {
+          continue;
+        }
+
+        if (itemIds.has(itemId)) {
+          errors.push(
+            createError(
+              'INVALID_VALUE',
+              `"Accordion" item ids must be unique. Duplicate id "${itemId}".`,
+              `${path}.items[${i}].id`,
+            ),
+          );
+        } else {
+          itemIds.add(itemId);
+        }
+      }
+
+      if (Array.isArray(node.defaultExpanded)) {
+        if (node.allowMultiple !== true && node.defaultExpanded.length > 1) {
+          errors.push(
+            createError(
+              'INVALID_VALUE',
+              '"Accordion" cannot define multiple defaultExpanded ids unless "allowMultiple" is true.',
+              `${path}.defaultExpanded`,
+            ),
+          );
+        }
+
+        for (let i = 0; i < node.defaultExpanded.length; i++) {
+          const itemId = node.defaultExpanded[i];
+          if (typeof itemId !== 'string' || !itemIds.has(itemId)) {
+            errors.push(
+              createError(
+                'INVALID_VALUE',
+                `"Accordion" defaultExpanded id "${String(itemId)}" was not found in items.`,
+                `${path}.defaultExpanded[${i}]`,
+              ),
+            );
+          }
+        }
+      }
+    }
   }
 
   return errors;

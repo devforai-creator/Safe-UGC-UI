@@ -2,7 +2,7 @@
  * @safe-ugc-ui/react --- Node Renderer
  *
  * Recursive renderer that maps UGC node types to React components.
- * Supports all 16 component types, for-loop rendering, style reference merge,
+ * Supports all currently implemented component types, for-loop rendering, style reference merge,
  * and runtime limits pre-check.
  *
  * For each node:
@@ -45,6 +45,7 @@ import { Badge } from './components/Badge.js';
 import { Chip } from './components/Chip.js';
 import { Button } from './components/Button.js';
 import { Toggle } from './components/Toggle.js';
+import { Accordion } from './components/Accordion.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,6 +85,13 @@ interface ResolvedTextPayload {
   spans?: ResolvedTextSpan[];
   textBytes: number;
   styleBytes: number;
+}
+
+interface ResolvedAccordionItem {
+  id: string;
+  label: string;
+  content: ReactNode;
+  disabled?: boolean;
 }
 
 /**
@@ -291,6 +299,37 @@ function resolveTextPayload(
     textBytes: utf8ByteLength(content),
     styleBytes: 0,
   };
+}
+
+function resolveAccordionItems(
+  node: UGCNodeLike,
+  ctx: RenderContext,
+  key: string | number,
+): ResolvedAccordionItem[] {
+  const rawItems = Array.isArray(node.items) ? node.items : [];
+
+  return rawItems.flatMap((item, index) => {
+    if (
+      item == null ||
+      typeof item !== 'object' ||
+      Array.isArray(item)
+    ) {
+      return [];
+    }
+
+    const rawItem = item as Record<string, unknown>;
+    const id = typeof rawItem.id === 'string' ? rawItem.id : `item-${index}`;
+    const label = resolveTextValue(rawItem.label, ctx.state, ctx.locals);
+    const resolvedDisabled = resolveValue(rawItem.disabled, ctx.state, ctx.locals);
+    const disabled = typeof resolvedDisabled === 'boolean' ? resolvedDisabled : undefined;
+    const content = renderNode(
+      rawItem.content,
+      ctx,
+      `${String(key)}.items[${index}].content`,
+    );
+
+    return [{ id, label, content, disabled }];
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -566,6 +605,27 @@ export function renderNode(
           onToggle={onToggle}
           onAction={ctx.onAction}
           disabled={disabled}
+          style={cssStyle}
+          hoverStyle={cssHoverStyle}
+        />
+      );
+    }
+
+    case 'Accordion': {
+      const items = resolveAccordionItems(n, ctx, key);
+      const allowMultiple = (n as Record<string, unknown>).allowMultiple === true;
+      const defaultExpanded = Array.isArray((n as Record<string, unknown>).defaultExpanded)
+        ? ((n as Record<string, unknown>).defaultExpanded as unknown[]).filter(
+            (value): value is string => typeof value === 'string',
+          )
+        : undefined;
+
+      return (
+        <Accordion
+          key={key}
+          items={items}
+          allowMultiple={allowMultiple}
+          defaultExpanded={defaultExpanded}
           style={cssStyle}
           hoverStyle={cssHoverStyle}
         />

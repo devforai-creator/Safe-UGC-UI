@@ -13,12 +13,13 @@ pick up the same project context.
 ## Repository Overview
 
 - Safe UGC UI is a pnpm workspace for schema, validation, and React rendering of untrusted UI cards.
-- Phase 2 is implemented.
+- Phase 2 plus the first `v1.0` interactive slice are implemented.
 - Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, and `@safe-ugc-ui/react` at `0.6.0`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
+- `Accordion` is implemented as the first renderer-owned interactive container.
 - `packages/demo` is a private Vite playground.
 
 ## Project Structure
