@@ -24,7 +24,7 @@ import { resolveValue } from './state-resolver.js';
 
 const DIRECT_MAP_PROPS = [
   'display', 'flexDirection', 'justifyContent', 'alignItems', 'alignSelf',
-  'flexWrap', 'flex', 'gap', 'width', 'height', 'minWidth', 'maxWidth',
+  'flexWrap', 'flex', 'gap', 'width', 'height', 'aspectRatio', 'minWidth', 'maxWidth',
   'minHeight', 'maxHeight', 'padding', 'paddingTop', 'paddingRight',
   'paddingBottom', 'paddingLeft', 'margin', 'marginTop', 'marginRight',
   'marginBottom', 'marginLeft', 'backgroundColor', 'color', 'borderRadius',
@@ -55,6 +55,23 @@ const FORBIDDEN_CSS_FUNCTIONS_LOWER = ['url(', 'var(', 'calc(', 'env(', 'express
 function containsForbiddenCssFunction(value: string): boolean {
   const lower = value.toLowerCase();
   return FORBIDDEN_CSS_FUNCTIONS_LOWER.some(fn => lower.includes(fn));
+}
+
+function isValidAspectRatio(value: unknown): value is string | number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0;
+  }
+
+  if (typeof value !== 'string' || containsForbiddenCssFunction(value)) {
+    return false;
+  }
+
+  const match = value.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*\/\s*([0-9]+(?:\.[0-9]+)?)\s*$/);
+  if (!match) {
+    return false;
+  }
+
+  return Number(match[1]) > 0 && Number(match[2]) > 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -423,6 +440,9 @@ export function mapStyle(
         }
         // Block forbidden CSS functions (defense-in-depth)
         if (typeof resolved === 'string' && containsForbiddenCssFunction(resolved)) {
+          continue;
+        }
+        if (prop === 'aspectRatio' && !isValidAspectRatio(resolved)) {
           continue;
         }
         (css as Record<string, unknown>)[prop] = resolved;

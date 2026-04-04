@@ -17,6 +17,7 @@
  */
 
 import { z } from 'zod';
+import { conditionSchema } from './conditions.js';
 import { responsivePropsSchema, stylePropsSchema } from './styles.js';
 import {
   textPropsSchema,
@@ -74,6 +75,7 @@ type Children = UGCNode[] | ForLoop;
 // ===========================================================================
 
 const baseFields = {
+  $if: conditionSchema.optional(),
   style: stylePropsSchema.optional(),
   responsive: responsivePropsSchema.optional(),
 };
@@ -94,6 +96,7 @@ export const boxNodeSchema = z.object({
 
 export type BoxNode = {
   type: 'Box';
+  $if?: z.infer<typeof conditionSchema>;
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
@@ -111,6 +114,7 @@ export const rowNodeSchema = z.object({
 
 export type RowNode = {
   type: 'Row';
+  $if?: z.infer<typeof conditionSchema>;
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
@@ -128,6 +132,7 @@ export const columnNodeSchema = z.object({
 
 export type ColumnNode = {
   type: 'Column';
+  $if?: z.infer<typeof conditionSchema>;
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
@@ -145,6 +150,7 @@ export const stackNodeSchema = z.object({
 
 export type StackNode = {
   type: 'Stack';
+  $if?: z.infer<typeof conditionSchema>;
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
@@ -162,6 +168,7 @@ export const gridNodeSchema = z.object({
 
 export type GridNode = {
   type: 'Grid';
+  $if?: z.infer<typeof conditionSchema>;
   children?: Children;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
@@ -184,6 +191,7 @@ export const textNodeSchema = z.object({
 export type TextNode = {
   type: 'Text';
 } & z.infer<typeof textPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -201,6 +209,7 @@ export const imageNodeSchema = z.object({
 export type ImageNode = {
   type: 'Image';
 } & z.infer<typeof imagePropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -222,6 +231,7 @@ export const progressBarNodeSchema = z.object({
 export type ProgressBarNode = {
   type: 'ProgressBar';
 } & z.infer<typeof progressBarPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -239,6 +249,7 @@ export const avatarNodeSchema = z.object({
 export type AvatarNode = {
   type: 'Avatar';
 } & z.infer<typeof avatarPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -256,6 +267,7 @@ export const iconNodeSchema = z.object({
 export type IconNode = {
   type: 'Icon';
 } & z.infer<typeof iconPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -273,6 +285,7 @@ export const badgeNodeSchema = z.object({
 export type BadgeNode = {
   type: 'Badge';
 } & z.infer<typeof badgePropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -290,6 +303,7 @@ export const chipNodeSchema = z.object({
 export type ChipNode = {
   type: 'Chip';
 } & z.infer<typeof chipPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -307,6 +321,7 @@ export const dividerNodeSchema = z.object({
 export type DividerNode = {
   type: 'Divider';
 } & z.infer<typeof dividerPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -324,6 +339,7 @@ export const spacerNodeSchema = z.object({
 export type SpacerNode = {
   type: 'Spacer';
 } & z.infer<typeof spacerPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -345,6 +361,7 @@ export const buttonNodeSchema = z.object({
 export type ButtonNode = {
   type: 'Button';
 } & z.infer<typeof buttonPropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };
@@ -362,6 +379,7 @@ export const toggleNodeSchema = z.object({
 export type ToggleNode = {
   type: 'Toggle';
 } & z.infer<typeof togglePropsSchema> & {
+  $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
   responsive?: z.infer<typeof responsivePropsSchema>;
 };

@@ -1,7 +1,13 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { resolveRef, resolveValue } from './state-resolver.js';
+import {
+  resolveRef,
+  resolveTemplate,
+  resolveTextValue,
+  resolveValue,
+} from './state-resolver.js';
+import { evaluateCondition } from './condition-resolver.js';
 import { mapStyle, mapTransition } from './style-mapper.js';
 import { resolveAsset } from './asset-resolver.js';
 import { renderTree } from './node-renderer.js';
@@ -123,6 +129,73 @@ describe('resolveValue', () => {
   });
 });
 
+describe('resolveTemplate', () => {
+  it('joins structured template parts and stringifies primitives', () => {
+    expect(
+      resolveTemplate(
+        {
+          $template: ['@', { $ref: '$name' }, ' · Lv.', { $ref: '$level' }, ' ', true, ' ', null],
+        },
+        { name: 'neo', level: 7 },
+      ),
+    ).toBe('@neo · Lv.7 true null');
+  });
+
+  it('treats unresolved parts as empty strings', () => {
+    expect(
+      resolveTemplate(
+        { $template: ['HP ', { $ref: '$missing' }, '/100'] },
+        {},
+      ),
+    ).toBe('HP /100');
+  });
+});
+
+describe('resolveTextValue', () => {
+  it('resolves literal, ref, and template values into strings', () => {
+    expect(resolveTextValue('plain', {})).toBe('plain');
+    expect(resolveTextValue({ $ref: '$label' }, { label: 'from ref' })).toBe('from ref');
+    expect(
+      resolveTextValue(
+        { $template: ['[', { $ref: '$status' }, ']'] },
+        { status: 'ok' },
+      ),
+    ).toBe('[ok]');
+  });
+});
+
+describe('evaluateCondition', () => {
+  it('resolves a boolean $ref condition', () => {
+    expect(evaluateCondition({ $ref: '$show' }, { show: true })).toBe(true);
+    expect(evaluateCondition({ $ref: '$show' }, { show: false })).toBe(false);
+  });
+
+  it('evaluates comparison and logical operators', () => {
+    const state = { hp: 25, dead: false };
+    expect(
+      evaluateCondition(
+        {
+          op: 'and',
+          values: [
+            { op: 'gt', left: { $ref: '$hp' }, right: 0 },
+            { op: 'eq', left: { $ref: '$dead' }, right: false },
+          ],
+        },
+        state,
+      ),
+    ).toBe(true);
+  });
+
+  it('returns false for missing comparison refs', () => {
+    expect(
+      evaluateCondition(
+        { op: 'eq', left: { $ref: '$missing' }, right: true },
+        {},
+      ),
+    ).toBe(false);
+  });
+});
+
 // =============================================================================
 // 2. style-mapper
 // =============================================================================
@@ -137,6 +210,15 @@ describe('mapStyle', () => {
     expect(result.fontSize).toBe(16);
     expect(result.opacity).toBe(0.5);
     expect(result.color).toBe('red');
+  });
+
+  it('maps aspectRatio when the value is valid', () => {
+    expect(mapStyle({ aspectRatio: 1.5 }, {}).aspectRatio).toBe(1.5);
+    expect(mapStyle({ aspectRatio: '16 / 9' }, {}).aspectRatio).toBe('16 / 9');
+  });
+
+  it('ignores invalid aspectRatio values', () => {
+    expect(mapStyle({ aspectRatio: 'wide' }, {}).aspectRatio).toBeUndefined();
   });
 
   it('converts transform object to CSS string', () => {
@@ -825,6 +907,61 @@ describe('renderTree', () => {
     expect(container.textContent).toBe('Dynamic');
   });
 
+  it('renders structured template values in Text content', () => {
+    const node = {
+      type: 'Text',
+      content: {
+        $template: ['@', { $ref: '$username' }, ' · Lv.', { $ref: '$level' }],
+      },
+    };
+    const { container } = render(<>{renderTree(node, { username: 'neo', level: 7 }, {})}</>);
+    expect(container.textContent).toBe('@neo · Lv.7');
+  });
+
+  it('renders inline Text spans with independently mapped styles', () => {
+    const node = {
+      type: 'Text',
+      spans: [
+        { text: 'HP ', style: { color: '#94a3b8' } },
+        {
+          text: { $template: [{ $ref: '$hp' }, '/', { $ref: '$maxHp' }] },
+          style: { color: '#22c55e', fontWeight: 'bold' },
+        },
+      ],
+    };
+    const { container } = render(<>{renderTree(node, { hp: 72, maxHp: 100 }, {})}</>);
+    const spans = container.querySelectorAll('span span');
+    expect(container.textContent).toBe('HP 72/100');
+    expect(spans).toHaveLength(2);
+    expect((spans[0] as HTMLElement).style.color).toBe('rgb(148, 163, 184)');
+    expect((spans[1] as HTMLElement).style.fontWeight).toBe('bold');
+  });
+
+  it('applies single-line text truncation styles', () => {
+    const node = {
+      type: 'Text',
+      content: 'This text should clamp',
+      maxLines: 1,
+      truncate: 'ellipsis',
+    };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    const text = container.firstElementChild as HTMLElement;
+    expect(text.style.whiteSpace).toBe('nowrap');
+    expect(text.style.textOverflow).toBe('ellipsis');
+    expect(text.style.overflow).toBe('hidden');
+  });
+
+  it('reuses template resolution for Button labels', () => {
+    const node = {
+      type: 'Button',
+      label: { $template: ['Claim ', { $ref: '$amount' }, ' XP'] },
+      action: 'claim',
+    };
+    const { unmount } = render(<>{renderTree(node, { amount: 120 }, {})}</>);
+    expect(screen.getByRole('button', { name: 'Claim 120 XP' })).toBeTruthy();
+    unmount();
+  });
+
   it('applies style to rendered nodes', () => {
     const node = {
       type: 'Box',
@@ -1069,6 +1206,24 @@ describe('New components rendering', () => {
     expect(onAction).toHaveBeenCalledWith('button', 'submit');
   });
 
+  it('Button resolves disabled and does not fire onAction when disabled', () => {
+    const onAction = vi.fn();
+    const node = {
+      type: 'Button',
+      label: 'Disabled',
+      action: 'submit',
+      disabled: { $ref: '$isDisabled' },
+    };
+    const { container } = render(
+      <>{renderTree(node, { isDisabled: true }, {}, undefined, undefined, onAction)}</>,
+    );
+    const btn = container.querySelector('button') as HTMLButtonElement | null;
+    expect(btn).not.toBeNull();
+    expect((btn as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(btn!);
+    expect(onAction).not.toHaveBeenCalled();
+  });
+
   it('Toggle renders and calls onAction with toggle payload', () => {
     const onAction = vi.fn();
     const node = {
@@ -1082,6 +1237,19 @@ describe('New components rendering', () => {
     expect(btn).not.toBeNull();
     fireEvent.click(btn!);
     expect(onAction).toHaveBeenCalledWith('toggle', 'toggle-dark', { value: true });
+  });
+
+  it('Toggle resolves disabled', () => {
+    const node = {
+      type: 'Toggle',
+      value: true,
+      onToggle: 'toggle-dark',
+      disabled: true,
+    };
+    const { container } = render(<>{renderTree(node, {}, {})}</>);
+    const btn = container.querySelector('button') as HTMLButtonElement | null;
+    expect(btn).not.toBeNull();
+    expect(btn?.disabled).toBe(true);
   });
 
   it('ProgressBar renders with value and max', () => {
@@ -1101,6 +1269,26 @@ describe('New components rendering', () => {
     const node = { type: 'Chip',  label: 'Tag'  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('Tag');
+  });
+
+  it('skips rendering when $if resolves to false', () => {
+    const node = {
+      type: 'Text',
+      $if: { $ref: '$show' },
+      content: 'hidden',
+    };
+    const { container } = render(<>{renderTree(node, { show: false }, {})}</>);
+    expect(container.textContent).toBe('');
+  });
+
+  it('renders when $if comparison resolves to true', () => {
+    const node = {
+      type: 'Text',
+      $if: { op: 'gt', left: { $ref: '$hp' }, right: 0 },
+      content: 'alive',
+    };
+    const { container } = render(<>{renderTree(node, { hp: 10 }, {})}</>);
+    expect(container.textContent).toContain('alive');
   });
 
   it('Avatar renders with @assets/ src resolved from asset map', () => {

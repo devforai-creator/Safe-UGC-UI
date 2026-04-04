@@ -15,7 +15,7 @@
  *   7. Recursively render children (arrays and for-loops)
  */
 
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import {
   MAX_NODE_COUNT,
   MAX_LOOP_ITERATIONS,
@@ -24,7 +24,8 @@ import {
   MAX_OVERFLOW_AUTO_COUNT,
 } from '@safe-ugc-ui/types';
 
-import { resolveRef, resolveValue } from './state-resolver.js';
+import { resolveRef, resolveTextValue, resolveValue } from './state-resolver.js';
+import { evaluateCondition } from './condition-resolver.js';
 import { mapStyle } from './style-mapper.js';
 import { resolveAsset } from './asset-resolver.js';
 import type { AssetMap } from './asset-resolver.js';
@@ -65,6 +66,18 @@ interface ForLoopLike {
   for: string;
   in: string;
   template: unknown;
+}
+
+interface ResolvedTextSpan {
+  text: string;
+  style?: CSSProperties;
+}
+
+interface ResolvedTextPayload {
+  content?: string;
+  spans?: ResolvedTextSpan[];
+  textBytes: number;
+  styleBytes: number;
 }
 
 /**
@@ -228,6 +241,45 @@ function mergeEffectiveNodeStyle(
   };
 }
 
+function resolveTextPayload(
+  node: UGCNodeLike,
+  ctx: RenderContext,
+): ResolvedTextPayload {
+  const rawSpans = Array.isArray(node.spans) ? node.spans : undefined;
+
+  if (rawSpans) {
+    const spans = rawSpans.map((span) => {
+      const rawSpan = span as Record<string, unknown>;
+      const spanStyle =
+        rawSpan.style != null &&
+        typeof rawSpan.style === 'object' &&
+        !Array.isArray(rawSpan.style)
+          ? rawSpan.style as Record<string, unknown>
+          : undefined;
+
+      return {
+        text: resolveTextValue(rawSpan.text, ctx.state, ctx.locals),
+        style: spanStyle ? mapStyle(spanStyle, ctx.state, ctx.locals) : undefined,
+        rawStyleBytes: spanStyle ? utf8ByteLength(JSON.stringify(spanStyle)) : 0,
+      };
+    });
+
+    const combinedText = spans.map((span) => span.text).join('');
+    return {
+      spans: spans.map(({ rawStyleBytes: _rawStyleBytes, ...span }) => span),
+      textBytes: utf8ByteLength(combinedText),
+      styleBytes: spans.reduce((sum, span) => sum + span.rawStyleBytes, 0),
+    };
+  }
+
+  const content = resolveTextValue(node.content, ctx.state, ctx.locals);
+  return {
+    content,
+    textBytes: utf8ByteLength(content),
+    styleBytes: 0,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // renderNode --- recursive node renderer
 // ---------------------------------------------------------------------------
@@ -248,20 +300,24 @@ export function renderNode(
   const n = node as UGCNodeLike;
   if (!n.type) return null;
 
+  if ('$if' in n && !evaluateCondition(n.$if, ctx.state, ctx.locals)) {
+    return null;
+  }
+
   // --- Compute all deltas before committing any ---
   const mergedRawStyle = mergeEffectiveNodeStyle(n, ctx);
   const rv = (val: unknown) => resolveValue(val, ctx.state, ctx.locals);
 
-  const styleDelta = mergedRawStyle ? utf8ByteLength(JSON.stringify(mergedRawStyle)) : 0;
+  let styleDelta = mergedRawStyle ? utf8ByteLength(JSON.stringify(mergedRawStyle)) : 0;
   const overflowDelta = mergedRawStyle?.overflow === 'auto' ? 1 : 0;
 
-  // Text content: resolve once, reuse in render
-  let resolvedTextContent: string | undefined;
+  // Text payload: resolve once, reuse in render
+  let resolvedTextPayload: ResolvedTextPayload | undefined;
   let textDelta = 0;
   if (n.type === 'Text') {
-    const raw = rv((n as Record<string, unknown>).content);
-    resolvedTextContent = typeof raw === 'string' ? raw : '';
-    textDelta = utf8ByteLength(resolvedTextContent);
+    resolvedTextPayload = resolveTextPayload(n, ctx);
+    textDelta = resolvedTextPayload.textBytes;
+    styleDelta += resolvedTextPayload.styleBytes;
   }
 
   // --- Batch limit checks (all-or-nothing) ---
@@ -314,8 +370,24 @@ export function renderNode(
     case 'Grid':
       return <Grid key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Grid>;
 
-    case 'Text':
-      return <Text key={key} content={resolvedTextContent!} style={cssStyle} hoverStyle={cssHoverStyle} />;
+    case 'Text': {
+      const maxLines = typeof n.maxLines === 'number' ? n.maxLines : undefined;
+      const truncate = n.truncate === 'clip' || n.truncate === 'ellipsis'
+        ? n.truncate
+        : undefined;
+
+      return (
+        <Text
+          key={key}
+          content={resolvedTextPayload?.content}
+          spans={resolvedTextPayload?.spans}
+          maxLines={maxLines}
+          truncate={truncate}
+          style={cssStyle}
+          hoverStyle={cssHoverStyle}
+        />
+      );
+    }
 
     case 'Image': {
       let src = rv((n as Record<string, unknown>).src);
@@ -392,32 +464,32 @@ export function renderNode(
     }
 
     case 'Badge': {
-      const resolvedLabel = rv((n as Record<string, unknown>).label);
-      const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
+      const label = resolveTextValue((n as Record<string, unknown>).label, ctx.state, ctx.locals);
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return <Badge key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Chip': {
-      const resolvedLabel = rv((n as Record<string, unknown>).label);
-      const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
+      const label = resolveTextValue((n as Record<string, unknown>).label, ctx.state, ctx.locals);
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return <Chip key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Button': {
-      const resolvedLabel = rv((n as Record<string, unknown>).label);
-      const label = typeof resolvedLabel === 'string' ? resolvedLabel : '';
+      const label = resolveTextValue((n as Record<string, unknown>).label, ctx.state, ctx.locals);
       const actionVal = (n as Record<string, unknown>).action;
       const action = typeof actionVal === 'string' ? actionVal : '';
+      const resolvedDisabled = rv((n as Record<string, unknown>).disabled);
+      const disabled = typeof resolvedDisabled === 'boolean' ? resolvedDisabled : undefined;
       return (
         <Button
           key={key}
           label={label}
           action={action}
           onAction={ctx.onAction}
+          disabled={disabled}
           style={cssStyle}
           hoverStyle={cssHoverStyle}
         />
@@ -429,12 +501,15 @@ export function renderNode(
       const value = typeof resolvedValue === 'boolean' ? resolvedValue : false;
       const onToggleVal = (n as Record<string, unknown>).onToggle;
       const onToggle = typeof onToggleVal === 'string' ? onToggleVal : '';
+      const resolvedDisabled = rv((n as Record<string, unknown>).disabled);
+      const disabled = typeof resolvedDisabled === 'boolean' ? resolvedDisabled : undefined;
       return (
         <Toggle
           key={key}
           value={value}
           onToggle={onToggle}
           onAction={ctx.onAction}
+          disabled={disabled}
           style={cssStyle}
           hoverStyle={cssHoverStyle}
         />

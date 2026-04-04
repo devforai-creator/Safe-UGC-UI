@@ -13,7 +13,7 @@
  */
 
 import { z } from 'zod';
-import { ALLOWED_FONT_FAMILIES } from './constants.js';
+import { ALLOWED_FONT_FAMILIES, ASPECT_RATIO_PATTERN } from './constants.js';
 import {
   refSchema,
   dynamicSchema,
@@ -320,6 +320,26 @@ const transitionFieldSchema = z
   .optional();
 
 // ===========================================================================
+// 3.1 TextSpanStyle — restricted inline text styling only
+// ===========================================================================
+
+export const textSpanStyleSchema = z.object({
+  backgroundColor: dynamicSchema(colorSchema).optional(),
+  color: dynamicSchema(colorSchema).optional(),
+  fontFamily: dynamicSchema(fontFamilyValueSchema).optional(),
+  fontSize: dynamicSchema(lengthSchema).optional(),
+  fontWeight: dynamicSchema(fontWeightValueSchema).optional(),
+  fontStyle: dynamicSchema(fontStyleValueSchema).optional(),
+  textDecoration: dynamicSchema(textDecorationValueSchema).optional(),
+  letterSpacing: dynamicSchema(lengthSchema).optional(),
+  textShadow: z
+    .union([textShadowObjectSchema, z.array(textShadowObjectSchema)])
+    .optional(),
+}).strict();
+
+export type TextSpanStyle = z.infer<typeof textSpanStyleSchema>;
+
+// ===========================================================================
 // 4. StyleProps — the main style schema (spec 4.3)
 //
 // Dynamic fields: literal | $ref  -> dynamicSchema(base).optional()
@@ -359,6 +379,10 @@ const coreStyleShape = {
   // -----------------------------------------------------------------------
   width: dynamicSchema(sizeValueSchema).optional(),
   height: dynamicSchema(sizeValueSchema).optional(),
+  aspectRatio: dynamicSchema(z.union([
+    z.number().positive(),
+    z.string().regex(ASPECT_RATIO_PATTERN),
+  ])).optional(),
   minWidth: dynamicSchema(z.union([lengthSchema, percentageSchema])).optional(),
   maxWidth: dynamicSchema(z.union([lengthSchema, percentageSchema])).optional(),
   minHeight: dynamicSchema(z.union([lengthSchema, percentageSchema])).optional(),

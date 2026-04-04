@@ -18,7 +18,6 @@ import {
   MAX_OVERFLOW_AUTO_COUNT,
   MAX_STACK_NESTING,
   PROTOTYPE_POLLUTION_SEGMENTS,
-  isRef,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -55,6 +54,88 @@ function utf8ByteLength(str: string): number {
     }
   }
   return bytes;
+}
+
+function isTemplateObject(
+  value: unknown,
+): value is { $template: unknown[] } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '$template' in value &&
+    Array.isArray((value as Record<string, unknown>).$template)
+  );
+}
+
+function countLiteralTemplatedStringBytes(value: unknown): number {
+  if (typeof value === 'string') {
+    return utf8ByteLength(value);
+  }
+
+  if (!isTemplateObject(value)) {
+    return 0;
+  }
+
+  return value.$template.reduce((total: number, part): number => {
+    if (typeof part === 'string') {
+      return total + utf8ByteLength(part);
+    }
+    if (
+      typeof part === 'number' ||
+      typeof part === 'boolean' ||
+      part === null
+    ) {
+      return total + utf8ByteLength(String(part));
+    }
+    return total;
+  }, 0);
+}
+
+function countTextNodeLiteralBytes(node: Record<string, unknown>): number {
+  if (Array.isArray(node.spans)) {
+    return node.spans.reduce((total, span) => {
+      if (
+        span == null ||
+        typeof span !== 'object' ||
+        Array.isArray(span)
+      ) {
+        return total;
+      }
+
+      return total + countLiteralTemplatedStringBytes(
+        (span as Record<string, unknown>).text,
+      );
+    }, 0);
+  }
+
+  return countLiteralTemplatedStringBytes(node.content);
+}
+
+function countTextSpanStyleBytes(node: Record<string, unknown>): number {
+  if (!Array.isArray(node.spans)) {
+    return 0;
+  }
+
+  return node.spans.reduce((total, span) => {
+    if (
+      span == null ||
+      typeof span !== 'object' ||
+      Array.isArray(span)
+    ) {
+      return total;
+    }
+
+    const style = (span as Record<string, unknown>).style;
+    if (
+      style == null ||
+      typeof style !== 'object' ||
+      Array.isArray(style)
+    ) {
+      return total;
+    }
+
+    return total + utf8ByteLength(JSON.stringify(style));
+  }, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -154,10 +235,8 @@ function countTemplateMetrics(
 
   // Text bytes
   if (node.type === 'Text') {
-    const content = (node as Record<string, unknown>).content;
-      if (typeof content === 'string' && !isRef(content)) {
-        result.textBytes = utf8ByteLength(content);
-      }
+    result.textBytes = countTextNodeLiteralBytes(node);
+    result.styleBytes += countTextSpanStyleBytes(node);
   }
 
   // Style bytes (merged with $style)
@@ -265,12 +344,10 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     // 2. Text content total bytes
     // -----------------------------------------------------------------------
-    if (node.type === 'Text') {
-      const content = (node as Record<string, unknown>).content;
-      if (typeof content === 'string' && !isRef(content)) {
-        textContentBytes += utf8ByteLength(content);
-      }
-    }
+  if (node.type === 'Text') {
+      textContentBytes += countTextNodeLiteralBytes(node as Record<string, unknown>);
+      styleObjectsBytes += countTextSpanStyleBytes(node as Record<string, unknown>);
+  }
 
     // -----------------------------------------------------------------------
     // 3. Style objects total bytes (use merged style if $style is present)

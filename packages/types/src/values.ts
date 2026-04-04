@@ -22,7 +22,32 @@ export const refSchema = z.object({
 export type Ref = z.infer<typeof refSchema>;
 
 // ---------------------------------------------------------------------------
-// 2. AssetPath — local asset reference (`@assets/...`)
+// 2. TemplateValue — structured string composition
+// ---------------------------------------------------------------------------
+
+export const templatePartSchema = z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  refSchema,
+]);
+
+export const templateValueSchema = z.object({
+  $template: z.array(templatePartSchema).min(1),
+}).strict();
+
+export type TemplatePart = z.infer<typeof templatePartSchema>;
+export type TemplateValue = z.infer<typeof templateValueSchema>;
+
+export const templatedStringSchema = z.union([
+  z.string(),
+  refSchema,
+  templateValueSchema,
+]);
+
+// ---------------------------------------------------------------------------
+// 3. AssetPath — local asset reference (`@assets/...`)
 // ---------------------------------------------------------------------------
 
 export const assetPathSchema = z.string().startsWith('@assets/');
@@ -30,7 +55,7 @@ export const assetPathSchema = z.string().startsWith('@assets/');
 export type AssetPath = `@assets/${string}`;
 
 // ---------------------------------------------------------------------------
-// 3. Color — hex, rgb, hsl, named colors (loose string for now)
+// 4. Color — hex, rgb, hsl, named colors (loose string for now)
 // ---------------------------------------------------------------------------
 
 export const colorSchema = z.string();
@@ -38,7 +63,7 @@ export const colorSchema = z.string();
 export type Color = z.infer<typeof colorSchema>;
 
 // ---------------------------------------------------------------------------
-// 4. Length — number | string (px, %, em, rem)
+// 5. Length — number | string (px, %, em, rem)
 // ---------------------------------------------------------------------------
 
 export const lengthSchema = z.union([z.number(), z.string()]);
@@ -46,7 +71,7 @@ export const lengthSchema = z.union([z.number(), z.string()]);
 export type Length = z.infer<typeof lengthSchema>;
 
 // ---------------------------------------------------------------------------
-// 5. Percentage — string like "50%"
+// 6. Percentage — string like "50%"
 // ---------------------------------------------------------------------------
 
 export const percentageSchema = z.string();
@@ -54,7 +79,7 @@ export const percentageSchema = z.string();
 export type Percentage = z.infer<typeof percentageSchema>;
 
 // ---------------------------------------------------------------------------
-// 6. IconName — string identifier for platform-provided icons
+// 7. IconName — string identifier for platform-provided icons
 // ---------------------------------------------------------------------------
 
 export const iconNameSchema = z.string();
@@ -124,6 +149,18 @@ export function isRef(value: unknown): value is Ref {
  */
 export function isDynamic(value: unknown): boolean {
   return isRef(value);
+}
+
+/**
+ * Returns `true` if the value is a `TemplateValue` object (`{ $template: [...] }`).
+ */
+export function isTemplateValue(value: unknown): value is TemplateValue {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '$template' in value &&
+    Array.isArray((value as Record<string, unknown>).$template)
+  );
 }
 
 /**

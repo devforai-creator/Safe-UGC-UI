@@ -40,6 +40,9 @@ export const MAX_LOOP_ITERATIONS = 1_000;
 /** Maximum depth of nested loops. */
 export const MAX_NESTED_LOOPS = 2;
 
+/** Maximum depth of nested `$if` conditions. */
+export const MAX_CONDITION_DEPTH = 5;
+
 /** Maximum number of elements with `overflow: auto` per card. */
 export const MAX_OVERFLOW_AUTO_COUNT = 2;
 
@@ -86,6 +89,9 @@ export const ALLOWED_FONT_FAMILIES = [
   'display',
   'handwriting',
 ] as const;
+
+/** Regex for supported string `aspectRatio` literals like "16 / 9". */
+export const ASPECT_RATIO_PATTERN = /^\s*[0-9]+(\.[0-9]+)?\s*\/\s*[0-9]+(\.[0-9]+)?\s*$/;
 
 /** Maximum number of text-shadow entries. */
 export const TEXT_SHADOW_MAX_COUNT = 5;

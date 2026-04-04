@@ -14,6 +14,7 @@
  */
 
 import {
+  ASPECT_RATIO_PATTERN,
   FORBIDDEN_STYLE_PROPERTIES,
   DANGEROUS_CSS_FUNCTIONS,
   ZINDEX_MIN,
@@ -170,6 +171,26 @@ function parseLengthValue(value: string): number | null {
     return null;
   }
   return Number(match[1]);
+}
+
+function isValidAspectRatioLiteral(value: string | number): boolean {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0;
+  }
+
+  const match = value.match(ASPECT_RATIO_PATTERN);
+  if (!match) {
+    return false;
+  }
+
+  const parts = value.split('/');
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const width = Number(parts[0].trim());
+  const height = Number(parts[1].trim());
+  return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0;
 }
 
 /**
@@ -762,6 +783,22 @@ function validateSingleStyle(
     }
   }
 
+  if ('aspectRatio' in style && style.aspectRatio != null && !isDynamic(style.aspectRatio)) {
+    const aspectRatio = style.aspectRatio;
+    if (
+      (typeof aspectRatio !== 'number' && typeof aspectRatio !== 'string') ||
+      !isValidAspectRatioLiteral(aspectRatio)
+    ) {
+      errors.push(
+        createError(
+          'INVALID_VALUE',
+          `Invalid aspectRatio "${String(aspectRatio)}" at "${stylePath}.aspectRatio"`,
+          `${stylePath}.aspectRatio`,
+        ),
+      );
+    }
+  }
+
   // ------------------------------------------------------------------
   // 10. Range checks on string length values
   // ------------------------------------------------------------------
@@ -1078,36 +1115,66 @@ export function validateStyles(
 
     const responsive = node.responsive;
     if (
-      responsive == null ||
-      typeof responsive !== 'object' ||
-      Array.isArray(responsive)
+      responsive != null &&
+      typeof responsive === 'object' &&
+      !Array.isArray(responsive)
     ) {
-      return;
+      const compact = (responsive as Record<string, unknown>).compact;
+      if (
+        compact != null &&
+        typeof compact === 'object' &&
+        !Array.isArray(compact)
+      ) {
+        const compactPath = `${ctx.path}.responsive.compact`;
+        const mergedCompact = resolveStyleRef(
+          compact as Record<string, unknown>,
+          compactPath,
+          cardStyles,
+          errors,
+        );
+
+        if (mergedCompact) {
+          validateSingleStyle(mergedCompact, compactPath, errors, cardStyles, {
+            allowHoverStyle: false,
+            allowTransition: false,
+            allowHoverStyleRefs: false,
+          });
+        }
+      }
     }
 
-    const compact = (responsive as Record<string, unknown>).compact;
-    if (
-      compact == null ||
-      typeof compact !== 'object' ||
-      Array.isArray(compact)
-    ) {
-      return;
-    }
+    if (node.type === 'Text' && Array.isArray(node.spans)) {
+      for (let i = 0; i < node.spans.length; i++) {
+        const span = node.spans[i];
+        if (
+          span == null ||
+          typeof span !== 'object' ||
+          Array.isArray(span)
+        ) {
+          continue;
+        }
 
-    const compactPath = `${ctx.path}.responsive.compact`;
-    const mergedCompact = resolveStyleRef(
-      compact as Record<string, unknown>,
-      compactPath,
-      cardStyles,
-      errors,
-    );
+        const spanStyle = (span as Record<string, unknown>).style;
+        if (
+          spanStyle == null ||
+          typeof spanStyle !== 'object' ||
+          Array.isArray(spanStyle)
+        ) {
+          continue;
+        }
 
-    if (mergedCompact) {
-      validateSingleStyle(mergedCompact, compactPath, errors, cardStyles, {
-        allowHoverStyle: false,
-        allowTransition: false,
-        allowHoverStyleRefs: false,
-      });
+        validateSingleStyle(
+          spanStyle as Record<string, unknown>,
+          `${ctx.path}.spans[${i}].style`,
+          errors,
+          undefined,
+          {
+            allowHoverStyle: false,
+            allowTransition: false,
+            allowHoverStyleRefs: false,
+          },
+        );
+      }
     }
   });
 

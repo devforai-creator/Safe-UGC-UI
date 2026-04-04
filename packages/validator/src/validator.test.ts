@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
 import {
   validate,
   validateRaw,
   validateSchema,
   validateNodes,
+  validateConditions,
   validateValueTypes,
   validateStyles,
   validateSecurity,
@@ -67,6 +69,65 @@ describe('validateSchema', () => {
     const result = validateSchema(card);
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
+  });
+
+  it('accepts $if, disabled, and aspectRatio in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      state: { canShow: true, isDisabled: false },
+      views: {
+        Main: {
+          type: 'Button',
+          $if: { $ref: '$canShow' },
+          label: 'Act',
+          action: 'act',
+          disabled: { $ref: '$isDisabled' },
+          style: { aspectRatio: '16 / 9' },
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts templates, spans, and text clamping fields in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Text',
+          spans: [
+            { text: 'HP ', style: { color: '#94a3b8' } },
+            {
+              text: {
+                $template: [{ $ref: '$hp' }, '/', { $ref: '$maxHp' }],
+              },
+              style: { color: '#22c55e', fontWeight: 'bold' },
+            },
+          ],
+          maxLines: 2,
+          truncate: 'ellipsis',
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects invalid $if condition shape in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Text',
+          $if: { op: 'and', values: [] },
+          content: 'hi',
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
   });
 
   it('rejects non-object input', () => {
@@ -162,6 +223,18 @@ describe('validateNodes', () => {
     expect(errors).toHaveLength(0);
   });
 
+  it('accepts a valid Text node with spans field', () => {
+    const views = makeViews({
+      type: 'Text',
+      spans: [
+        { text: 'HP ' },
+        { text: { $template: [{ $ref: '$hp' }, '/100'] } },
+      ],
+    });
+    const errors = validateNodes(views);
+    expect(errors).toHaveLength(0);
+  });
+
   it('accepts a valid Image node with src field', () => {
     const views = makeViews({ type: 'Image',  src: '@assets/logo.png'  });
     const errors = validateNodes(views);
@@ -190,6 +263,16 @@ describe('validateNodes', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(codes(errors)).toContain('MISSING_FIELD');
     expect(errors.some((e) => e.path.includes('content'))).toBe(true);
+  });
+
+  it('rejects a Text node that defines both content and spans', () => {
+    const views = makeViews({
+      type: 'Text',
+      content: 'Hello',
+      spans: [{ text: 'World' }],
+    });
+    const errors = validateNodes(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
   });
 
   it('rejects an Image node without src field', () => {
@@ -253,6 +336,53 @@ describe('validateNodes', () => {
     const errors = validateNodes(views);
     expect(codes(errors)).toContain('INVALID_VALUE');
     expect(errors.some((e) => e.path.includes('children.template'))).toBe(true);
+  });
+});
+
+describe('validateConditions', () => {
+  it('accepts simple boolean and comparison conditions', () => {
+    const views = makeViews({
+      type: 'Text',
+      $if: {
+        op: 'and',
+        values: [
+          { $ref: '$show' },
+          { op: 'gt', left: { $ref: '$hp' }, right: 0 },
+        ],
+      },
+      content: 'visible',
+    });
+    const errors = validateConditions(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects conditions deeper than the maximum depth', () => {
+    const views = makeViews({
+      type: 'Text',
+      $if: {
+        op: 'not',
+        value: {
+          op: 'not',
+          value: {
+            op: 'not',
+            value: {
+              op: 'not',
+              value: {
+                op: 'not',
+                value: {
+                  op: 'not',
+                  value: true,
+                },
+              },
+            },
+          },
+        },
+      },
+      content: 'too deep',
+    });
+    const errors = validateConditions(views);
+    expect(codes(errors)).toContain('CONDITION_DEPTH_EXCEEDED');
+    expect(errors.some((e) => e.path.includes('.$if'))).toBe(true);
   });
 });
 
@@ -404,6 +534,21 @@ describe('validateStyles', () => {
     });
     const errors = validateStyles(views);
     expect(errors).toHaveLength(0);
+  });
+
+  it('validates Text span styles with the same typography limits', () => {
+    const views = makeViews({
+      type: 'Text',
+      spans: [
+        {
+          text: 'too big',
+          style: { fontSize: 100 },
+        },
+      ],
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+    expect(errors.some((e) => e.path.includes('spans[0].style.fontSize'))).toBe(true);
   });
 
   it('rejects forbidden property backgroundImage', () => {
@@ -777,6 +922,21 @@ describe('validateStyles', () => {
 // ===========================================================================
 
 describe('validateSecurity', () => {
+  it('rejects url() inside Text span styles', () => {
+    const views = makeViews({
+      type: 'Text',
+      spans: [
+        {
+          text: 'bad',
+          style: { color: 'url(https://evil.test/x)' },
+        },
+      ],
+    });
+    const errors = validateSecurity({ views });
+    expect(codes(errors)).toContain('FORBIDDEN_CSS_FUNCTION');
+    expect(errors.some((e) => e.path.includes('spans[0].style.color'))).toBe(true);
+  });
+
   it('rejects Image src with https:// URL', () => {
     const views = makeViews({
       type: 'Image',
@@ -1072,6 +1232,20 @@ describe('validateLimits', () => {
     });
     const errors = validateLimits({ views });
     expect(errors).toHaveLength(0);
+  });
+
+  it('counts literal text inside templates and spans toward the global text budget', () => {
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const views = makeViews({
+      type: 'Text',
+      spans: [
+        {
+          text: { $template: [huge] },
+        },
+      ],
+    });
+    const errors = validateLimits({ views });
+    expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');
   });
 
   it('rejects overflow:auto count > 2', () => {
@@ -2036,6 +2210,36 @@ describe('validateStyles — new style fields', () => {
 
     const result = validate(card);
     expect(result.valid).toBe(true);
+  });
+
+  it('accepts aspectRatio as a number or ratio string', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        aspectRatio: '16 / 9',
+      },
+      children: [
+        {
+          type: 'Image',
+          src: '@assets/photo.png',
+          style: { aspectRatio: 1.5 },
+        },
+      ],
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects malformed aspectRatio literals', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        aspectRatio: 'wide',
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path.includes('aspectRatio'))).toBe(true);
   });
 });
 

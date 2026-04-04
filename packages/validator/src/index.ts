@@ -28,6 +28,7 @@ import {
 } from './result.js';
 import { validateSchema } from './schema.js';
 import { validateNodes } from './node-validator.js';
+import { validateConditions } from './condition-validator.js';
 import { validateValueTypes } from './value-types.js';
 import { validateStyles } from './style-validator.js';
 import { validateSecurity } from './security.js';
@@ -59,6 +60,7 @@ export {
 
 export { validateSchema, parseCard } from './schema.js';
 export { validateNodes } from './node-validator.js';
+export { validateConditions } from './condition-validator.js';
 export { validateValueTypes } from './value-types.js';
 export { validateStyles } from './style-validator.js';
 export { validateSecurity } from './security.js';
@@ -102,6 +104,7 @@ function runAllChecks(input: unknown): ValidationError[] {
   const errors: ValidationError[] = [];
 
   errors.push(...validateNodes(views));
+  errors.push(...validateConditions(views));
   errors.push(...validateValueTypes(views));
   errors.push(...validateStyles(views, cardStyles));
   errors.push(...validateSecurity({

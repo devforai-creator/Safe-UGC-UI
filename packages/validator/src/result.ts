@@ -67,7 +67,9 @@ export type ValidationErrorCode =
   | 'HOVER_STYLE_NESTED'
   | 'TRANSITION_RAW_STRING'
   | 'TRANSITION_COUNT_EXCEEDED'
-  | 'TRANSITION_PROPERTY_FORBIDDEN';
+  | 'TRANSITION_PROPERTY_FORBIDDEN'
+  // Conditions
+  | 'CONDITION_DEPTH_EXCEEDED';
 
 // ---------------------------------------------------------------------------
 // ValidationError

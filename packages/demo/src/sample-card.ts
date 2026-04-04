@@ -728,7 +728,275 @@ export const SAMPLE_HOVER_TRANSITION = {
   },
 };
 
+export const SAMPLE_V07_FEATURES = {
+  meta: { name: 'v0-7-feature-demo', version: '1.0.0' },
+  assets: {
+    portrait: '@assets/char-avatar.png',
+  },
+  state: {
+    title: 'v0.7 Feature Demo',
+    subtitle: '$if + disabled + aspectRatio',
+    canClaimReward: false,
+    claimDisabled: true,
+    isEligibleForBonus: true,
+    stockLeft: 0,
+    ctaLabel: '보상 받기',
+    helperText: '조건부 렌더링과 비활성 버튼, 비율 고정 미디어 블록을 한 카드에서 확인할 수 있습니다.',
+  },
+  styles: {
+    panel: {
+      backgroundColor: '#1f2937',
+      borderRadius: 14,
+      padding: 14,
+    },
+    muted: {
+      fontSize: 12,
+      color: '#94a3b8',
+      lineHeight: 18,
+    },
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: {
+        width: '380px',
+        backgroundColor: '#0f172a',
+        borderRadius: 18,
+        padding: 20,
+        gap: 16,
+      },
+      children: [
+        {
+          type: 'Column',
+          style: { gap: 4 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$title' },
+              style: { fontSize: 22, fontWeight: 'bold', color: '#f8fafc' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$subtitle' },
+              style: { fontSize: 12, color: '#38bdf8', letterSpacing: 1 },
+            },
+          ],
+        },
+        {
+          type: 'Box',
+          style: {
+            backgroundColor: '#111827',
+            borderRadius: 16,
+            overflow: 'hidden',
+          },
+          children: [
+            {
+              type: 'Image',
+              src: '@assets/char-avatar.png',
+              alt: 'demo portrait',
+              style: {
+                width: '100%',
+                aspectRatio: '16 / 9',
+                objectFit: 'cover',
+              },
+            },
+          ],
+        },
+        {
+          type: 'Box',
+          style: { '$style': 'panel' },
+          children: [
+            {
+              type: 'Column',
+              style: { gap: 10 },
+              children: [
+                {
+                  type: 'Text',
+                  content: { $ref: '$helperText' },
+                  style: { '$style': 'muted' },
+                },
+                {
+                  type: 'Badge',
+                  $if: { $ref: '$isEligibleForBonus' },
+                  label: '보너스 대상',
+                  color: '#22c55e',
+                  style: { fontSize: 11 },
+                },
+                {
+                  type: 'Badge',
+                  $if: { op: 'eq', left: { $ref: '$stockLeft' }, right: 0 },
+                  label: '재고 없음',
+                  color: '#f97316',
+                  style: { fontSize: 11 },
+                },
+                {
+                  type: 'Text',
+                  $if: {
+                    op: 'and',
+                    values: [
+                      { op: 'eq', left: { $ref: '$canClaimReward' }, right: false },
+                      { op: 'eq', left: { $ref: '$stockLeft' }, right: 0 },
+                    ],
+                  },
+                  content: '현재는 재고가 없어서 보상을 받을 수 없습니다.',
+                  style: { fontSize: 12, color: '#fca5a5', lineHeight: 18 },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: 'Row',
+          style: { gap: 10 },
+          children: [
+            {
+              type: 'Button',
+              label: { $ref: '$ctaLabel' },
+              action: 'claimReward',
+              disabled: { $ref: '$claimDisabled' },
+              style: {
+                flex: 1,
+                backgroundColor: '#38bdf8',
+                color: '#082f49',
+                fontWeight: 'bold',
+              },
+            },
+            {
+              type: 'Button',
+              label: '상세 보기',
+              action: 'openDetails',
+              style: {
+                flex: 1,
+                backgroundColor: '#1e293b',
+                color: '#e2e8f0',
+                border: { width: 1, style: 'solid', color: '#334155' },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
+export const SAMPLE_V08_TEXT = {
+  meta: { name: 'v0-8-text-demo', version: '1.0.0' },
+  state: {
+    title: 'v0.8 Text Authoring',
+    subtitle: '$template + spans + clamp',
+    username: 'pixel_fox',
+    level: 18,
+    hp: 72,
+    maxHp: 100,
+    rewardCount: 3,
+    description:
+      '구조화된 템플릿으로 라벨을 조합하고, 한 개의 Text 안에서 강조 구간을 나누고, 긴 문장은 maxLines와 truncate로 안전하게 잘라낼 수 있습니다.',
+  },
+  styles: {
+    panel: {
+      backgroundColor: '#111827',
+      borderRadius: 16,
+      padding: 16,
+    },
+    muted: {
+      fontSize: 12,
+      color: '#94a3b8',
+      lineHeight: 18,
+    },
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: {
+        width: '380px',
+        backgroundColor: '#020617',
+        borderRadius: 20,
+        padding: 20,
+        gap: 14,
+      },
+      children: [
+        {
+          type: 'Column',
+          style: { gap: 4 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$title' },
+              style: { fontSize: 22, fontWeight: 'bold', color: '#f8fafc' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$subtitle' },
+              style: { fontSize: 12, color: '#22d3ee', letterSpacing: 1 },
+            },
+          ],
+        },
+        {
+          type: 'Box',
+          style: { '$style': 'panel' },
+          children: [
+            {
+              type: 'Column',
+              style: { gap: 12 },
+              children: [
+                {
+                  type: 'Text',
+                  content: {
+                    $template: ['@', { $ref: '$username' }, ' · Lv.', { $ref: '$level' }],
+                  },
+                  style: { fontSize: 18, fontWeight: 'bold', color: '#e2e8f0' },
+                },
+                {
+                  type: 'Text',
+                  spans: [
+                    {
+                      text: 'HP ',
+                      style: { color: '#94a3b8' },
+                    },
+                    {
+                      text: {
+                        $template: [{ $ref: '$hp' }, '/', { $ref: '$maxHp' }],
+                      },
+                      style: { color: '#4ade80', fontWeight: 'bold' },
+                    },
+                    {
+                      text: ' 유지 중',
+                      style: { color: '#e2e8f0' },
+                    },
+                  ],
+                  style: { fontSize: 14 },
+                },
+                {
+                  type: 'Text',
+                  content: { $ref: '$description' },
+                  maxLines: 2,
+                  truncate: 'ellipsis',
+                  style: { '$style': 'muted' },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: 'Button',
+          label: {
+            $template: ['보상 ', { $ref: '$rewardCount' }, '개 받기'],
+          },
+          action: 'claimRewards',
+          style: {
+            backgroundColor: '#22c55e',
+            color: '#052e16',
+            fontWeight: 'bold',
+          },
+        },
+      ],
+    },
+  },
+};
+
 export const SAMPLES: Record<string, unknown> = {
+  'v0.8 Text Authoring': SAMPLE_V08_TEXT,
+  'v0.7 Features': SAMPLE_V07_FEATURES,
   'Hover & Transition': SAMPLE_HOVER_TRANSITION,
   'Character Card': SAMPLE_CHARACTER,
   'YouTube Shorts': SAMPLE_SHORTS,

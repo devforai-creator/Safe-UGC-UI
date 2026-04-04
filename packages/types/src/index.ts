@@ -6,6 +6,7 @@
  */
 
 export * from './values.js';
+export * from './conditions.js';
 export * from './styles.js';
 export * from './props.js';
 export * from './primitives.js';

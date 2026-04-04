@@ -20,6 +20,26 @@ export type RefPath = `$${string}`;
 /** Dynamic values allow literals or $ref (no $expr). */
 export type Dynamic<T> = T | Ref<T>;
 
+export type TemplatePart = string | number | boolean | null | Ref<unknown>;
+export type TemplateValue = { $template: TemplatePart[] };
+export type TextValue = string | Ref<string> | TemplateValue;
+
+export type ConditionOperand = string | number | boolean | null | Ref<unknown>;
+
+export type ComparisonCondition = {
+  op: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte';
+  left: ConditionOperand;
+  right: ConditionOperand;
+};
+
+export type Condition =
+  | boolean
+  | Ref<boolean>
+  | { op: 'not'; value: Condition }
+  | { op: 'and'; values: Condition[] }
+  | { op: 'or'; values: Condition[] }
+  | ComparisonCondition;
+
 /** Asset path must start with "@assets/". */
 export type AssetPath = `@assets/${string}`;
 
@@ -162,6 +182,7 @@ export interface BaseStyle {
   // Sizing — dynamic
   width?: Dynamic<SizeValue>;
   height?: Dynamic<SizeValue>;
+  aspectRatio?: Dynamic<number | string>;
   minWidth?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
   maxWidth?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
   minHeight?: Dynamic<Length>; // percentage strings allowed, "auto" is not allowed
@@ -246,12 +267,36 @@ export interface Style extends BaseStyle {
   transition?: TransitionField;
 }
 
+export interface ResponsiveProps {
+  compact?: Omit<Style, 'hoverStyle' | 'transition'>;
+}
+
+export interface TextSpanStyle {
+  backgroundColor?: Dynamic<Color>;
+  color?: Dynamic<Color>;
+  fontFamily?: Dynamic<'sans' | 'serif' | 'mono' | 'rounded' | 'display' | 'handwriting'>;
+  fontSize?: Dynamic<Length>;
+  fontWeight?: Dynamic<FontWeightValue>;
+  fontStyle?: Dynamic<FontStyleValue>;
+  textDecoration?: Dynamic<TextDecorationValue>;
+  letterSpacing?: Dynamic<Length>;
+  textShadow?: ShadowObject | ShadowObject[];
+}
+
+export interface TextSpan {
+  text: TextValue;
+  style?: TextSpanStyle;
+}
+
 // ---------------------------------------------------------------------------
 // 3) Component fields
 // ---------------------------------------------------------------------------
 
 export interface TextFields {
-  content: Dynamic<string>;
+  content?: TextValue;
+  spans?: TextSpan[];
+  maxLines?: number;
+  truncate?: 'ellipsis' | 'clip';
 }
 
 export interface ImageFields {
@@ -277,12 +322,12 @@ export interface IconFields {
 }
 
 export interface BadgeFields {
-  label: Dynamic<string>;
+  label: TextValue;
   color?: Dynamic<Color>;
 }
 
 export interface ChipFields {
-  label: Dynamic<string>;
+  label: TextValue;
   color?: Dynamic<Color>;
 }
 
@@ -296,13 +341,15 @@ export interface SpacerFields {
 }
 
 export interface ButtonFields {
-  label: Dynamic<string>;
+  label: TextValue;
   action: string; // static only
+  disabled?: Dynamic<boolean>;
 }
 
 export interface ToggleFields {
   value: Dynamic<boolean>;
   onToggle: string; // static only
+  disabled?: Dynamic<boolean>;
 }
 
 // ---------------------------------------------------------------------------
@@ -310,7 +357,9 @@ export interface ToggleFields {
 // ---------------------------------------------------------------------------
 
 export interface BaseNode {
+  $if?: Condition;
   style?: Style;
+  responsive?: ResponsiveProps;
 }
 
 export interface LayoutNode extends BaseNode {

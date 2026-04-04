@@ -18,19 +18,32 @@
 import { z } from 'zod';
 import {
   dynamicSchema,
+  refSchema,
+  templatedStringSchema,
   refOnlySchema,
   assetPathSchema,
   colorSchema,
   lengthSchema,
   iconNameSchema,
 } from './values.js';
+import { textSpanStyleSchema } from './styles.js';
 
 // ---------------------------------------------------------------------------
 // 1. TextProps
 // ---------------------------------------------------------------------------
 
+export const textSpanSchema = z.object({
+  text: templatedStringSchema,
+  style: textSpanStyleSchema.optional(),
+}).strict();
+
+export type TextSpan = z.infer<typeof textSpanSchema>;
+
 export const textPropsSchema = z.object({
-  content: dynamicSchema(z.string()),
+  content: templatedStringSchema.optional(),
+  spans: z.array(textSpanSchema).min(1).max(32).optional(),
+  maxLines: z.number().int().min(1).max(10).optional(),
+  truncate: z.enum(['ellipsis', 'clip']).optional(),
 });
 
 export type TextProps = z.infer<typeof textPropsSchema>;
@@ -86,7 +99,7 @@ export type IconProps = z.infer<typeof iconPropsSchema>;
 // ---------------------------------------------------------------------------
 
 export const badgePropsSchema = z.object({
-  label: dynamicSchema(z.string()),
+  label: templatedStringSchema,
   color: dynamicSchema(colorSchema).optional(),
 });
 
@@ -97,7 +110,7 @@ export type BadgeProps = z.infer<typeof badgePropsSchema>;
 // ---------------------------------------------------------------------------
 
 export const chipPropsSchema = z.object({
-  label: dynamicSchema(z.string()),
+  label: templatedStringSchema,
   color: dynamicSchema(colorSchema).optional(),
 });
 
@@ -129,8 +142,9 @@ export type SpacerProps = z.infer<typeof spacerPropsSchema>;
 // ---------------------------------------------------------------------------
 
 export const buttonPropsSchema = z.object({
-  label: dynamicSchema(z.string()),
+  label: templatedStringSchema,
   action: z.string(),
+  disabled: z.union([z.boolean(), refSchema]).optional(),
 });
 
 export type ButtonProps = z.infer<typeof buttonPropsSchema>;
@@ -142,6 +156,7 @@ export type ButtonProps = z.infer<typeof buttonPropsSchema>;
 export const togglePropsSchema = z.object({
   value: dynamicSchema(z.boolean()),
   onToggle: z.string(),
+  disabled: dynamicSchema(z.boolean()).optional(),
 });
 
 export type ToggleProps = z.infer<typeof togglePropsSchema>;

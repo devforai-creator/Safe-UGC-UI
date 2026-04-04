@@ -7,7 +7,9 @@
  * - Literal values pass through unchanged
  */
 
-import { PROTOTYPE_POLLUTION_SEGMENTS } from '@safe-ugc-ui/types';
+import {
+  PROTOTYPE_POLLUTION_SEGMENTS,
+} from '@safe-ugc-ui/types';
 
 /**
  * Parse a $ref path into individual segments.
@@ -116,4 +118,55 @@ export function resolveValue(
     }
   }
   return value;
+}
+
+function stringifyTextScalar(value: unknown): string {
+  if (value === undefined) return '';
+  if (value === null) return 'null';
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return String(value);
+  }
+  return '';
+}
+
+function isTemplateObject(
+  value: unknown,
+): value is { $template: unknown[] } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '$template' in value &&
+    Array.isArray((value as Record<string, unknown>).$template)
+  );
+}
+
+export function resolveTemplate(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): string | undefined {
+  if (!isTemplateObject(value)) {
+    return undefined;
+  }
+
+  return value.$template
+    .map((part) => stringifyTextScalar(resolveValue(part, state, locals)))
+    .join('');
+}
+
+export function resolveTextValue(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): string {
+  const template = resolveTemplate(value, state, locals);
+  if (template !== undefined) {
+    return template;
+  }
+
+  return stringifyTextScalar(resolveValue(value, state, locals));
 }

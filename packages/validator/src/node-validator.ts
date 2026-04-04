@@ -28,7 +28,6 @@ import {
  * (Divider, Spacer) have no required fields.
  */
 const REQUIRED_FIELDS: Record<string, string[]> = {
-  Text: ['content'],
   Image: ['src'],
   ProgressBar: ['value', 'max'],
   Avatar: ['src'],
@@ -143,6 +142,31 @@ function validateNode(
   }
 
   // 2. Required field validation
+  if (node.type === 'Text') {
+    const hasContent = 'content' in node && (node as Record<string, unknown>).content !== undefined;
+    const hasSpans = 'spans' in node && (node as Record<string, unknown>).spans !== undefined;
+
+    if (!hasContent && !hasSpans) {
+      errors.push(
+        createError(
+          'MISSING_FIELD',
+          '"Text" node must define either "content" or "spans".',
+          `${path}.content`,
+        ),
+      );
+    }
+
+    if (hasContent && hasSpans) {
+      errors.push(
+        createError(
+          'INVALID_VALUE',
+          '"Text" node cannot define both "content" and "spans".',
+          path,
+        ),
+      );
+    }
+  }
+
   const requiredFields = REQUIRED_FIELDS[node.type];
   if (requiredFields && requiredFields.length > 0) {
     // Check each required field on the node itself (v2 flattening).

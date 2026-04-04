@@ -462,6 +462,33 @@ export function validateSecurity(card: {
       }
     }
 
+    if (type === 'Text' && Array.isArray((node as Record<string, unknown>).spans)) {
+      const spans = (node as Record<string, unknown>).spans as unknown[];
+      for (let i = 0; i < spans.length; i++) {
+        const span = spans[i];
+        if (
+          span == null ||
+          typeof span !== 'object' ||
+          Array.isArray(span)
+        ) {
+          continue;
+        }
+
+        const spanStyle = (span as Record<string, unknown>).style;
+        if (
+          spanStyle != null &&
+          typeof spanStyle === 'object' &&
+          !Array.isArray(spanStyle)
+        ) {
+          scanStyleStringsForUrl(
+            spanStyle as Record<string, unknown>,
+            `${path}.spans[${i}].style`,
+            errors,
+          );
+        }
+      }
+    }
+
     // -----------------------------------------------------------------
     // 3. Prototype pollution check on $ref values in node fields and style
     // -----------------------------------------------------------------

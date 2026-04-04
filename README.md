@@ -7,8 +7,10 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 ## Status
 
 - Phase 2 is implemented.
-- Published packages are currently `0.5.1`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
-- The style system includes font family tokens, text shadow, repeating linear gradients, and node-level `responsive.compact` overrides.
+- Published packages are currently `0.6.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
+- The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
+- Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
+- Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - `packages/demo` is a private playground app used for local development.
 
 ## Packages
@@ -141,13 +143,15 @@ Phase 2 components:
 Supported card-level features:
 
 - `$ref` state binding
+- node-level `$if` conditional rendering
 - `for...in` loops
 - reusable `styles` plus `$style` references
 - node-level `responsive.compact` overrides for container widths up to `480px`
 - `hoverStyle`
 - structured `transition`
 - directional `borderRadius`
-- `objectFit` and `objectPosition`
+- `objectFit`, `objectPosition`, and `aspectRatio`
+- `Button` / `Toggle` disabled state
 
 For full details, see:
 

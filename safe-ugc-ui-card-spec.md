@@ -54,7 +54,7 @@ Sixteen component types are available, organized into three categories.
 
 ### 2.1 Layout Components
 
-Layout components contain `children` — either an array of child nodes or a `for...in` loop object (see Section 4.5).
+Layout components contain `children` — either an array of child nodes or a `for...in` loop object (see Section 4.6).
 
 #### Box
 General-purpose container. No default flex direction.
@@ -97,6 +97,7 @@ CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to
 |-------|----------|------|
 | `type` | Yes | `"Box"` \| `"Row"` \| `"Column"` \| `"Stack"` \| `"Grid"` |
 | `children` | No | Array of child nodes, or a `for...in` loop object |
+| `$if` | No | Condition object, boolean literal, or boolean `$ref` (see Section 4.7) |
 | `style` | No | Style object (see Section 3) |
 | `responsive` | No | Node-level breakpoint overrides (see Section 3.18) |
 
@@ -110,14 +111,37 @@ Displays text content.
 ```json
 {
   "type": "Text",
-   "content": "Hello World" ,
+  "content": {
+    "$template": ["@", { "$ref": "$username" }, " · Lv.", { "$ref": "$level" }]
+  },
+  "maxLines": 2,
+  "truncate": "ellipsis",
   "style": { "fontSize": 16, "color": "#ffffff" }
 }
 ```
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `content` | Yes | string | literal or $ref |
+| `content` | Conditionally | string-like value | literal, $ref, or `$template` |
+| `spans` | Conditionally | array of `{ text, style? }` | ordered inline spans |
+| `maxLines` | No | integer `1`–`10` | literal only |
+| `truncate` | No | `"ellipsis"` \| `"clip"` | literal only |
+
+`Text` must define exactly one of `content` or `spans`.
+
+`spans[*].text` accepts the same string-like value as `content`: a literal string, `$ref`, or structured `$template`.
+
+`spans[*].style` is restricted to inline typography properties only:
+
+- `backgroundColor`
+- `color`
+- `fontFamily`
+- `fontSize`
+- `fontWeight`
+- `fontStyle`
+- `textDecoration`
+- `letterSpacing`
+- `textShadow`
 
 #### Image
 Displays an image from local assets only.
@@ -221,7 +245,7 @@ Small label with a colored background. Good for status indicators, counts, or ta
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `label` | Yes | string | literal or $ref |
+| `label` | Yes | string-like value | literal, $ref, or `$template` |
 | `color` | No | color | literal or $ref |
 
 #### Chip
@@ -233,7 +257,7 @@ Label with a border outline, similar to Badge but outlined rather than filled.
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `label` | Yes | string | literal or $ref |
+| `label` | Yes | string-like value | literal, $ref, or `$template` |
 | `color` | No | color | literal or $ref |
 
 ### 2.3 Interaction Components
@@ -249,8 +273,9 @@ Triggers an action callback when pressed. The `action` string identifies which c
 
 | Field | Required | Type | Dynamic |
 |------|----------|------|---------|
-| `label` | Yes | string | literal or $ref |
+| `label` | Yes | string-like value | literal, $ref, or `$template` |
 | `action` | Yes | string | static only |
+| `disabled` | No | boolean | literal or $ref |
 
 #### Toggle
 Boolean toggle switch that triggers a callback when flipped.
@@ -263,6 +288,7 @@ Boolean toggle switch that triggers a callback when flipped.
 |------|----------|------|---------|
 | `value` | Yes | boolean | literal or $ref |
 | `onToggle` | Yes | string | static only |
+| `disabled` | No | boolean | literal or $ref |
 
 ---
 
@@ -327,10 +353,12 @@ All other style properties accept literal values or `$ref`.
 | Property | Values |
 |----------|--------|
 | `width`, `height` | number \| length string \| percentage string \| `"auto"` |
+| `aspectRatio` | positive number \| ratio string like `"16 / 9"` |
 | `minWidth`, `maxWidth` | number \| length string \| percentage string |
 | `minHeight`, `maxHeight` | number \| length string \| percentage string |
 
 Length values: bare number (treated as px), `"100px"`, `"50%"`, `"2em"`, `"1.5rem"`.
+`aspectRatio` accepts a positive number or a ratio string with positive numeric parts.
 Only `width` and `height` accept the literal `"auto"` in the sizing group.
 
 ### 3.3 Spacing Properties
@@ -826,7 +854,47 @@ When using `$style`, the referenced style object is resolved first, then any inl
 
 Here, `$themeColor` overrides whatever `color` was set in the `heading` style definition.
 
-### 4.5 For...in Loops
+### 4.5 Structured Templates (`$template`)
+
+Use `$template` for safe string composition without introducing a second expression language.
+
+```json
+{
+  "$template": [
+    "@",
+    { "$ref": "$username" },
+    " · Lv.",
+    { "$ref": "$level" }
+  ]
+}
+```
+
+Allowed template part types:
+
+- string literal
+- number literal
+- boolean literal
+- `null`
+- `$ref`
+
+Output semantics:
+
+- Each part resolves independently
+- `undefined` parts become empty strings
+- numbers, booleans, and `null` stringify with normal JavaScript string conversion
+- the final result is a single string
+
+`$template` is allowed in these fields:
+
+- `Text.content`
+- `Text.spans[*].text`
+- `Badge.label`
+- `Chip.label`
+- `Button.label`
+
+`$template` is **not** allowed in security-sensitive fields such as `Image.src`, `Avatar.src`, `Button.action`, or `Toggle.onToggle`.
+
+### 4.6 For...in Loops
 
 Children of a layout component can be a **for-loop object** instead of an array. This renders a template once for each element in a state array.
 
@@ -858,6 +926,51 @@ Inside the template, `$item` (or whatever you named the loop variable) refers to
 - Max 2 levels of nested loops
 - Loop source must resolve to an array from state or loop-local variables (undefined is soft-skipped with empty render; non-array triggers an error)
 - All expanded nodes count toward the 10,000 node limit
+
+### 4.7 Node-Level Conditions (`$if`)
+
+Any node may include an optional `$if` field. If the condition resolves to `true`, the node renders.
+If it resolves to `false`, `null`, or `undefined`, the node is skipped.
+
+```json
+{
+  "type": "Badge",
+  "$if": { "$ref": "$user.isVip" },
+  "label": "VIP"
+}
+```
+
+Supported condition forms:
+
+- boolean literal: `true`, `false`
+- boolean `$ref`: `{ "$ref": "$showBanner" }`
+- unary: `{ "op": "not", "value": <condition> }`
+- logical: `{ "op": "and"|"or", "values": [<condition>, ...] }`
+- comparison:
+
+```json
+{ "op": "gt", "left": { "$ref": "$hp" }, "right": 0 }
+```
+
+Allowed comparison operators:
+
+- `eq`, `ne`, `gt`, `gte`, `lt`, `lte`
+
+Allowed comparison operands:
+
+- string literal
+- number literal
+- boolean literal
+- `null`
+- `$ref`
+
+Constraints:
+
+- Max condition nesting depth: 5
+- No arithmetic operators
+- No string concatenation
+- No user-authored code strings
+- No general `$expr`
 
 **Nested loop example:**
 
@@ -896,7 +1009,7 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | Resource | Limit |
 |----------|-------|
 | Card JSON size | max 1 MB |
-| Text content total | max 200 KB (sum of all Text content strings) |
+| Text content total | max 200 KB (sum of all `Text` literal strings, `$template` literal parts, and `spans[*].text` literal parts) |
 | Style objects total | max 100 KB (sum of all style objects) |
 | Total node count | max 10,000 |
 | Loop iterations | max 1000 per loop |
@@ -1388,14 +1501,19 @@ Before outputting a card, verify:
 - [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array or for-loop object)
 - [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
 - [ ] Interaction nodes (`Button`, `Toggle`) use top-level fields (no `props` object)
-- [ ] `Text.content` is present
+- [ ] `Text` defines exactly one of `content` or `spans`
+- [ ] `Text.maxLines`, if present, is between 1 and 10
+- [ ] `Text.truncate`, if present, is `"ellipsis"` or `"clip"`
 - [ ] `Image.src` starts with `@assets/` — no external URLs
 - [ ] `Avatar.src` starts with `@assets/` — no external URLs
 - [ ] `Icon.name` is a string literal or `$ref`
 - [ ] `Button.action` and `Toggle.onToggle` are static strings
+- [ ] `Button.disabled` and `Toggle.disabled` are boolean literals or `$ref`
 
 **Dynamic values:**
-- [ ] Dynamic values use `$ref`
+- [ ] Dynamic values use `$ref` or structured `$template` where allowed
+- [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, or `Button.label`
+- [ ] Node-level `$if` uses a boolean literal, boolean `$ref`, or a supported condition object
 - [ ] State values referenced by `$ref` exist in the `state` object
 
 **Styles:**
@@ -1409,6 +1527,7 @@ Before outputting a card, verify:
 - [ ] `position`, offsets, `overflow`, and `zIndex` use literal values (no `$ref`)
 - [ ] Structured style objects are object literals; if dynamic values are needed, use `$ref` inside leaf fields like `borderLeft.color`
 - [ ] `fontFamily` uses one of the allowed tokens
+- [ ] `aspectRatio` uses a positive number or a ratio string like `"16 / 9"`
 - [ ] No nested `overflow: "auto"` (parent and child both auto is forbidden)
 - [ ] Grid properties use string values
 

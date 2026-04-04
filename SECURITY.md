@@ -16,7 +16,7 @@ Out of scope (but still important for adopters):
 
 ## Threat Model (High‑Level)
 - **Goal:** prevent untrusted UI from escaping its container, loading unsafe external content, or abusing layout to spoof/overlay host UI.
-- **Non‑goals:** full sandboxing of browser execution, runtime expression evaluation, or protection against compromised host apps.
+- **Non‑goals:** full sandboxing of browser execution, general-purpose runtime expression evaluation, or protection against compromised host apps.
 - **Status:** best‑effort; not formally audited.
 
 ## Reporting Vulnerabilities
