@@ -1,0 +1,426 @@
+{
+  "meta": {
+    "name": "youtube-shorts-v1.1",
+    "version": "1.0.0"
+  },
+  "assets": {
+    "channel": "@assets/shorts-channel.png",
+    "music": "@assets/shorts-music.png",
+    "thumbnail": "@assets/shorts-thumbnail.png"
+  },
+  "state": {
+    "channelName": "@cooking_master",
+    "description": "3분 계란볶음밥 레시피 🍳🔥 초간단 자취 요리! 누구나 따라할 수 있는 꿀팁 대방출",
+    "hashtags": "#요리 #먹방 #레시피 #shorts",
+    "isSubscribed": false,
+    "isLiked": false,
+    "likes": "42.3K",
+    "comments": "1,892",
+    "shares": "3,201",
+    "bookmarks": "892",
+    "musicTitle": "original sound - cooking_master",
+    "progress": 65,
+    "isLive": false,
+    "isPinned": true,
+    "pinnedComment": "레시피 정리는 고정 댓글 확인!",
+    "sideActions": [
+      { "icon": "heart", "count": "42.3K", "id": "like" },
+      { "icon": "chat", "count": "1,892", "id": "comment" },
+      { "icon": "bookmark", "count": "892", "id": "bookmark" },
+      { "icon": "share", "count": "3,201", "id": "share" }
+    ]
+  },
+  "styles": {
+    "iconLabel": {
+      "fontSize": 10,
+      "color": "#ffffff",
+      "fontWeight": "bold",
+      "textAlign": "center"
+    },
+    "overlayText": {
+      "color": "#ffffff",
+      "textShadow": {
+        "offsetX": 0,
+        "offsetY": 1,
+        "blur": 4,
+        "color": "rgba(0,0,0,0.6)"
+      }
+    }
+  },
+  "fragments": {
+    "sideButton": {
+      "type": "Column",
+      "style": {
+        "alignItems": "center",
+        "gap": 4
+      },
+      "children": [
+        {
+          "type": "Box",
+          "style": {
+            "width": 40,
+            "height": 40,
+            "borderRadius": 9999,
+            "backgroundColor": "rgba(255,255,255,0.15)",
+            "alignItems": "center",
+            "justifyContent": "center"
+          },
+          "children": [
+            {
+              "type": "Icon",
+              "name": { "$ref": "$item.icon" },
+              "size": 22,
+              "color": "#ffffff"
+            }
+          ]
+        },
+        {
+          "type": "Text",
+          "content": { "$ref": "$item.count" },
+          "style": { "$style": "iconLabel" }
+        }
+      ]
+    },
+    "pinnedComment": {
+      "type": "Row",
+      "style": {
+        "gap": 6,
+        "alignItems": "center",
+        "backgroundColor": "rgba(0,0,0,0.4)",
+        "borderRadius": 8,
+        "padding": 8
+      },
+      "children": [
+        {
+          "type": "Icon",
+          "name": "pin",
+          "size": 12,
+          "color": "#aaaaaa"
+        },
+        {
+          "type": "Text",
+          "content": { "$ref": "$pinnedComment" },
+          "maxLines": 1,
+          "truncate": "ellipsis",
+          "style": {
+            "fontSize": 11,
+            "color": "#dddddd",
+            "flex": 1
+          }
+        },
+        {
+          "type": "Icon",
+          "name": "chevron-right",
+          "size": 14,
+          "color": "#888888"
+        }
+      ]
+    }
+  },
+  "views": {
+    "Main": {
+      "type": "Stack",
+      "style": {
+        "width": "340px",
+        "height": "600px",
+        "borderRadius": 12,
+        "overflow": "hidden"
+      },
+      "children": [
+        {
+          "type": "Image",
+          "src": "@assets/shorts-thumbnail.png",
+          "alt": "video thumbnail",
+          "style": {
+            "width": "100%",
+            "height": "100%",
+            "objectFit": "cover"
+          }
+        },
+
+        {
+          "type": "Box",
+          "style": {
+            "position": "absolute",
+            "top": 0,
+            "left": 0,
+            "right": 0,
+            "bottom": 0,
+            "backgroundGradient": {
+              "type": "linear",
+              "direction": "180deg",
+              "stops": [
+                { "color": "rgba(0,0,0,0.3)", "position": "0%" },
+                { "color": "rgba(0,0,0,0)", "position": "15%" },
+                { "color": "rgba(0,0,0,0)", "position": "50%" },
+                { "color": "rgba(0,0,0,0.7)", "position": "85%" },
+                { "color": "rgba(0,0,0,0.9)", "position": "100%" }
+              ]
+            }
+          }
+        },
+
+        {
+          "type": "Box",
+          "style": {
+            "position": "absolute",
+            "top": 12,
+            "left": 14,
+            "right": 14
+          },
+          "children": [
+            {
+              "type": "Row",
+              "style": {
+                "justifyContent": "space-between",
+                "alignItems": "center"
+              },
+              "children": [
+                {
+                  "type": "Row",
+                  "style": {
+                    "gap": 8,
+                    "alignItems": "center"
+                  },
+                  "children": [
+                    {
+                      "type": "Text",
+                      "content": "Shorts",
+                      "style": {
+                        "$style": "overlayText",
+                        "fontSize": 18,
+                        "fontWeight": "bold"
+                      }
+                    },
+                    {
+                      "type": "Badge",
+                      "$if": { "$ref": "$isLive" },
+                      "label": "LIVE",
+                      "color": "#ff0033",
+                      "style": { "fontSize": 10 }
+                    }
+                  ]
+                },
+                {
+                  "type": "Row",
+                  "style": { "gap": 16 },
+                  "children": [
+                    {
+                      "type": "Icon",
+                      "name": "search",
+                      "size": 22,
+                      "color": "#ffffff"
+                    },
+                    {
+                      "type": "Icon",
+                      "name": "more-vertical",
+                      "size": 22,
+                      "color": "#ffffff"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "type": "Box",
+          "style": {
+            "position": "absolute",
+            "right": 10,
+            "bottom": 80
+          },
+          "children": [
+            {
+              "type": "Column",
+              "style": {
+                "gap": 16,
+                "alignItems": "center"
+              },
+              "children": [
+                {
+                  "type": "Column",
+                  "style": {
+                    "gap": 16,
+                    "alignItems": "center"
+                  },
+                  "children": {
+                    "for": "item",
+                    "in": "$sideActions",
+                    "template": {
+                      "$use": "sideButton"
+                    }
+                  }
+                },
+                {
+                  "type": "Box",
+                  "style": {
+                    "width": 32,
+                    "height": 32,
+                    "borderRadius": 6,
+                    "overflow": "hidden",
+                    "border": { "width": 1, "style": "solid", "color": "rgba(255,255,255,0.3)" }
+                  },
+                  "children": [
+                    {
+                      "type": "Image",
+                      "src": "@assets/shorts-music.png",
+                      "alt": "music album",
+                      "style": {
+                        "width": 32,
+                        "height": 32,
+                        "objectFit": "cover"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "type": "Box",
+          "style": {
+            "position": "absolute",
+            "left": 14,
+            "right": 56,
+            "bottom": 16
+          },
+          "children": [
+            {
+              "type": "Column",
+              "style": { "gap": 10 },
+              "children": [
+                {
+                  "type": "Row",
+                  "style": {
+                    "gap": 10,
+                    "alignItems": "center"
+                  },
+                  "children": [
+                    {
+                      "type": "Avatar",
+                      "src": "@assets/shorts-channel.png",
+                      "size": 32
+                    },
+                    {
+                      "type": "Text",
+                      "content": { "$ref": "$channelName" },
+                      "style": {
+                        "$style": "overlayText",
+                        "fontSize": 13,
+                        "fontWeight": "bold"
+                      }
+                    },
+                    {
+                      "type": "Button",
+                      "$if": {
+                        "op": "not",
+                        "value": { "$ref": "$isSubscribed" }
+                      },
+                      "label": "Subscribe",
+                      "action": "subscribe",
+                      "style": {
+                        "backgroundColor": "#ff0033",
+                        "color": "#ffffff",
+                        "fontSize": 11,
+                        "fontWeight": "bold",
+                        "borderRadius": 16,
+                        "paddingLeft": 12,
+                        "paddingRight": 12
+                      }
+                    },
+                    {
+                      "type": "Badge",
+                      "$if": { "$ref": "$isSubscribed" },
+                      "label": "Subscribed",
+                      "color": "#555555",
+                      "style": { "fontSize": 11 }
+                    }
+                  ]
+                },
+
+                {
+                  "type": "Text",
+                  "spans": [
+                    {
+                      "text": { "$ref": "$description" },
+                      "style": { "color": "#ffffff" }
+                    },
+                    {
+                      "text": " "
+                    },
+                    {
+                      "text": { "$ref": "$hashtags" },
+                      "style": { "color": "#6eb5ff" }
+                    }
+                  ],
+                  "maxLines": 2,
+                  "truncate": "ellipsis",
+                  "style": {
+                    "fontSize": 13,
+                    "lineHeight": 1.4
+                  }
+                },
+
+                {
+                  "$use": "pinnedComment",
+                  "$if": { "$ref": "$isPinned" }
+                },
+
+                {
+                  "type": "Row",
+                  "style": {
+                    "gap": 6,
+                    "alignItems": "center"
+                  },
+                  "children": [
+                    {
+                      "type": "Icon",
+                      "name": "music",
+                      "size": 12,
+                      "color": "#aaaaaa"
+                    },
+                    {
+                      "type": "Text",
+                      "content": { "$ref": "$musicTitle" },
+                      "maxLines": 1,
+                      "truncate": "ellipsis",
+                      "style": {
+                        "fontSize": 11,
+                        "color": "#cccccc",
+                        "flex": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+
+        {
+          "type": "Box",
+          "style": {
+            "position": "absolute",
+            "left": 0,
+            "right": 0,
+            "bottom": 0,
+            "height": 3,
+            "backgroundColor": "rgba(255,255,255,0.2)"
+          },
+          "children": [
+            {
+              "type": "ProgressBar",
+              "value": { "$ref": "$progress" },
+              "max": 100,
+              "color": "#ff0033"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

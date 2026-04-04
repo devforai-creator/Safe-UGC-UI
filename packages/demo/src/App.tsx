@@ -18,6 +18,8 @@ const DEMO_ASSETS: Record<string, string> = {
     'https://ui-avatars.com/api/?name=CM&background=ff0033&color=fff&size=84&bold=true',
   '@assets/shorts-music.png':
     'https://ui-avatars.com/api/?name=♪&background=333&color=fff&size=84',
+  '@assets/shorts-thumbnail.png':
+    'https://ui-avatars.com/api/?name=🍳&background=1a1a1a&color=ff6b35&size=600&bold=true',
 };
 
 const sampleNames = Object.keys(SAMPLES);
