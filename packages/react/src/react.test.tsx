@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
 import {
   resolveRef,
@@ -19,6 +19,7 @@ const originalResizeObserver = globalThis.ResizeObserver;
 const originalInnerWidth = window.innerWidth;
 
 afterEach(() => {
+  cleanup();
   globalThis.ResizeObserver = originalResizeObserver;
   Object.defineProperty(window, 'innerWidth', {
     configurable: true,
@@ -1372,6 +1373,119 @@ describe('New components rendering', () => {
     const node = {
       type: 'Accordion',
       items: [
+        {
+          id: 'summary',
+          label: 'Summary',
+          content: { type: 'Text', content: 'visible' },
+        },
+        {
+          id: 'hidden',
+          label: 'Hidden',
+          content: { type: 'Text', content: huge },
+        },
+      ],
+    };
+
+    render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>);
+
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' }),
+    ]);
+  });
+
+  it('Tabs switches visible panel content locally', () => {
+    const node = {
+      type: 'Tabs',
+      defaultTab: 'stats',
+      tabs: [
+        {
+          id: 'stats',
+          label: 'Stats',
+          content: { type: 'Text', content: 'Stats body' },
+        },
+        {
+          id: 'logs',
+          label: 'Logs',
+          content: { type: 'Text', content: 'Logs body' },
+        },
+      ],
+    };
+    render(<>{renderTree(node, {}, {})}</>);
+
+    expect(screen.getByText('Stats body')).toBeTruthy();
+    expect(screen.queryByText('Logs body')).toBeNull();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Logs' }));
+    expect(screen.getByText('Logs body')).toBeTruthy();
+    expect(screen.queryByText('Stats body')).toBeNull();
+  });
+
+  it('Tabs supports keyboard navigation across enabled tabs', () => {
+    const node = {
+      type: 'Tabs',
+      defaultTab: 'stats',
+      tabs: [
+        {
+          id: 'stats',
+          label: 'Stats',
+          content: { type: 'Text', content: 'Stats body' },
+        },
+        {
+          id: 'logs',
+          label: 'Logs',
+          content: { type: 'Text', content: 'Logs body' },
+        },
+        {
+          id: 'history',
+          label: 'History',
+          content: { type: 'Text', content: 'History body' },
+        },
+      ],
+    };
+    render(<>{renderTree(node, {}, {})}</>);
+
+    const statsTab = screen.getByRole('tab', { name: 'Stats' });
+    fireEvent.keyDown(statsTab, { key: 'ArrowRight' });
+
+    const logsTab = screen.getByRole('tab', { name: 'Logs' });
+    expect(logsTab.getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByText('Logs body')).toBeTruthy();
+  });
+
+  it('Tabs does not activate disabled tabs', () => {
+    const node = {
+      type: 'Tabs',
+      defaultTab: 'stats',
+      tabs: [
+        {
+          id: 'stats',
+          label: 'Stats',
+          content: { type: 'Text', content: 'Stats body' },
+        },
+        {
+          id: 'locked',
+          label: 'Locked',
+          disabled: true,
+          content: { type: 'Text', content: 'Locked body' },
+        },
+      ],
+    };
+    render(<>{renderTree(node, {}, {})}</>);
+
+    const lockedTab = screen.getByRole('tab', { name: 'Locked' }) as HTMLButtonElement;
+    expect(lockedTab.disabled).toBe(true);
+    fireEvent.click(lockedTab);
+    expect(screen.queryByText('Locked body')).toBeNull();
+    expect(screen.getByText('Stats body')).toBeTruthy();
+  });
+
+  it('Tabs reserves runtime budget for hidden panel content', () => {
+    const onError = vi.fn();
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const node = {
+      type: 'Tabs',
+      defaultTab: 'summary',
+      tabs: [
         {
           id: 'summary',
           label: 'Summary',

@@ -132,9 +132,21 @@ export function getEmbeddedRenderables(
 ): EmbeddedRenderableEntry[] {
   const entries: EmbeddedRenderableEntry[] = [];
 
-  if (node.type === 'Accordion' && Array.isArray(node.items)) {
-    for (let i = 0; i < node.items.length; i++) {
-      const item = node.items[i];
+  const interactiveField =
+    node.type === 'Accordion'
+      ? 'items'
+      : node.type === 'Tabs'
+        ? 'tabs'
+        : null;
+
+  if (interactiveField) {
+    const items = (node as Record<string, unknown>)[interactiveField];
+    if (!Array.isArray(items)) {
+      return entries;
+    }
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       if (
         item == null ||
         typeof item !== 'object' ||
@@ -146,7 +158,7 @@ export function getEmbeddedRenderables(
       const content = (item as Record<string, unknown>).content;
       if (isTraversableNode(content) || isFragmentUseLike(content)) {
         entries.push({
-          pathSuffix: `items[${i}].content`,
+          pathSuffix: `${interactiveField}[${i}].content`,
           renderable: content,
         });
       }

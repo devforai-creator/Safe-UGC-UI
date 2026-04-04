@@ -14,11 +14,11 @@ Use this as the **quick guide** for LLM output. It is a strict subset of the ful
 }
 ```
 
-## 2) Components (17 total)
+## 2) Components (18 total)
 Layout: `Box`, `Row`, `Column`, `Stack`, `Grid` (use `children`)
 Content: `Text`, `Image`
 Display: `ProgressBar`, `Avatar`, `Icon`, `Badge`, `Chip`, `Divider`, `Spacer`
-Interaction: `Button`, `Toggle`, `Accordion`
+Interaction: `Button`, `Toggle`, `Accordion`, `Tabs`
 **All component fields are top-level** — do not use a `props` wrapper.
 - `Stack` is the overlay container: absolute children are positioned relative to it.
 
@@ -29,7 +29,7 @@ Interaction: `Button`, `Toggle`, `Accordion`
 - Use node-level `$if` for conditional rendering. It accepts `true`, `false`, a boolean `$ref`, or a small condition object with `not`, `and`, `or`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte`.
 - `Icon.name` may be a literal string or `$ref`
 - `Image.src` / `Avatar.src` are **@assets only** (no external URLs)
-- `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, and `Accordion.items[*].label` accept literal strings, `$ref`, or `$template`
+- `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, `Accordion.items[*].label`, and `Tabs.tabs[*].label` accept literal strings, `$ref`, or `$template`
 
 ## 4) Text Authoring
 - `Text` uses exactly one of `content` or `spans`.
@@ -90,6 +90,12 @@ Inside template: `$item` and `$index`.
 - `Accordion.defaultExpanded` is optional.
 - Unless `allowMultiple: true`, `defaultExpanded` may include at most one id.
 - Hidden accordion content still counts toward existing validator and runtime limits.
+- `Tabs.tabs[*]` needs `id`, `label`, and `content`.
+- `Tabs.tabs[*].content` may use a normal node or `$use`.
+- `Tabs.tabs[*].disabled` accepts boolean or `$ref`.
+- `Tabs.defaultTab` is optional and must match a declared tab id.
+- Tabs support click plus arrow-key, `Home`, and `End` keyboard selection.
+- Hidden tab panel content still counts toward existing validator and runtime limits.
 
 ## 10) Common Mistakes (Avoid)
 1) `borderLeft` itself as `$ref` instead of using `$ref` inside `borderLeft.color`
@@ -101,7 +107,7 @@ Inside template: `$item` and `$index`.
 7) Putting both `content` and `spans` on the same `Text` node
 8) Using raw placeholder strings like `"@{$username}"` instead of structured `$template`
 9) Putting `$use` inside `fragments.*` or adding extra fields like `style` to a `$use` wrapper
-10) Reusing the same `Accordion.items[*].id` twice or referencing a missing `defaultExpanded` id
+10) Reusing the same `Accordion.items[*].id` twice, or referencing a missing `defaultExpanded` / `defaultTab` id
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

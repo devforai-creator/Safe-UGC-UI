@@ -6,13 +6,13 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 
 ## Status
 
-- Phase 2 plus the first `v1.0` interactive slice are implemented.
+- Phase 2 plus the `v1.0` interactive container milestone are implemented.
 - Published packages are currently `0.6.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
-- `Accordion` is implemented as the first renderer-owned interactive container.
+- `Accordion` and `Tabs` are implemented as renderer-owned interactive containers.
 - `packages/demo` is a private playground app used for local development.
 
 ## Packages
@@ -142,7 +142,7 @@ Currently implemented components:
 
 - `Box`, `Row`, `Column`, `Text`, `Image`
 - `Stack`, `Grid`, `Spacer`, `Divider`, `Icon`
-- `ProgressBar`, `Avatar`, `Badge`, `Chip`, `Button`, `Toggle`, `Accordion`
+- `ProgressBar`, `Avatar`, `Badge`, `Chip`, `Button`, `Toggle`, `Accordion`, `Tabs`
 
 Supported card-level features:
 
@@ -157,7 +157,7 @@ Supported card-level features:
 - directional `borderRadius`
 - `objectFit`, `objectPosition`, and `aspectRatio`
 - `Button` / `Toggle` disabled state
-- `Accordion` local interactive state with hidden-content budgeting
+- `Accordion` and `Tabs` local interactive state with hidden-content budgeting
 
 For full details, see:
 

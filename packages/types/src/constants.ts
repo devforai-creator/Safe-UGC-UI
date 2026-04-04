@@ -176,7 +176,7 @@ export const PHASE1_COMPONENT_TYPES = [
  * Layout (2.1): Box, Row, Column, Stack, Grid, Spacer
  * Content (2.2): Text, Image, Icon, Divider
  * Display (2.3): ProgressBar, Badge, Avatar, Chip
- * Interaction (2.4): Button, Toggle, Accordion
+ * Interaction (2.4): Button, Toggle, Accordion, Tabs
  */
 export const ALL_COMPONENT_TYPES = [
   // 2.1 Layout
@@ -200,6 +200,7 @@ export const ALL_COMPONENT_TYPES = [
   'Button',
   'Toggle',
   'Accordion',
+  'Tabs',
 ] as const;
 
 // ---------------------------------------------------------------------------

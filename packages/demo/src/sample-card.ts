@@ -1289,7 +1289,137 @@ export const SAMPLE_V10_ACCORDION = {
   },
 };
 
+export const SAMPLE_V10_TABS = {
+  meta: { name: 'v1-0-tabs', version: '1.0.0' },
+  state: {
+    title: 'v1.0 Tabs',
+    subtitle: 'renderer-owned local state',
+    pilotName: 'Jisoo Park',
+    missionStatus: 'Ready for launch',
+    cargoCount: 3,
+    cargo: [
+      { name: 'Survey Drone', qty: 2 },
+      { name: 'Repair Kit', qty: 1 },
+      { name: 'Water Pack', qty: 6 },
+    ],
+    reportsLocked: true,
+  },
+  styles: {
+    shell: {
+      width: '390px',
+      backgroundColor: '#111827',
+      borderRadius: 20,
+      padding: 20,
+      color: '#e5e7eb',
+    },
+    panel: {
+      backgroundColor: '#1f2937',
+      borderRadius: 16,
+      padding: 16,
+    },
+    muted: {
+      fontSize: 12,
+      color: '#9ca3af',
+      lineHeight: 18,
+    },
+  },
+  fragments: {
+    overviewPanel: {
+      type: 'Column',
+      style: { gap: 8 },
+      children: [
+        {
+          type: 'Text',
+          content: { $ref: '$pilotName' },
+          style: { fontSize: 18, fontWeight: 'bold', color: '#f9fafb' },
+        },
+        {
+          type: 'Text',
+          content: { $ref: '$missionStatus' },
+          style: { '$style': 'muted' },
+        },
+      ],
+    },
+    cargoRow: {
+      type: 'Row',
+      style: { justifyContent: 'space-between', alignItems: 'center' },
+      children: [
+        {
+          type: 'Text',
+          content: { $ref: '$item.name' },
+          style: { fontSize: 14, color: '#e5e7eb' },
+        },
+        {
+          type: 'Chip',
+          label: { $template: ['x', { $ref: '$item.qty' }] },
+          color: '#60a5fa',
+        },
+      ],
+    },
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: { '$style': 'shell', gap: 14 },
+      children: [
+        {
+          type: 'Column',
+          style: { gap: 4 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$title' },
+              style: { fontSize: 22, fontWeight: 'bold', color: '#f9fafb' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$subtitle' },
+              style: { fontSize: 12, color: '#60a5fa', letterSpacing: 1 },
+            },
+          ],
+        },
+        {
+          type: 'Tabs',
+          defaultTab: 'overview',
+          style: { '$style': 'panel' },
+          tabs: [
+            {
+              id: 'overview',
+              label: 'Overview',
+              content: { $use: 'overviewPanel' },
+            },
+            {
+              id: 'cargo',
+              label: { $template: ['Cargo ', { $ref: '$cargoCount' }] },
+              content: {
+                type: 'Column',
+                style: { gap: 8 },
+                children: {
+                  for: 'item',
+                  in: '$cargo',
+                  template: { $use: 'cargoRow' },
+                },
+              },
+            },
+            {
+              id: 'reports',
+              label: 'Reports',
+              disabled: { $ref: '$reportsLocked' },
+              content: {
+                type: 'Text',
+                content: 'Disabled tabs cannot be selected.',
+                style: { '$style': 'muted' },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
 export const SAMPLES: Record<string, unknown> = {
+  'v1.0 Tabs': SAMPLE_V10_TABS,
   'v1.0 Accordion': SAMPLE_V10_ACCORDION,
   'v0.9 Fragments': SAMPLE_V09_FRAGMENTS,
   'v0.8 Text Authoring': SAMPLE_V08_TEXT,

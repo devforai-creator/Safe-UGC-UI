@@ -18,3 +18,4 @@ export { Chip } from './Chip.js';
 export { Button } from './Button.js';
 export { Toggle } from './Toggle.js';
 export { Accordion } from './Accordion.js';
+export { Tabs } from './Tabs.js';

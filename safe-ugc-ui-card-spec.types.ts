@@ -365,6 +365,18 @@ export interface AccordionFields {
   defaultExpanded?: string[];
 }
 
+export interface TabsItem {
+  id: string;
+  label: TextValue;
+  content: RenderableNode;
+  disabled?: Dynamic<boolean>;
+}
+
+export interface TabsFields {
+  tabs: TabsItem[];
+  defaultTab?: string;
+}
+
 // ---------------------------------------------------------------------------
 // 4) Nodes (discriminated union)
 // ---------------------------------------------------------------------------
@@ -431,6 +443,9 @@ export interface ToggleNode extends BaseNode, ToggleFields {
 export interface AccordionNode extends BaseNode, AccordionFields {
   type: 'Accordion';
 }
+export interface TabsNode extends BaseNode, TabsFields {
+  type: 'Tabs';
+}
 
 export interface FragmentUseNode {
   $use: string;
@@ -454,7 +469,8 @@ export type UGCNode =
   | SpacerNode
   | ButtonNode
   | ToggleNode
-  | AccordionNode;
+  | AccordionNode
+  | TabsNode;
 
 export type RenderableNode = UGCNode | FragmentUseNode;
 

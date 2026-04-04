@@ -34,6 +34,7 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
   Button: ['label', 'action'],
   Toggle: ['value', 'onToggle'],
   Accordion: ['items'],
+  Tabs: ['tabs'],
 };
 
 // ---------------------------------------------------------------------------
@@ -110,6 +111,46 @@ function validateForLoop(
   }
 
   return errors;
+}
+
+function collectUniqueInteractiveItemIds(
+  items: unknown[],
+  nodeType: 'Accordion' | 'Tabs',
+  path: string,
+  errors: ValidationError[],
+): Set<string> {
+  const itemIds = new Set<string>();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (
+      item == null ||
+      typeof item !== 'object' ||
+      Array.isArray(item)
+    ) {
+      continue;
+    }
+
+    const itemId = (item as Record<string, unknown>).id;
+    if (typeof itemId !== 'string' || itemId.length === 0) {
+      continue;
+    }
+
+    if (itemIds.has(itemId)) {
+      errors.push(
+        createError(
+          'INVALID_VALUE',
+          `"${nodeType}" item ids must be unique. Duplicate id "${itemId}".`,
+          `${path}[${i}].id`,
+        ),
+      );
+      continue;
+    }
+
+    itemIds.add(itemId);
+  }
+
+  return itemIds;
 }
 
 // ---------------------------------------------------------------------------
@@ -204,34 +245,12 @@ function validateNode(
         );
       }
 
-      const itemIds = new Set<string>();
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        if (
-          item == null ||
-          typeof item !== 'object' ||
-          Array.isArray(item)
-        ) {
-          continue;
-        }
-
-        const itemId = (item as Record<string, unknown>).id;
-        if (typeof itemId !== 'string' || itemId.length === 0) {
-          continue;
-        }
-
-        if (itemIds.has(itemId)) {
-          errors.push(
-            createError(
-              'INVALID_VALUE',
-              `"Accordion" item ids must be unique. Duplicate id "${itemId}".`,
-              `${path}.items[${i}].id`,
-            ),
-          );
-        } else {
-          itemIds.add(itemId);
-        }
-      }
+      const itemIds = collectUniqueInteractiveItemIds(
+        items,
+        'Accordion',
+        `${path}.items`,
+        errors,
+      );
 
       if (Array.isArray(node.defaultExpanded)) {
         if (node.allowMultiple !== true && node.defaultExpanded.length > 1) {
@@ -255,6 +274,41 @@ function validateNode(
               ),
             );
           }
+        }
+      }
+    }
+  }
+
+  if (node.type === 'Tabs') {
+    const tabs = Array.isArray(node.tabs) ? node.tabs : undefined;
+    if (tabs) {
+      if (tabs.length > MAX_INTERACTIVE_ITEMS) {
+        errors.push(
+          createError(
+            'INVALID_VALUE',
+            `"Tabs" node may define at most ${MAX_INTERACTIVE_ITEMS} tabs.`,
+            `${path}.tabs`,
+          ),
+        );
+      }
+
+      const tabIds = collectUniqueInteractiveItemIds(
+        tabs,
+        'Tabs',
+        `${path}.tabs`,
+        errors,
+      );
+
+      if ('defaultTab' in node) {
+        const defaultTab = (node as Record<string, unknown>).defaultTab;
+        if (typeof defaultTab !== 'string' || !tabIds.has(defaultTab)) {
+          errors.push(
+            createError(
+              'INVALID_VALUE',
+              `"Tabs" defaultTab "${String(defaultTab)}" was not found in tabs.`,
+              `${path}.defaultTab`,
+            ),
+          );
         }
       }
     }

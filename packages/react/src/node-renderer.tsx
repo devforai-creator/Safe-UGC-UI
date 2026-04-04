@@ -46,6 +46,7 @@ import { Chip } from './components/Chip.js';
 import { Button } from './components/Button.js';
 import { Toggle } from './components/Toggle.js';
 import { Accordion } from './components/Accordion.js';
+import { Tabs } from './components/Tabs.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -88,6 +89,13 @@ interface ResolvedTextPayload {
 }
 
 interface ResolvedAccordionItem {
+  id: string;
+  label: string;
+  content: ReactNode;
+  disabled?: boolean;
+}
+
+interface ResolvedTabsItem {
   id: string;
   label: string;
   content: ReactNode;
@@ -326,6 +334,37 @@ function resolveAccordionItems(
       rawItem.content,
       ctx,
       `${String(key)}.items[${index}].content`,
+    );
+
+    return [{ id, label, content, disabled }];
+  });
+}
+
+function resolveTabsItems(
+  node: UGCNodeLike,
+  ctx: RenderContext,
+  key: string | number,
+): ResolvedTabsItem[] {
+  const rawTabs = Array.isArray(node.tabs) ? node.tabs : [];
+
+  return rawTabs.flatMap((tab, index) => {
+    if (
+      tab == null ||
+      typeof tab !== 'object' ||
+      Array.isArray(tab)
+    ) {
+      return [];
+    }
+
+    const rawTab = tab as Record<string, unknown>;
+    const id = typeof rawTab.id === 'string' ? rawTab.id : `tab-${index}`;
+    const label = resolveTextValue(rawTab.label, ctx.state, ctx.locals);
+    const resolvedDisabled = resolveValue(rawTab.disabled, ctx.state, ctx.locals);
+    const disabled = typeof resolvedDisabled === 'boolean' ? resolvedDisabled : undefined;
+    const content = renderNode(
+      rawTab.content,
+      ctx,
+      `${String(key)}.tabs[${index}].content`,
     );
 
     return [{ id, label, content, disabled }];
@@ -626,6 +665,23 @@ export function renderNode(
           items={items}
           allowMultiple={allowMultiple}
           defaultExpanded={defaultExpanded}
+          style={cssStyle}
+          hoverStyle={cssHoverStyle}
+        />
+      );
+    }
+
+    case 'Tabs': {
+      const tabs = resolveTabsItems(n, ctx, key);
+      const defaultTab = typeof (n as Record<string, unknown>).defaultTab === 'string'
+        ? (n as Record<string, unknown>).defaultTab as string
+        : undefined;
+
+      return (
+        <Tabs
+          key={key}
+          tabs={tabs}
+          defaultTab={defaultTab}
           style={cssStyle}
           hoverStyle={cssHoverStyle}
         />

@@ -9,7 +9,7 @@
  *   - Layout:      Box, Row, Column, Stack, Grid  (have children)
  *   - Content:     Text, Image                     (have fields, no children)
  *   - Display:     ProgressBar, Avatar, Icon, Badge, Chip, Divider, Spacer
- *   - Interaction: Button, Toggle, Accordion
+ *   - Interaction: Button, Toggle, Accordion, Tabs
  *
  * Naming convention:
  *   - Zod schema  -> `fooNodeSchema`
@@ -425,6 +425,25 @@ export type AccordionItem = {
   disabled?: boolean | { $ref: string };
 };
 
+export const tabsItemSchema: z.ZodType<{
+  id: string;
+  label: z.infer<typeof templatedStringSchema>;
+  content: RenderableNode;
+  disabled?: boolean | { $ref: string };
+}> = z.object({
+  id: interactiveItemIdSchema,
+  label: templatedStringSchema,
+  content: z.lazy(() => renderableNodeSchema),
+  disabled: dynamicSchema(z.boolean()).optional(),
+}).strict();
+
+export type TabsItem = {
+  id: string;
+  label: z.infer<typeof templatedStringSchema>;
+  content: RenderableNode;
+  disabled?: boolean | { $ref: string };
+};
+
 export const accordionNodeSchema = z.object({
   type: z.literal('Accordion'),
   items: z.array(accordionItemSchema).min(1).max(MAX_INTERACTIVE_ITEMS),
@@ -438,6 +457,27 @@ export type AccordionNode = {
   items: AccordionItem[];
   allowMultiple?: boolean;
   defaultExpanded?: string[];
+} & {
+  $if?: z.infer<typeof conditionSchema>;
+  style?: z.infer<typeof stylePropsSchema>;
+  responsive?: z.infer<typeof responsivePropsSchema>;
+};
+
+// ---------------------------------------------------------------------------
+// 7.4 TabsNode
+// ---------------------------------------------------------------------------
+
+export const tabsNodeSchema = z.object({
+  type: z.literal('Tabs'),
+  tabs: z.array(tabsItemSchema).min(1).max(MAX_INTERACTIVE_ITEMS),
+  defaultTab: interactiveItemIdSchema.optional(),
+  ...baseFields,
+});
+
+export type TabsNode = {
+  type: 'Tabs';
+  tabs: TabsItem[];
+  defaultTab?: string;
 } & {
   $if?: z.infer<typeof conditionSchema>;
   style?: z.infer<typeof stylePropsSchema>;
@@ -469,7 +509,8 @@ export type UGCNode =
   | SpacerNode
   | ButtonNode
   | ToggleNode
-  | AccordionNode;
+  | AccordionNode
+  | TabsNode;
 
 export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
   z.discriminatedUnion('type', [
@@ -490,6 +531,7 @@ export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
     buttonNodeSchema,
     toggleNodeSchema,
     accordionNodeSchema,
+    tabsNodeSchema,
   ]),
 );
 

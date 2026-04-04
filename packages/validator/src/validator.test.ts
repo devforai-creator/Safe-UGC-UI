@@ -158,6 +158,30 @@ describe('validateSchema', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('accepts Tabs nodes in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Tabs',
+          defaultTab: 'stats',
+          tabs: [
+            {
+              id: 'stats',
+              label: 'Stats',
+              content: {
+                type: 'Text',
+                content: 'Tabs content',
+              },
+            },
+          ],
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
   it('rejects invalid $if condition shape in schema validation', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
@@ -399,6 +423,54 @@ describe('validateNodes', () => {
     const errors = validateNodes(views);
     expect(codes(errors)).toContain('INVALID_VALUE');
     expect(errors.some((e) => e.path.includes('defaultExpanded[0]'))).toBe(true);
+  });
+
+  it('accepts a valid Tabs node', () => {
+    const views = makeViews({
+      type: 'Tabs',
+      defaultTab: 'stats',
+      tabs: [
+        {
+          id: 'stats',
+          label: 'Stats',
+          content: { type: 'Text', content: 'details' },
+        },
+        {
+          id: 'logs',
+          label: { $template: ['Logs ', 3] },
+          disabled: { $ref: '$locked' },
+          content: { type: 'Text', content: 'entries' },
+        },
+      ],
+    });
+    const errors = validateNodes(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects duplicate Tabs item ids', () => {
+    const views = makeViews({
+      type: 'Tabs',
+      tabs: [
+        { id: 'dup', label: 'One', content: { type: 'Text', content: 'a' } },
+        { id: 'dup', label: 'Two', content: { type: 'Text', content: 'b' } },
+      ],
+    });
+    const errors = validateNodes(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path.includes('tabs[1].id'))).toBe(true);
+  });
+
+  it('rejects missing Tabs defaultTab ids', () => {
+    const views = makeViews({
+      type: 'Tabs',
+      defaultTab: 'missing',
+      tabs: [
+        { id: 'stats', label: 'Stats', content: { type: 'Text', content: 'a' } },
+      ],
+    });
+    const errors = validateNodes(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path.includes('defaultTab'))).toBe(true);
   });
 
   it('rejects a ForLoop with "in" not starting with $', () => {
@@ -1438,6 +1510,28 @@ describe('validateLimits', () => {
     const views = makeViews({
       type: 'Accordion',
       items: [
+        {
+          id: 'summary',
+          label: 'Summary',
+          content: { type: 'Text', content: 'visible' },
+        },
+        {
+          id: 'hidden',
+          label: 'Hidden',
+          content: { type: 'Text', content: huge },
+        },
+      ],
+    });
+    const errors = validateLimits({ views });
+    expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');
+  });
+
+  it('counts hidden Tabs content toward the global text budget', () => {
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const views = makeViews({
+      type: 'Tabs',
+      defaultTab: 'summary',
+      tabs: [
         {
           id: 'summary',
           label: 'Summary',

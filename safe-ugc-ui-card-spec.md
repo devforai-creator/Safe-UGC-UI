@@ -337,6 +337,58 @@ Rules:
 - unless `allowMultiple` is `true`, `defaultExpanded` may contain at most one id
 - hidden accordion content still counts toward validator and runtime limits
 
+#### Tabs
+Renderer-owned tab list with local selected state. Tab content is standard renderable card content, so it may use loops, `$if`, and `$use`.
+
+```json
+{
+  "type": "Tabs",
+  "defaultTab": "stats",
+  "tabs": [
+    {
+      "id": "stats",
+      "label": "Stats",
+      "content": { "type": "Text", "content": "Mission stats" }
+    },
+    {
+      "id": "logs",
+      "label": { "$template": ["Logs ", { "$ref": "$logCount" }] },
+      "disabled": { "$ref": "$logsLocked" },
+      "content": { "$use": "logsPanel" }
+    }
+  ]
+}
+```
+
+| Field | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `tabs` | Yes | array | static structure only |
+| `defaultTab` | No | string | literal only |
+
+Each `tabs[*]` entry must contain:
+
+| Field | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `id` | Yes | string | static only |
+| `label` | Yes | string-like value | literal, $ref, or `$template` |
+| `content` | Yes | renderable node | static node or `$use` |
+| `disabled` | No | boolean | literal or $ref |
+
+Rules:
+
+- `tabs` must contain at least 1 item
+- tab ids must be unique within the tabs node
+- `defaultTab`, if present, must exist in `tabs`
+- disabled tabs are non-interactive
+- hidden tab content still counts toward validator and runtime limits
+
+Keyboard behavior:
+
+- `ArrowLeft` / `ArrowRight` move selection across enabled tabs
+- `ArrowUp` / `ArrowDown` are treated the same as left/right
+- `Home` selects the first enabled tab
+- `End` selects the last enabled tab
+
 ---
 
 ## 3. Style System
@@ -939,6 +991,7 @@ Output semantics:
 - `Chip.label`
 - `Button.label`
 - `Accordion.items[*].label`
+- `Tabs.tabs[*].label`
 
 `$template` is **not** allowed in security-sensitive fields such as `Image.src`, `Avatar.src`, `Button.action`, or `Toggle.onToggle`.
 
@@ -1590,6 +1643,7 @@ Before outputting a card, verify:
 - [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array of nodes / `$use`, or for-loop object)
 - [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
 - [ ] Interaction nodes (`Button`, `Toggle`, `Accordion`) use top-level fields (no `props` object)
+- [ ] `Tabs` uses top-level fields (no `props` object)
 - [ ] `Text` defines exactly one of `content` or `spans`
 - [ ] `Text.maxLines`, if present, is between 1 and 10
 - [ ] `Text.truncate`, if present, is `"ellipsis"` or `"clip"`
@@ -1602,10 +1656,13 @@ Before outputting a card, verify:
 - [ ] `Accordion.items[*].id` values are unique
 - [ ] `Accordion.defaultExpanded`, if present, refers only to declared item ids
 - [ ] `Accordion.defaultExpanded` contains at most one id unless `allowMultiple` is `true`
+- [ ] `Tabs.tabs[*]` defines `id`, `label`, and `content`
+- [ ] `Tabs.tabs[*].id` values are unique
+- [ ] `Tabs.defaultTab`, if present, refers only to declared tab ids
 
 **Dynamic values:**
 - [ ] Dynamic values use `$ref` or structured `$template` where allowed
-- [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, or `Accordion.items[*].label`
+- [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, `Accordion.items[*].label`, or `Tabs.tabs[*].label`
 - [ ] Node-level `$if` uses a boolean literal, boolean `$ref`, or a supported condition object
 - [ ] `$use` names are static strings and resolve to an existing fragment
 - [ ] `fragments.*` does not contain nested `$use`

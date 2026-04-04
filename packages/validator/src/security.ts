@@ -270,8 +270,15 @@ function getScannableNodeFields(
   delete nodeFields.style;
   delete nodeFields.children;
 
-  if (node.type === 'Accordion' && Array.isArray(node.items)) {
-    nodeFields.items = node.items.map((item) => {
+  const interactiveField =
+    node.type === 'Accordion'
+      ? 'items'
+      : node.type === 'Tabs'
+        ? 'tabs'
+        : null;
+
+  if (interactiveField && Array.isArray(node[interactiveField])) {
+    nodeFields[interactiveField] = node[interactiveField].map((item) => {
       if (
         item == null ||
         typeof item !== 'object' ||
