@@ -7,7 +7,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 ## Status
 
 - Phase 2 plus the `v1.0` interactive container milestone are implemented.
-- Published packages are currently `0.6.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
+- Published packages are currently `1.0.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
