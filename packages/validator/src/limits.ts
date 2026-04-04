@@ -216,6 +216,7 @@ interface TemplateMetrics {
 function countTemplateMetrics(
   template: unknown,
   cardStyles?: Record<string, Record<string, unknown>>,
+  fragments?: Record<string, unknown>,
 ): TemplateMetrics {
   const result: TemplateMetrics = {
     nodes: 0,
@@ -226,79 +227,44 @@ function countTemplateMetrics(
       compact: 0,
     },
   };
-  if (template == null || typeof template !== 'object') return result;
 
-  const node = template as Record<string, unknown>;
-  if (!node.type) return result;
+  traverseCard(
+    { __template: template },
+    (node: TraversableNode) => {
+      result.nodes += 1;
 
-  result.nodes = 1;
+      if (node.type === 'Text') {
+        result.textBytes += countTextNodeLiteralBytes(node as Record<string, unknown>);
+        result.styleBytes += countTextSpanStyleBytes(node as Record<string, unknown>);
+      }
 
-  // Text bytes
-  if (node.type === 'Text') {
-    result.textBytes = countTextNodeLiteralBytes(node);
-    result.styleBytes += countTextSpanStyleBytes(node);
-  }
-
-  // Style bytes (merged with $style)
-  {
-    const baseStyleForBytes = getEffectiveStyleForMode(
-      node as TraversableNode,
-      cardStyles,
-      'default',
-    );
-    if (baseStyleForBytes) {
-      result.styleBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
-    }
-
-    const compactStyleForBytes = getMergedCompactResponsiveStyle(
-      node as TraversableNode,
-      cardStyles,
-    );
-    if (compactStyleForBytes) {
-      result.styleBytes += utf8ByteLength(JSON.stringify(compactStyleForBytes));
-    }
-
-    for (const mode of RESPONSIVE_MODES) {
-      const effectiveStyle = getEffectiveStyleForMode(
-        node as TraversableNode,
+      const baseStyleForBytes = getEffectiveStyleForMode(
+        node,
         cardStyles,
-        mode,
+        'default',
       );
-      if (effectiveStyle?.overflow === 'auto') {
-        result.overflowAutoCount[mode]++;
+      if (baseStyleForBytes) {
+        result.styleBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
       }
-    }
-  }
 
-  // Recurse into children
-  const children = node.children;
-  if (Array.isArray(children)) {
-    for (const child of children) {
-      const childMetrics = countTemplateMetrics(child, cardStyles);
-      result.nodes += childMetrics.nodes;
-      result.textBytes += childMetrics.textBytes;
-      result.styleBytes += childMetrics.styleBytes;
-      for (const mode of RESPONSIVE_MODES) {
-        result.overflowAutoCount[mode] += childMetrics.overflowAutoCount[mode];
+      const compactStyleForBytes = getMergedCompactResponsiveStyle(
+        node,
+        cardStyles,
+      );
+      if (compactStyleForBytes) {
+        result.styleBytes += utf8ByteLength(JSON.stringify(compactStyleForBytes));
       }
-    }
-  } else if (
-    children != null &&
-    typeof children === 'object' &&
-    !Array.isArray(children) &&
-    'template' in (children as Record<string, unknown>)
-  ) {
-    // Nested for-loop: count the template once (inner loop expansion
-    // can't be calculated without knowing the inner array length)
-    const innerTemplate = (children as Record<string, unknown>).template;
-    const innerMetrics = countTemplateMetrics(innerTemplate, cardStyles);
-    result.nodes += innerMetrics.nodes;
-    result.textBytes += innerMetrics.textBytes;
-    result.styleBytes += innerMetrics.styleBytes;
-    for (const mode of RESPONSIVE_MODES) {
-      result.overflowAutoCount[mode] += innerMetrics.overflowAutoCount[mode];
-    }
-  }
+
+      for (const mode of RESPONSIVE_MODES) {
+        const effectiveStyle = getEffectiveStyleForMode(node, cardStyles, mode);
+        if (effectiveStyle?.overflow === 'auto') {
+          result.overflowAutoCount[mode]++;
+        }
+      }
+    },
+    undefined,
+    fragments,
+  );
 
   return result;
 }
@@ -323,7 +289,12 @@ function countTemplateMetrics(
  * @returns An array of validation errors (empty if all limits are satisfied).
  */
 export function validateLimits(
-  card: { state?: Record<string, unknown>; views: Record<string, unknown>; cardStyles?: Record<string, Record<string, unknown>> },
+  card: {
+    state?: Record<string, unknown>;
+    views: Record<string, unknown>;
+    cardStyles?: Record<string, Record<string, unknown>>;
+    fragments?: Record<string, unknown>;
+  },
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -425,7 +396,7 @@ export function validateLimits(
           } else if (source.length > 1) {
             // Multiply template metrics by (N - 1) since traversal already
             // counts the template once
-            const tplMetrics = countTemplateMetrics(forLoop.template, card.cardStyles);
+            const tplMetrics = countTemplateMetrics(forLoop.template, card.cardStyles, card.fragments);
             const multiplier = source.length - 1;
             nodeCount += tplMetrics.nodes * multiplier;
             textContentBytes += tplMetrics.textBytes * multiplier;
@@ -473,7 +444,7 @@ export function validateLimits(
         ),
       );
     }
-  });
+  }, undefined, card.fragments);
 
   // -------------------------------------------------------------------------
   // Post-traversal aggregate checks

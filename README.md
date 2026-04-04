@@ -11,6 +11,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
+- Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
 - `packages/demo` is a private playground app used for local development.
 
 ## Packages

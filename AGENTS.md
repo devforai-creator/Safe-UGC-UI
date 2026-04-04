@@ -26,6 +26,7 @@ untrusted UI cards.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
+- Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
 - `@safe-ugc-ui/demo` is private and remains at `0.1.0`.
 
 ## Build, Test, and Development Commands

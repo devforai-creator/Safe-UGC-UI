@@ -8,11 +8,7 @@
 import { MAX_CONDITION_DEPTH, isRef } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
-import {
-  type TraversableNode,
-  type TraversalContext,
-  traverseCard,
-} from './traverse.js';
+import { walkRenderableCard } from './renderable-walk.js';
 
 function validateConditionDepth(
   condition: unknown,
@@ -60,10 +56,11 @@ function validateConditionDepth(
 
 export function validateConditions(
   views: Record<string, unknown>,
+  fragments?: Record<string, unknown>,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  traverseCard(views, (node: TraversableNode, ctx: TraversalContext) => {
+  walkRenderableCard(views, fragments, (node, ctx) => {
     if ('$if' in node) {
       validateConditionDepth(node.$if, `${ctx.path}.$if`, errors);
     }

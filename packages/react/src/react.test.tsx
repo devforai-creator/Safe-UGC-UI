@@ -705,6 +705,23 @@ describe('UGCRenderer', () => {
     expect(screen.getByText('First View')).toBeTruthy();
   });
 
+  it('renders a root $use view through fragments', () => {
+    const card = {
+      meta: { name: 'fragments', version: '1.0.0' },
+      fragments: {
+        header: {
+          type: 'Text',
+          content: 'From fragment',
+        },
+      },
+      views: {
+        Main: { $use: 'header' },
+      },
+    };
+    render(<UGCRenderer card={card as any} />);
+    expect(screen.getByText('From fragment')).toBeTruthy();
+  });
+
   it('renders with containerStyle', () => {
     const { container } = render(
       <UGCRenderer
@@ -844,6 +861,55 @@ describe('renderTree', () => {
     const node = { type: 'Text',  content: 'tree text'  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toBe('tree text');
+  });
+
+  it('renders a fragment reference in children', () => {
+    const node = {
+      type: 'Box',
+      children: [{ $use: 'header' }],
+    };
+    const fragments = {
+      header: {
+        type: 'Text',
+        content: 'fragment child',
+      },
+    };
+    const { container } = render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: false }, fragments)}</>);
+    expect(container.textContent).toBe('fragment child');
+  });
+
+  it('skips a fragment reference when its wrapper $if is false', () => {
+    const node = { $use: 'header', $if: { $ref: '$show' } };
+    const fragments = {
+      header: {
+        type: 'Text',
+        content: 'fragment child',
+      },
+    };
+    const { container } = render(<>{renderTree(node, { show: false }, {}, undefined, undefined, undefined, undefined, { compact: false }, fragments)}</>);
+    expect(container.innerHTML).toBe('');
+  });
+
+  it('calls onError when a fragment reference is missing at runtime', () => {
+    const onError = vi.fn();
+    render(
+      <>
+        {renderTree(
+          { $use: 'missing' },
+          {},
+          {},
+          undefined,
+          undefined,
+          undefined,
+          onError,
+          { compact: false },
+          {},
+        )}
+      </>,
+    );
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_FRAGMENT_NOT_FOUND' }),
+    ]);
   });
 
   it('renders a Box with children', () => {

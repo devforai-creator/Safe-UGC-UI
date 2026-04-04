@@ -9,6 +9,7 @@ Use this as the **quick guide** for LLM output. It is a strict subset of the ful
   "assets": { "key": "@assets/file.png" },
   "state": { "key": "value" },
   "styles": { "styleName": { "fontSize": 14, "color": "#fff" } },
+  "fragments": { "header": { "type": "Row", "children": [ ... ] } },
   "views": { "Main": { "type": "Box", "children": [ ... ] } }
 }
 ```
@@ -73,11 +74,18 @@ Interaction: `Button`, `Toggle`
 Inside template: `$item` and `$index`.  
 `in` must resolve to an array (state or loop-local). `undefined` → empty render.
 
-## 8) Interaction Details
+## 8) Fragment Reuse
+- Use top-level `fragments` to define reusable node subtrees.
+- Use `{ "$use": "fragmentName" }` anywhere a node is allowed, including child arrays and loop templates.
+- `$use` may include only optional `$if`.
+- Fragment names are static strings.
+- Fragments may not contain another `$use`.
+
+## 9) Interaction Details
 - `Button.action` and `Toggle.onToggle` are static strings.
 - `Button.disabled` and `Toggle.disabled` accept boolean or `$ref`.
 
-## 9) Common Mistakes (Avoid)
+## 10) Common Mistakes (Avoid)
 1) `borderLeft` itself as `$ref` instead of using `$ref` inside `borderLeft.color`
 2) `padding: "6px 8px"` (shorthand not allowed)  
 3) `Image.src` not starting with `@assets/`
@@ -86,6 +94,7 @@ Inside template: `$item` and `$index`.
 6) Using malformed `aspectRatio` strings like `"wide"` instead of `"16 / 9"`
 7) Putting both `content` and `spans` on the same `Text` node
 8) Using raw placeholder strings like `"@{$username}"` instead of structured `$template`
+9) Putting `$use` inside `fragments.*` or adding extra fields like `style` to a `$use` wrapper
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

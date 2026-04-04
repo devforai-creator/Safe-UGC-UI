@@ -51,16 +51,24 @@ export interface TraversalContext {
  */
 export interface TraversableNode {
   type: string;
-  children?: TraversableNode[] | ForLoopLike;
+  children?: TraversableRenderable[] | ForLoopLike;
   style?: Record<string, unknown>;
   responsive?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
+export interface FragmentUseLike {
+  $use: string;
+  $if?: unknown;
+  [key: string]: unknown;
+}
+
+export type TraversableRenderable = TraversableNode | FragmentUseLike;
+
 interface ForLoopLike {
   for: string;
   in: string;
-  template: TraversableNode;
+  template: TraversableRenderable;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +104,47 @@ function isForLoop(
   );
 }
 
+export function isTraversableNode(value: unknown): value is TraversableNode {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'type' in value &&
+    typeof (value as Record<string, unknown>).type === 'string'
+  );
+}
+
+export function isFragmentUseLike(value: unknown): value is FragmentUseLike {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '$use' in value &&
+    typeof (value as Record<string, unknown>).$use === 'string'
+  );
+}
+
+function resolveRenderableNode(
+  node: TraversableRenderable,
+  fragments?: Record<string, unknown>,
+  fragmentStack: string[] = [],
+): TraversableNode | null {
+  if (isTraversableNode(node)) {
+    return node;
+  }
+
+  if (!isFragmentUseLike(node) || !fragments) {
+    return null;
+  }
+
+  // Fragment definitions are validated separately and may not nest `$use`.
+  // Skip expansion here so invalid cards cannot recurse indefinitely.
+  if (fragmentStack.length > 0 || fragmentStack.includes(node.$use)) {
+    return null;
+  }
+
+  const target = fragments[node.$use];
+  return isTraversableNode(target) ? target : null;
+}
+
 function hasOverflowAuto(style: Record<string, unknown> | undefined): boolean {
   return style?.overflow === 'auto';
 }
@@ -108,53 +157,63 @@ function hasOverflowAuto(style: Record<string, unknown> | undefined): boolean {
  * Recursively traverse a single node and its descendants.
  */
 export function traverseNode(
-  node: TraversableNode,
+  node: TraversableRenderable,
   context: TraversalContext,
   visitor: NodeVisitor,
   styleResolver?: StyleResolver,
+  fragments?: Record<string, unknown>,
+  fragmentStack: string[] = [],
 ): void {
-  const result = visitor(node, context);
+  const resolvedNode = resolveRenderableNode(node, fragments, fragmentStack);
+  if (!resolvedNode) {
+    return;
+  }
+
+  const nextFragmentStack =
+    isFragmentUseLike(node) ? [...fragmentStack, node.$use] : fragmentStack;
+
+  const result = visitor(resolvedNode, context);
 
   // If visitor returns false, skip children.
   if (result === false) {
     return;
   }
 
-  const children = node.children;
+  const children = resolvedNode.children;
   if (children == null) {
     return;
   }
 
   const nextStackDepth =
-    node.type === 'Stack' ? context.stackDepth + 1 : context.stackDepth;
+    resolvedNode.type === 'Stack' ? context.stackDepth + 1 : context.stackDepth;
   const nextOverflowAuto =
-    context.overflowAutoAncestor || hasOverflowAuto(styleResolver ? styleResolver(node) : node.style);
+    context.overflowAutoAncestor || hasOverflowAuto(styleResolver ? styleResolver(resolvedNode) : resolvedNode.style);
 
   if (isForLoop(children)) {
     // ForLoop: traverse the template node
     const childCtx: TraversalContext = {
       path: `${context.path}.children.template`,
       depth: context.depth + 1,
-      parentType: node.type,
+      parentType: resolvedNode.type,
       loopDepth: context.loopDepth + 1,
       overflowAutoAncestor: nextOverflowAuto,
       stackDepth: nextStackDepth,
     };
-    traverseNode(children.template, childCtx, visitor, styleResolver);
+    traverseNode(children.template, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
   } else if (Array.isArray(children)) {
     // Array of child nodes
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
-      if (child && typeof child === 'object' && 'type' in child) {
+      if (isTraversableNode(child) || isFragmentUseLike(child)) {
         const childCtx: TraversalContext = {
           path: `${context.path}.children[${i}]`,
           depth: context.depth + 1,
-          parentType: node.type,
+          parentType: resolvedNode.type,
           loopDepth: context.loopDepth,
           overflowAutoAncestor: nextOverflowAuto,
           stackDepth: nextStackDepth,
         };
-        traverseNode(child as TraversableNode, childCtx, visitor, styleResolver);
+        traverseNode(child, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
       }
     }
   }
@@ -174,18 +233,16 @@ export function traverseCard(
   views: Record<string, unknown>,
   visitor: NodeVisitor,
   styleResolver?: StyleResolver,
+  fragments?: Record<string, unknown>,
+  pathPrefix: string = 'views',
 ): void {
   for (const [viewName, rootNode] of Object.entries(views)) {
-    if (
-      rootNode == null ||
-      typeof rootNode !== 'object' ||
-      !('type' in rootNode)
-    ) {
+    if (!isTraversableNode(rootNode) && !isFragmentUseLike(rootNode)) {
       continue;
     }
 
     const context: TraversalContext = {
-      path: `views.${viewName}`,
+      path: `${pathPrefix}.${viewName}`,
       depth: 0,
       parentType: null,
       loopDepth: 0,
@@ -193,6 +250,6 @@ export function traverseCard(
       stackDepth: 0,
     };
 
-    traverseNode(rootNode as TraversableNode, context, visitor, styleResolver);
+    traverseNode(rootNode, context, visitor, styleResolver, fragments);
   }
 }

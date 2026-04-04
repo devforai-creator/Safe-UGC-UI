@@ -44,7 +44,7 @@ import {
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
-import { type TraversableNode, type TraversalContext, traverseCard } from './traverse.js';
+import { walkRenderableCard } from './renderable-walk.js';
 
 // ---------------------------------------------------------------------------
 // Property sets
@@ -1066,6 +1066,7 @@ function mergeStyleWithRef(
 export function validateStyles(
   views: Record<string, unknown>,
   cardStyles?: Record<string, Record<string, unknown>>,
+  fragments?: Record<string, unknown>,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -1101,8 +1102,17 @@ export function validateStyles(
   // ------------------------------------------------------------------
   // Phase 1: Validate per-node styles (with $style merging)
   // ------------------------------------------------------------------
-  traverseCard(views, (node: TraversableNode, ctx: TraversalContext) => {
-    const style = node.style;
+  walkRenderableCard(views, fragments, (node, ctx) => {
+    if (!('type' in node) || typeof node.type !== 'string') {
+      return;
+    }
+
+    const style =
+      node.style != null &&
+      typeof node.style === 'object' &&
+      !Array.isArray(node.style)
+        ? node.style as Record<string, unknown>
+        : undefined;
     if (style != null && typeof style === 'object') {
       const stylePath = `${ctx.path}.style`;
 
@@ -1143,9 +1153,10 @@ export function validateStyles(
       }
     }
 
-    if (node.type === 'Text' && Array.isArray(node.spans)) {
-      for (let i = 0; i < node.spans.length; i++) {
-        const span = node.spans[i];
+    const spans = Array.isArray(node.spans) ? node.spans : undefined;
+    if (node.type === 'Text' && spans) {
+      for (let i = 0; i < spans.length; i++) {
+        const span = spans[i];
         if (
           span == null ||
           typeof span !== 'object' ||

@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
+import { MAX_NODE_COUNT, TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
 import {
   validate,
   validateRaw,
   validateSchema,
+  validateFragments,
   validateNodes,
   validateConditions,
   validateValueTypes,
@@ -21,11 +22,13 @@ import {
 function makeCard(
   views: Record<string, unknown>,
   state?: Record<string, unknown>,
+  extra?: Record<string, unknown>,
 ): Record<string, unknown> {
   return {
     meta: { name: 'test', version: '1.0.0' },
     views,
     ...(state !== undefined ? { state } : {}),
+    ...(extra ?? {}),
   };
 }
 
@@ -108,6 +111,23 @@ describe('validateSchema', () => {
           maxLines: 2,
           truncate: 'ellipsis',
         },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts fragments and a root $use in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      fragments: {
+        header: {
+          type: 'Text',
+          content: 'Hello fragments',
+        },
+      },
+      views: {
+        Main: { $use: 'header' },
       },
     };
     const result = validateSchema(card);
@@ -383,6 +403,54 @@ describe('validateConditions', () => {
     const errors = validateConditions(views);
     expect(codes(errors)).toContain('CONDITION_DEPTH_EXCEEDED');
     expect(errors.some((e) => e.path.includes('.$if'))).toBe(true);
+  });
+});
+
+describe('validateFragments', () => {
+  it('accepts valid fragment references in views and for-loop templates', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { $use: 'chipRow' },
+      },
+    });
+    const fragments = {
+      chipRow: {
+        type: 'Row',
+        children: [
+          { type: 'Text', content: 'ok' },
+        ],
+      },
+    };
+    const errors = validateFragments(views, fragments);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects unknown fragment references', () => {
+    const views = makeViews({ $use: 'missing' });
+    const errors = validateFragments(views, {});
+    expect(codes(errors)).toContain('FRAGMENT_REF_NOT_FOUND');
+  });
+
+  it('rejects nested $use inside fragment definitions', () => {
+    const views = makeViews({ type: 'Box' });
+    const fragments = {
+      outer: {
+        type: 'Column',
+        children: [
+          { $use: 'inner' },
+        ],
+      },
+      inner: {
+        type: 'Text',
+        content: 'hi',
+      },
+    };
+    const errors = validateFragments(views, fragments);
+    expect(codes(errors)).toContain('FRAGMENT_NESTED_USE');
+    expect(errors.some((e) => e.path.includes('fragments.outer.children[0]'))).toBe(true);
   });
 });
 
@@ -937,6 +1005,22 @@ describe('validateSecurity', () => {
     expect(errors.some((e) => e.path.includes('spans[0].style.color'))).toBe(true);
   });
 
+  it('applies position restrictions to expanded fragments', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: [{ $use: 'floating' }],
+    });
+    const fragments = {
+      floating: {
+        type: 'Box',
+        style: { position: 'absolute' },
+      },
+    };
+    const errors = validateSecurity({ views, fragments });
+    expect(codes(errors)).toContain('POSITION_ABSOLUTE_NOT_IN_STACK');
+    expect(errors.some((e) => e.path.includes('children[0].style.position'))).toBe(true);
+  });
+
   it('rejects Image src with https:// URL', () => {
     const views = makeViews({
       type: 'Image',
@@ -1246,6 +1330,44 @@ describe('validateLimits', () => {
     });
     const errors = validateLimits({ views });
     expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');
+  });
+
+  it('counts expanded fragment nodes toward the global node budget', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: Array.from({ length: MAX_NODE_COUNT }, () => ({ $use: 'leaf' })),
+    });
+    const fragments = {
+      leaf: {
+        type: 'Text',
+        content: 'x',
+      },
+    };
+    const errors = validateLimits({ views, fragments });
+    expect(codes(errors)).toContain('NODE_COUNT_EXCEEDED');
+  });
+
+  it('counts fragment use inside for-loop templates during loop expansion', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { $use: 'line' },
+      },
+    });
+    const fragments = {
+      line: {
+        type: 'Text',
+        content: 'ok',
+      },
+    };
+    const errors = validateLimits({
+      views,
+      state: { items: [1, 2, 3, 4, 5] },
+      fragments,
+    });
+    expect(errors).toHaveLength(0);
   });
 
   it('rejects overflow:auto count > 2', () => {

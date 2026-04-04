@@ -416,6 +416,11 @@ export interface ToggleNode extends BaseNode, ToggleFields {
   type: 'Toggle';
 }
 
+export interface FragmentUseNode {
+  $use: string;
+  $if?: Condition;
+}
+
 export type UGCNode =
   | BoxNode
   | RowNode
@@ -434,6 +439,8 @@ export type UGCNode =
   | ButtonNode
   | ToggleNode;
 
+export type RenderableNode = UGCNode | FragmentUseNode;
+
 // ---------------------------------------------------------------------------
 // 5) for...in loops
 // ---------------------------------------------------------------------------
@@ -441,10 +448,10 @@ export type UGCNode =
 export interface ForLoop {
   for: string; // referenced as $item
   in: RefPath; // must resolve to an array
-  template: UGCNode;
+  template: RenderableNode;
 }
 
-export type Children = UGCNode[] | ForLoop;
+export type Children = RenderableNode[] | ForLoop;
 
 // ---------------------------------------------------------------------------
 // 6) Card
@@ -457,5 +464,6 @@ export interface Card {
   assets?: Record<string, AssetPath>;
   state?: Record<string, unknown>;
   styles?: Record<StyleName, Style>;
-  views: Record<string, UGCNode>;
+  fragments?: Record<StyleName, UGCNode>;
+  views: Record<string, RenderableNode>;
 }

@@ -12,11 +12,8 @@
 import { ALL_COMPONENT_TYPES } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
-import {
-  type TraversableNode,
-  type TraversalContext,
-  traverseCard,
-} from './traverse.js';
+import { walkRenderableCard } from './renderable-walk.js';
+import { isFragmentUseLike, type TraversableNode, type TraversalContext } from './traverse.js';
 
 // ---------------------------------------------------------------------------
 // Required fields per component type
@@ -100,12 +97,12 @@ function validateForLoop(
   if (
     typeof template !== 'object' ||
     template === null ||
-    !('type' in template)
+    (!('type' in template) && !isFragmentUseLike(template))
   ) {
     errors.push(
       createError(
         'INVALID_VALUE',
-        'ForLoop "template" must be an object with a "type" property.',
+        'ForLoop "template" must be an object with a "type" property or "$use" reference.',
         `${path}.children.template`,
       ),
     );
@@ -213,11 +210,28 @@ function validateNode(
  */
 export function validateNodes(
   views: Record<string, unknown>,
+  fragments?: Record<string, unknown>,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
-    errors.push(...validateNode(node, context));
+  walkRenderableCard(views, fragments, (node, context) => {
+    if (!('type' in node) || typeof node.type !== 'string') {
+      return;
+    }
+
+    errors.push(
+      ...validateNode(
+        node as TraversableNode,
+        {
+          path: context.path,
+          depth: 0,
+          parentType: null,
+          loopDepth: 0,
+          overflowAutoAncestor: false,
+          stackDepth: 0,
+        } satisfies TraversalContext,
+      ),
+    );
   });
 
   return errors;

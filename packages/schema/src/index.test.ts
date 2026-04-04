@@ -32,6 +32,7 @@ describe('generateCardSchema', () => {
       assets: { type: 'object' },
       state: { type: 'object' },
       styles: { type: 'object' },
+      fragments: { type: 'object' },
       views: { type: 'object' },
     });
   });

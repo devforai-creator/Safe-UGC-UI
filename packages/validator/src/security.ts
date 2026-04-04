@@ -23,6 +23,7 @@ import {
   type TraversalContext,
   traverseCard,
 } from './traverse.js';
+import { walkRenderableCard } from './renderable-walk.js';
 import {
   type ResponsiveMode,
   RESPONSIVE_MODES,
@@ -287,6 +288,7 @@ function validateEffectiveStylesForMode(
   mode: ResponsiveMode,
   views: Record<string, unknown>,
   cardStyles: Record<string, Record<string, unknown>> | undefined,
+  fragments: Record<string, unknown> | undefined,
   errors: ValidationError[],
   seen: Set<string>,
 ): void {
@@ -347,7 +349,7 @@ function validateEffectiveStylesForMode(
         ),
       );
     }
-  }, styleResolver);
+  }, styleResolver, fragments);
 }
 
 // ---------------------------------------------------------------------------
@@ -374,10 +376,11 @@ export function validateSecurity(card: {
   state?: Record<string, unknown>;
   cardAssets?: Record<string, string>;
   cardStyles?: Record<string, Record<string, unknown>>;
+  fragments?: Record<string, unknown>;
 }): ValidationError[] {
   const errors: ValidationError[] = [];
   const seen = new Set<string>();
-  const { views, state, cardAssets, cardStyles } = card;
+  const { views, state, cardAssets, cardStyles, fragments } = card;
 
   // -----------------------------------------------------------------
   // 0. Validate cardAssets values
@@ -405,9 +408,19 @@ export function validateSecurity(card: {
     }
   }
 
-  traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
+  walkRenderableCard(views, fragments, (node, context) => {
+    if (!('type' in node) || typeof node.type !== 'string') {
+      return;
+    }
+
     const { path } = context;
-    const { style, type } = node;
+    const style =
+      node.style != null &&
+      typeof node.style === 'object' &&
+      !Array.isArray(node.style)
+        ? node.style as Record<string, unknown>
+        : undefined;
+    const type = node.type;
     const nodeFields = { ...node } as Record<string, unknown>;
     delete nodeFields.type;
     delete nodeFields.style;
@@ -497,16 +510,16 @@ export function validateSecurity(card: {
       scanForRefs(style, `${path}.style`, errors);
     }
     if (
-      node.responsive != null &&
-      typeof node.responsive === 'object' &&
-      !Array.isArray(node.responsive)
+      responsive != null &&
+      typeof responsive === 'object' &&
+      !Array.isArray(responsive)
     ) {
-      scanForRefs(node.responsive, `${path}.responsive`, errors);
+      scanForRefs(responsive, `${path}.responsive`, errors);
     }
   });
 
   for (const mode of RESPONSIVE_MODES) {
-    validateEffectiveStylesForMode(mode, views, cardStyles, errors, seen);
+    validateEffectiveStylesForMode(mode, views, cardStyles, fragments, errors, seen);
   }
 
   return errors;

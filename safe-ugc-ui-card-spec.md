@@ -13,6 +13,7 @@ A card is a JSON object with these top-level fields:
   "meta": { "name": "my-card", "version": "1.0.0" },
   "state": { ... },
   "styles": { ... },
+  "fragments": { ... },
   "views": {
     "Main": { ... }
   }
@@ -25,7 +26,8 @@ A card is a JSON object with these top-level fields:
 | `assets` | No | Manifest of local assets used by the card (see below) |
 | `state` | No | Key-value pairs for dynamic data binding |
 | `styles` | No | Named style definitions for reuse via `$style` (see Section 3.17) |
-| `views` | Yes | Named view definitions. Each value is a component tree (node). Must have at least one view. |
+| `fragments` | No | Named reusable node subtrees for `$use` references (see Section 4.6.1) |
+| `views` | Yes | Named view definitions. Each value is a component tree or `$use` wrapper. Must have at least one view. |
 
 ### Assets
 
@@ -54,7 +56,7 @@ Sixteen component types are available, organized into three categories.
 
 ### 2.1 Layout Components
 
-Layout components contain `children` — either an array of child nodes or a `for...in` loop object (see Section 4.6).
+Layout components contain `children` — either an array of child nodes / `$use` wrappers or a `for...in` loop object (see Section 4.6).
 
 #### Box
 General-purpose container. No default flex direction.
@@ -96,7 +98,7 @@ CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to
 | Field | Required | Type |
 |-------|----------|------|
 | `type` | Yes | `"Box"` \| `"Row"` \| `"Column"` \| `"Stack"` \| `"Grid"` |
-| `children` | No | Array of child nodes, or a `for...in` loop object |
+| `children` | No | Array of child nodes / `$use` wrappers, or a `for...in` loop object |
 | `$if` | No | Condition object, boolean literal, or boolean `$ref` (see Section 4.7) |
 | `style` | No | Style object (see Section 3) |
 | `responsive` | No | Node-level breakpoint overrides (see Section 3.18) |
@@ -927,6 +929,46 @@ Inside the template, `$item` (or whatever you named the loop variable) refers to
 - Loop source must resolve to an array from state or loop-local variables (undefined is soft-skipped with empty render; non-array triggers an error)
 - All expanded nodes count toward the 10,000 node limit
 
+### 4.6.1 Fragment Reuse (`fragments` / `$use`)
+
+Cards may define reusable node subtrees at the top level:
+
+```json
+{
+  "fragments": {
+    "profileHeader": {
+      "type": "Row",
+      "children": [
+        { "type": "Text", "content": "Pilot" },
+        { "type": "Badge", "label": "READY" }
+      ]
+    }
+  }
+}
+```
+
+Use a fragment anywhere a normal node is accepted:
+
+```json
+{ "$use": "profileHeader" }
+```
+
+Optional wrapper condition:
+
+```json
+{ "$use": "vipNotice", "$if": { "$ref": "$isVip" } }
+```
+
+Rules:
+
+- `fragments` is a map from fragment name to a single normal node subtree
+- fragment names use the same identifier pattern as `styles`
+- `$use` accepts only `$use` and optional `$if`
+- `$use` names are static strings only
+- `$use` is allowed in child arrays, view roots, and `for...in.template`
+- fragments may not contain another `$use`
+- expanded fragment nodes count toward the same node, text, style, overflow, and loop limits as inline nodes
+
 ### 4.7 Node-Level Conditions (`$if`)
 
 Any node may include an optional `$if` field. If the condition resolves to `true`, the node renders.
@@ -1495,10 +1537,11 @@ Before outputting a card, verify:
 **Structure:**
 - [ ] `meta` has `name` and `version` (both strings)
 - [ ] `views` has at least one view (usually `"Main"`)
-- [ ] Each view root is a valid node with a `type` field
+- [ ] Each view root is a valid node or a `$use` wrapper
+- [ ] `fragments`, if present, maps names to normal node subtrees
 
 **Components:**
-- [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array or for-loop object)
+- [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array of nodes / `$use`, or for-loop object)
 - [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
 - [ ] Interaction nodes (`Button`, `Toggle`) use top-level fields (no `props` object)
 - [ ] `Text` defines exactly one of `content` or `spans`
@@ -1514,6 +1557,8 @@ Before outputting a card, verify:
 - [ ] Dynamic values use `$ref` or structured `$template` where allowed
 - [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, or `Button.label`
 - [ ] Node-level `$if` uses a boolean literal, boolean `$ref`, or a supported condition object
+- [ ] `$use` names are static strings and resolve to an existing fragment
+- [ ] `fragments.*` does not contain nested `$use`
 - [ ] State values referenced by `$ref` exist in the `state` object
 
 **Styles:**

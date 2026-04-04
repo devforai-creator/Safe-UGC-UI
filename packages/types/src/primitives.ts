@@ -34,7 +34,21 @@ import {
 } from './props.js';
 
 // ===========================================================================
-// 1. ForLoop — iterative children
+// 1. FragmentUseNode — reusable subtree reference
+// ===========================================================================
+
+export const fragmentUseNodeSchema = z.object({
+  $use: z.string(),
+  $if: conditionSchema.optional(),
+}).strict();
+
+export type FragmentUseNode = {
+  $use: string;
+  $if?: z.infer<typeof conditionSchema>;
+};
+
+// ===========================================================================
+// 2. ForLoop — iterative children
 // ===========================================================================
 
 /**
@@ -50,28 +64,28 @@ import {
 export const forLoopSchema = z.object({
   for: z.string(),
   in: z.string(),
-  template: z.lazy(() => ugcNodeSchema),
+  template: z.lazy(() => renderableNodeSchema),
 });
 
 export type ForLoop = {
   for: string;
   in: string;
-  template: UGCNode;
+  template: RenderableNode;
 };
 
 // ===========================================================================
-// 2. Children — array of nodes OR a for-loop
+// 3. Children — array of nodes OR a for-loop
 // ===========================================================================
 
 const childrenSchema = z.union([
-  z.array(z.lazy(() => ugcNodeSchema)),
+  z.array(z.lazy(() => renderableNodeSchema)),
   forLoopSchema,
 ]);
 
-type Children = UGCNode[] | ForLoop;
+type Children = RenderableNode[] | ForLoop;
 
 // ===========================================================================
-// 3. Base node fields (shared by every node)
+// 4. Base node fields (shared by every node)
 // ===========================================================================
 
 const baseFields = {
@@ -81,7 +95,7 @@ const baseFields = {
 };
 
 // ===========================================================================
-// 4. Layout nodes — have children
+// 5. Layout nodes — have children
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
@@ -175,7 +189,7 @@ export type GridNode = {
 };
 
 // ===========================================================================
-// 5. Content nodes — have fields, no children
+// 6. Content nodes — have fields, no children
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
@@ -215,7 +229,7 @@ export type ImageNode = {
 };
 
 // ===========================================================================
-// 6. Display nodes
+// 7. Display nodes
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
@@ -345,7 +359,7 @@ export type SpacerNode = {
 };
 
 // ===========================================================================
-// 7. Interaction nodes
+// 8. Interaction nodes
 // ===========================================================================
 
 // ---------------------------------------------------------------------------
@@ -385,7 +399,7 @@ export type ToggleNode = {
 };
 
 // ===========================================================================
-// 8. UGCNode — discriminated union of all node types
+// 9. UGCNode — discriminated union of all node types
 // ===========================================================================
 
 /**
@@ -431,8 +445,17 @@ export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
   ]),
 );
 
+export type RenderableNode = UGCNode | FragmentUseNode;
+
+export const renderableNodeSchema: z.ZodType<RenderableNode> = z.lazy(() =>
+  z.union([
+    ugcNodeSchema,
+    fragmentUseNodeSchema,
+  ]),
+);
+
 // ===========================================================================
-// 9. Phase1Node — MVP subset (spec section 9, Phase 1)
+// 10. Phase1Node — MVP subset (spec section 9, Phase 1)
 // ===========================================================================
 
 /**

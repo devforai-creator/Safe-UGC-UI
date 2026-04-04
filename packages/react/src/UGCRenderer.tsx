@@ -117,12 +117,14 @@ export function UGCRenderer({
 
     // 5. Extract card-level styles
     const cardStyles = cardObj.styles as Record<string, Record<string, unknown>> | undefined;
+    const fragments = cardObj.fragments as Record<string, unknown> | undefined;
 
     return {
       valid: true as const,
       rootNode: views[selectedView],
       state: mergedState,
       cardStyles,
+      fragments,
     };
   }, [card, viewName, stateOverride]);
 
@@ -184,6 +186,7 @@ export function UGCRenderer({
         onAction,
         onError,
         responsive,
+        result.fragments,
       )}
     </UGCContainer>
   );

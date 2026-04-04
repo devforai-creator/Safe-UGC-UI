@@ -994,7 +994,175 @@ export const SAMPLE_V08_TEXT = {
   },
 };
 
+export const SAMPLE_V09_FRAGMENTS = {
+  meta: { name: 'v0-9-fragments', version: '1.0.0' },
+  state: {
+    title: 'v0.9 Fragments',
+    subtitle: 'header reuse + loop template reuse',
+    pilotName: 'Hana Lee',
+    pilotRole: 'Recon Lead',
+    showNotice: true,
+    items: [
+      { name: 'Signal Beacon', qty: 2 },
+      { name: 'Med Patch', qty: 5 },
+      { name: 'Battery Cell', qty: 3 },
+    ],
+  },
+  styles: {
+    panel: {
+      backgroundColor: '#0f172a',
+      borderRadius: 16,
+      padding: 16,
+    },
+    muted: {
+      fontSize: 12,
+      color: '#94a3b8',
+    },
+  },
+  fragments: {
+    profileHeader: {
+      type: 'Row',
+      style: { gap: 12, alignItems: 'center' },
+      children: [
+        {
+          type: 'Box',
+          style: {
+            width: 44,
+            height: 44,
+            borderRadius: 999,
+            backgroundColor: '#22d3ee',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+          children: [
+            {
+              type: 'Text',
+              content: 'H',
+              style: { fontSize: 18, fontWeight: 'bold', color: '#082f49' },
+            },
+          ],
+        },
+        {
+          type: 'Column',
+          style: { gap: 2 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$pilotName' },
+              style: { fontSize: 18, fontWeight: 'bold', color: '#e2e8f0' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$pilotRole' },
+              style: { '$style': 'muted' },
+            },
+          ],
+        },
+      ],
+    },
+    inventoryRow: {
+      type: 'Row',
+      style: { justifyContent: 'space-between', alignItems: 'center' },
+      children: [
+        {
+          type: 'Text',
+          content: { $ref: '$item.name' },
+          style: { fontSize: 14, color: '#e2e8f0' },
+        },
+        {
+          type: 'Badge',
+          label: { $template: ['x', { $ref: '$item.qty' }] },
+          color: '#22d3ee',
+        },
+      ],
+    },
+    readyNotice: {
+      type: 'Box',
+      style: {
+        backgroundColor: '#082f49',
+        borderRadius: 12,
+        padding: 12,
+      },
+      children: [
+        {
+          type: 'Text',
+          content: 'All fragments resolve statically and still count toward limits.',
+          style: { fontSize: 12, color: '#bae6fd', lineHeight: 18 },
+        },
+      ],
+    },
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: {
+        width: '380px',
+        backgroundColor: '#020617',
+        borderRadius: 20,
+        padding: 20,
+        gap: 14,
+      },
+      children: [
+        {
+          type: 'Column',
+          style: { gap: 4 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$title' },
+              style: { fontSize: 22, fontWeight: 'bold', color: '#f8fafc' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$subtitle' },
+              style: { fontSize: 12, color: '#22d3ee', letterSpacing: 1 },
+            },
+          ],
+        },
+        {
+          type: 'Box',
+          style: { '$style': 'panel' },
+          children: [
+            { $use: 'profileHeader' },
+          ],
+        },
+        {
+          type: 'Box',
+          style: { '$style': 'panel' },
+          children: [
+            {
+              type: 'Column',
+              style: { gap: 10 },
+              children: [
+                {
+                  type: 'Text',
+                  content: 'Manifest',
+                  style: { fontSize: 14, fontWeight: 'bold', color: '#f8fafc' },
+                },
+                {
+                  type: 'Column',
+                  style: { gap: 8 },
+                  children: {
+                    for: 'item',
+                    in: '$items',
+                    template: { $use: 'inventoryRow' },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          $use: 'readyNotice',
+          $if: { $ref: '$showNotice' },
+        },
+      ],
+    },
+  },
+};
+
 export const SAMPLES: Record<string, unknown> = {
+  'v0.9 Fragments': SAMPLE_V09_FRAGMENTS,
   'v0.8 Text Authoring': SAMPLE_V08_TEXT,
   'v0.7 Features': SAMPLE_V07_FEATURES,
   'Hover & Transition': SAMPLE_HOVER_TRANSITION,

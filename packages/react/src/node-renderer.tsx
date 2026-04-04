@@ -68,6 +68,12 @@ interface ForLoopLike {
   template: unknown;
 }
 
+interface FragmentUseLike {
+  $use: string;
+  $if?: unknown;
+  [key: string]: unknown;
+}
+
 interface ResolvedTextSpan {
   text: string;
   style?: CSSProperties;
@@ -96,6 +102,8 @@ export interface RenderContext {
   assets: AssetMap;
   locals?: Record<string, unknown>;
   cardStyles?: Record<string, Record<string, unknown>>;
+  fragments?: Record<string, unknown>;
+  fragmentStack?: string[];
   iconResolver?: (name: string) => ReactNode;
   onAction?: (type: string, actionId: string, payload?: unknown) => void;
   onError?: (errors: Array<{ code: string; message: string; path: string }>) => void;
@@ -113,6 +121,11 @@ function isForLoop(obj: unknown): obj is ForLoopLike {
   if (obj == null || typeof obj !== 'object' || Array.isArray(obj)) return false;
   const o = obj as Record<string, unknown>;
   return typeof o.for === 'string' && typeof o.in === 'string' && o.template != null;
+}
+
+function isFragmentUse(obj: unknown): obj is FragmentUseLike {
+  if (obj == null || typeof obj !== 'object' || Array.isArray(obj)) return false;
+  return typeof (obj as Record<string, unknown>).$use === 'string';
 }
 
 function utf8ByteLength(str: string): number {
@@ -296,6 +309,49 @@ export function renderNode(
   key: string | number,
 ): ReactNode {
   if (node == null || typeof node !== 'object') return null;
+
+  if (isFragmentUse(node)) {
+    if ('$if' in node && !evaluateCondition(node.$if, ctx.state, ctx.locals)) {
+      return null;
+    }
+
+    if ((ctx.fragmentStack?.length ?? 0) > 0) {
+      ctx.onError?.([{
+        code: 'RUNTIME_FRAGMENT_NESTED_USE',
+        message: 'Fragments may not contain nested "$use" references',
+        path: String(key),
+      }]);
+      return null;
+    }
+
+    if (ctx.fragmentStack?.includes(node.$use)) {
+      ctx.onError?.([{
+        code: 'RUNTIME_FRAGMENT_CYCLE',
+        message: `Fragment "${node.$use}" recursively references itself`,
+        path: String(key),
+      }]);
+      return null;
+    }
+
+    const fragment = ctx.fragments?.[node.$use];
+    if (fragment == null) {
+      ctx.onError?.([{
+        code: 'RUNTIME_FRAGMENT_NOT_FOUND',
+        message: `Fragment "${node.$use}" was not found`,
+        path: String(key),
+      }]);
+      return null;
+    }
+
+    return renderNode(
+      fragment,
+      {
+        ...ctx,
+        fragmentStack: [...(ctx.fragmentStack ?? []), node.$use],
+      },
+      key,
+    );
+  }
 
   const n = node as UGCNodeLike;
   if (!n.type) return null;
@@ -611,6 +667,7 @@ export function renderTree(
   onAction?: (type: string, actionId: string, payload?: unknown) => void,
   onError?: (errors: Array<{ code: string; message: string; path: string }>) => void,
   responsive: { compact: boolean } = { compact: false },
+  fragments?: Record<string, unknown>,
 ): ReactNode {
   const limits: RuntimeLimits = {
     nodeCount: 0,
@@ -622,6 +679,8 @@ export function renderTree(
     state,
     assets,
     cardStyles,
+    fragments,
+    fragmentStack: [],
     iconResolver,
     onAction,
     onError,

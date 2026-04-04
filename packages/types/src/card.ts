@@ -16,7 +16,7 @@
  */
 
 import { z } from 'zod';
-import { ugcNodeSchema } from './primitives.js';
+import { renderableNodeSchema, ugcNodeSchema } from './primitives.js';
 import { stylePropsSchema } from './styles.js';
 
 // ---------------------------------------------------------------------------
@@ -42,7 +42,8 @@ export const ugcCardSchema = z.object({
   assets: z.record(z.string(), z.string()).optional(),
   state: z.record(z.string(), z.unknown()).optional(),
   styles: z.record(z.string().regex(styleNamePattern), stylePropsSchema).optional(),
-  views: z.record(z.string(), ugcNodeSchema),
+  fragments: z.record(z.string().regex(styleNamePattern), ugcNodeSchema).optional(),
+  views: z.record(z.string(), renderableNodeSchema),
 });
 
 export type UGCCard = z.infer<typeof ugcCardSchema>;

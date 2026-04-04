@@ -27,6 +27,7 @@ import {
   toResult,
 } from './result.js';
 import { validateSchema } from './schema.js';
+import { validateFragments } from './fragment-validator.js';
 import { validateNodes } from './node-validator.js';
 import { validateConditions } from './condition-validator.js';
 import { validateValueTypes } from './value-types.js';
@@ -59,6 +60,7 @@ export {
 } from './traverse.js';
 
 export { validateSchema, parseCard } from './schema.js';
+export { validateFragments } from './fragment-validator.js';
 export { validateNodes } from './node-validator.js';
 export { validateConditions } from './condition-validator.js';
 export { validateValueTypes } from './value-types.js';
@@ -98,22 +100,31 @@ function runAllChecks(input: unknown): ValidationError[] {
     state?: Record<string, unknown>;
     assets?: Record<string, string>;
     styles?: Record<string, Record<string, unknown>>;
+    fragments?: Record<string, unknown>;
   };
   const views = obj.views as Record<string, unknown>;
   const cardStyles = obj.styles as Record<string, Record<string, unknown>> | undefined;
+  const fragments = obj.fragments as Record<string, unknown> | undefined;
   const errors: ValidationError[] = [];
 
-  errors.push(...validateNodes(views));
-  errors.push(...validateConditions(views));
-  errors.push(...validateValueTypes(views));
-  errors.push(...validateStyles(views, cardStyles));
+  errors.push(...validateFragments(views, fragments));
+  errors.push(...validateNodes(views, fragments));
+  errors.push(...validateConditions(views, fragments));
+  errors.push(...validateValueTypes(views, fragments));
+  errors.push(...validateStyles(views, cardStyles, fragments));
   errors.push(...validateSecurity({
     views,
     state: obj.state as Record<string, unknown> | undefined,
     cardAssets: obj.assets as Record<string, string> | undefined,
     cardStyles,
+    fragments,
   }));
-  errors.push(...validateLimits({ state: obj.state as Record<string, unknown> | undefined, views, cardStyles }));
+  errors.push(...validateLimits({
+    state: obj.state as Record<string, unknown> | undefined,
+    views,
+    cardStyles,
+    fragments,
+  }));
 
   return errors;
 }

@@ -62,6 +62,10 @@ export type ValidationErrorCode =
   | 'STYLE_REF_NOT_FOUND'
   | 'INVALID_STYLE_REF'
   | 'INVALID_STYLE_NAME'
+  // Fragments
+  | 'FRAGMENT_REF_NOT_FOUND'
+  | 'FRAGMENT_NESTED_USE'
+  | 'INVALID_FRAGMENT_NAME'
   // Hover / Transition
   | 'INVALID_HOVER_STYLE'
   | 'HOVER_STYLE_NESTED'

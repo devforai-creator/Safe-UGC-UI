@@ -22,11 +22,7 @@
  */
 
 import { type ValidationError, createError } from './result.js';
-import {
-  type TraversableNode,
-  type TraversalContext,
-  traverseCard,
-} from './traverse.js';
+import { walkRenderableCard } from './renderable-walk.js';
 
 // ---------------------------------------------------------------------------
 // Style properties that must always be static (no $ref)
@@ -129,11 +125,22 @@ function validateNodeStyle(
  */
 export function validateValueTypes(
   views: Record<string, unknown>,
+  fragments?: Record<string, unknown>,
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  traverseCard(views, (node: TraversableNode, ctx: TraversalContext) => {
-    validateNodeStyle(node.style, `${ctx.path}.style`, errors);
+  walkRenderableCard(views, fragments, (node, ctx) => {
+    if (!('type' in node) || typeof node.type !== 'string') {
+      return;
+    }
+
+    const style =
+      node.style != null &&
+      typeof node.style === 'object' &&
+      !Array.isArray(node.style)
+        ? node.style as Record<string, unknown>
+        : undefined;
+    validateNodeStyle(style, `${ctx.path}.style`, errors);
 
     const responsive = node.responsive;
     if (
