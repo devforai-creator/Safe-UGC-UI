@@ -55,6 +55,9 @@ export const MAX_STACK_NESTING = 3;
 /** Container width threshold for the `compact` responsive override (px). */
 export const COMPACT_BREAKPOINT_MAX_WIDTH = 480;
 
+/** Container width threshold for the `medium` responsive override (px). */
+export const MEDIUM_BREAKPOINT_MAX_WIDTH = 768;
+
 // ---------------------------------------------------------------------------
 // 6.3 Style limits
 // ---------------------------------------------------------------------------
@@ -125,6 +128,9 @@ export const OPACITY_MIN = 0;
 
 /** Maximum opacity value. */
 export const OPACITY_MAX = 1;
+
+/** Maximum allowed backdrop blur radius (px). */
+export const BACKDROP_BLUR_MAX = 40;
 
 /** Maximum transition duration in milliseconds. */
 export const TRANSITION_DURATION_MAX = 2000;
@@ -212,7 +218,7 @@ export const ALL_COMPONENT_TYPES = [
  *
  * - External resource loading: backgroundImage, cursor, listStyleImage, content
  * - Performance / deception: filter, backdropFilter, mixBlendMode
- * - Complex visual manipulation: animation, transition, clipPath, mask
+ * - Complex visual manipulation: animation, transition, mask
  */
 export const FORBIDDEN_STYLE_PROPERTIES = [
   'backgroundImage',
@@ -224,7 +230,6 @@ export const FORBIDDEN_STYLE_PROPERTIES = [
   'mixBlendMode',
   'animation',
   'transition',
-  'clipPath',
   'mask',
 ] as const;
 

@@ -1418,7 +1418,209 @@ export const SAMPLE_V10_TABS = {
   },
 };
 
+export const SAMPLE_V11_VISUAL_LAYOUT = {
+  meta: { name: 'v1-1-visual-layout', version: '1.0.0' },
+  assets: {
+    portrait: '@assets/char-avatar.png',
+  },
+  state: {
+    title: 'v1.1 Visual Layout',
+    subtitle: 'medium + backdropBlur + clipPath',
+    note:
+      'Resize the preview below 768px to see the feature row stack. The visuals stay inside the same safe style model.',
+  },
+  styles: {
+    shell: {
+      width: '560px',
+      backgroundGradient: {
+        type: 'linear',
+        direction: '135deg',
+        stops: [
+          { color: '#07111f', position: '0%' },
+          { color: '#101c2f', position: '100%' },
+        ],
+      },
+      borderRadius: 24,
+      padding: 20,
+      color: '#e2e8f0',
+    },
+    glass: {
+      backgroundColor: 'rgba(15, 23, 42, 0.62)',
+      backdropBlur: 14,
+      borderRadius: 18,
+      border: { width: 1, style: 'solid', color: 'rgba(148, 163, 184, 0.18)' },
+    },
+    muted: {
+      fontSize: 12,
+      color: '#94a3b8',
+      lineHeight: 18,
+    },
+  },
+  views: {
+    Main: {
+      type: 'Column',
+      style: { '$style': 'shell', gap: 16 },
+      children: [
+        {
+          type: 'Column',
+          style: { gap: 4 },
+          children: [
+            {
+              type: 'Text',
+              content: { $ref: '$title' },
+              style: { fontSize: 22, fontWeight: 'bold', color: '#f8fafc' },
+            },
+            {
+              type: 'Text',
+              content: { $ref: '$subtitle' },
+              style: { fontSize: 12, color: '#67e8f9', letterSpacing: 1 },
+            },
+          ],
+        },
+        {
+          type: 'Text',
+          content: { $ref: '$note' },
+          style: { '$style': 'muted' },
+        },
+        {
+          type: 'Row',
+          style: { gap: 16, alignItems: 'stretch' },
+          responsive: {
+            medium: { flexDirection: 'column' },
+            compact: { gap: 12 },
+          },
+          children: [
+            {
+              type: 'Box',
+              style: {
+                '$style': 'glass',
+                width: 220,
+                padding: 14,
+              },
+              children: [
+                {
+                  type: 'Column',
+                  style: { gap: 12 },
+                  children: [
+                    {
+                      type: 'Text',
+                      content: 'Inset mask + glass panel',
+                      style: { fontSize: 14, fontWeight: 'bold', color: '#f8fafc' },
+                    },
+                    {
+                      type: 'Image',
+                      src: '@assets/char-avatar.png',
+                      alt: 'portrait',
+                      style: {
+                        width: '100%',
+                        aspectRatio: '4 / 5',
+                        objectFit: 'cover',
+                        clipPath: {
+                          type: 'inset',
+                          top: 0,
+                          right: 0,
+                          bottom: 0,
+                          left: 0,
+                          round: 22,
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'Column',
+              style: { flex: 1, gap: 12 },
+              children: [
+                {
+                  type: 'Box',
+                  style: { '$style': 'glass', padding: 14 },
+                  children: [
+                    {
+                      type: 'Text',
+                      content:
+                        'structured clipPath stays object-only, backdropBlur stays numeric, and responsive.medium reuses the same validator path as compact.',
+                      style: { '$style': 'muted' },
+                    },
+                  ],
+                },
+                {
+                  type: 'Row',
+                  style: { gap: 12 },
+                  responsive: {
+                    compact: { flexDirection: 'column' },
+                  },
+                  children: [
+                    {
+                      type: 'Column',
+                      style: {
+                        '$style': 'glass',
+                        flex: 1,
+                        padding: 12,
+                        alignItems: 'center',
+                        gap: 10,
+                      },
+                      children: [
+                        {
+                          type: 'Image',
+                          src: '@assets/char-avatar.png',
+                          alt: 'circle clip',
+                          style: {
+                            width: 96,
+                            height: 96,
+                            objectFit: 'cover',
+                            clipPath: { type: 'circle', radius: '50%' },
+                          },
+                        },
+                        {
+                          type: 'Text',
+                          content: 'circle',
+                          style: { fontSize: 12, color: '#cbd5e1' },
+                        },
+                      ],
+                    },
+                    {
+                      type: 'Column',
+                      style: {
+                        '$style': 'glass',
+                        flex: 1,
+                        padding: 12,
+                        alignItems: 'center',
+                        gap: 10,
+                      },
+                      children: [
+                        {
+                          type: 'Image',
+                          src: '@assets/char-avatar.png',
+                          alt: 'ellipse clip',
+                          style: {
+                            width: 120,
+                            height: 96,
+                            objectFit: 'cover',
+                            clipPath: { type: 'ellipse', rx: '50%', ry: '38%' },
+                          },
+                        },
+                        {
+                          type: 'Text',
+                          content: 'ellipse',
+                          style: { fontSize: 12, color: '#cbd5e1' },
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  },
+};
+
 export const SAMPLES: Record<string, unknown> = {
+  'v1.1 Visual Layout': SAMPLE_V11_VISUAL_LAYOUT,
   'v1.0 Tabs': SAMPLE_V10_TABS,
   'v1.0 Accordion': SAMPLE_V10_ACCORDION,
   'v0.9 Fragments': SAMPLE_V09_FRAGMENTS,

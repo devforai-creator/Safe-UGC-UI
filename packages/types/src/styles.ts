@@ -138,6 +138,38 @@ export const transformObjectSchema = z.object({
 
 export type TransformObject = z.infer<typeof transformObjectSchema>;
 
+// ---------------------------------------------------------------------------
+// 1.10 ClipPathObject
+// ---------------------------------------------------------------------------
+
+export const clipPathCircleSchema = z.object({
+  type: z.literal('circle'),
+  radius: dynamicSchema(lengthSchema),
+}).strict();
+
+export const clipPathEllipseSchema = z.object({
+  type: z.literal('ellipse'),
+  rx: dynamicSchema(lengthSchema),
+  ry: dynamicSchema(lengthSchema),
+}).strict();
+
+export const clipPathInsetSchema = z.object({
+  type: z.literal('inset'),
+  top: dynamicSchema(lengthSchema),
+  right: dynamicSchema(lengthSchema),
+  bottom: dynamicSchema(lengthSchema),
+  left: dynamicSchema(lengthSchema),
+  round: dynamicSchema(lengthSchema).optional(),
+}).strict();
+
+export const clipPathObjectSchema = z.union([
+  clipPathCircleSchema,
+  clipPathEllipseSchema,
+  clipPathInsetSchema,
+]);
+
+export type ClipPathObject = z.infer<typeof clipPathObjectSchema>;
+
 // ===========================================================================
 // 2. Enum value types
 // ===========================================================================
@@ -433,6 +465,7 @@ const coreStyleShape = {
   // Opacity — Dynamic
   // -----------------------------------------------------------------------
   opacity: dynamicSchema(z.number()).optional(),
+  backdropBlur: dynamicSchema(z.number()).optional(),
 
   // -----------------------------------------------------------------------
   // Gradient — Static only
@@ -466,6 +499,7 @@ const coreStyleShape = {
   // Transform — Static only (skew excluded)
   // -----------------------------------------------------------------------
   transform: transformObjectSchema.optional(),
+  clipPath: clipPathObjectSchema.optional(),
 
   // -----------------------------------------------------------------------
   // Overflow — Static only
@@ -533,6 +567,7 @@ export type ResponsiveStyleProps = z.infer<typeof responsiveStylePropsSchema>;
 // ---------------------------------------------------------------------------
 
 export const responsivePropsSchema = z.object({
+  medium: responsiveStylePropsSchema.optional(),
   compact: responsiveStylePropsSchema.optional(),
 }).strict();
 

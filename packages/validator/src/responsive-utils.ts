@@ -1,9 +1,10 @@
 import type { TraversableNode } from './traverse.js';
 
-export type ResponsiveMode = 'default' | 'compact';
+export type ResponsiveMode = 'default' | 'medium' | 'compact';
 
 export const RESPONSIVE_MODES: readonly ResponsiveMode[] = [
   'default',
+  'medium',
   'compact',
 ] as const;
 
@@ -33,8 +34,9 @@ function mergeNamedStyle(
   return { ...baseStyle, ...inlineWithoutStyleRef };
 }
 
-function getCompactResponsiveStyle(
+function getResponsiveStyle(
   node: TraversableNode,
+  mode: Exclude<ResponsiveMode, 'default'>,
 ): Record<string, unknown> | undefined {
   const responsive = node.responsive;
   if (
@@ -45,16 +47,16 @@ function getCompactResponsiveStyle(
     return undefined;
   }
 
-  const compact = (responsive as Record<string, unknown>).compact;
+  const override = (responsive as Record<string, unknown>)[mode];
   if (
-    compact == null ||
-    typeof compact !== 'object' ||
-    Array.isArray(compact)
+    override == null ||
+    typeof override !== 'object' ||
+    Array.isArray(override)
   ) {
     return undefined;
   }
 
-  return compact as Record<string, unknown>;
+  return override as Record<string, unknown>;
 }
 
 function stripResponsiveOnlyUnsupportedFields(
@@ -81,23 +83,40 @@ export function getEffectiveStyleForMode(
     return baseStyle;
   }
 
-  const compactStyle = stripResponsiveOnlyUnsupportedFields(
-    mergeNamedStyle(getCompactResponsiveStyle(node), cardStyles),
+  const mediumStyle = stripResponsiveOnlyUnsupportedFields(
+    mergeNamedStyle(getResponsiveStyle(node, 'medium'), cardStyles),
   );
 
-  if (!compactStyle) {
+  if (mode === 'medium') {
+    if (!mediumStyle) {
+      return baseStyle;
+    }
+
+    return {
+      ...(baseStyle ?? {}),
+      ...mediumStyle,
+    };
+  }
+
+  const compactStyle = stripResponsiveOnlyUnsupportedFields(
+    mergeNamedStyle(getResponsiveStyle(node, 'compact'), cardStyles),
+  );
+
+  if (!mediumStyle && !compactStyle) {
     return baseStyle;
   }
 
   return {
     ...(baseStyle ?? {}),
+    ...(mediumStyle ?? {}),
     ...compactStyle,
   };
 }
 
-export function getMergedCompactResponsiveStyle(
+export function getMergedResponsiveStyleOverride(
   node: TraversableNode,
   cardStyles: Record<string, Record<string, unknown>> | undefined,
+  mode: Exclude<ResponsiveMode, 'default'>,
 ): Record<string, unknown> | undefined {
-  return mergeNamedStyle(getCompactResponsiveStyle(node), cardStyles);
+  return mergeNamedStyle(getResponsiveStyle(node, mode), cardStyles);
 }

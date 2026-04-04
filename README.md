@@ -8,7 +8,8 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 
 - Phase 2 plus the `v1.0` interactive container milestone are implemented.
 - Published packages are currently `1.0.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
-- The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, and node-level `responsive.compact` overrides.
+- The `v1.1` safe visual/layout pack is implemented on `main`.
+- The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, `backdropBlur`, structured `clipPath`, and node-level `responsive.medium` / `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
@@ -151,11 +152,12 @@ Supported card-level features:
 - `for...in` loops
 - `fragments` plus `$use` subtree reuse
 - reusable `styles` plus `$style` references
+- node-level `responsive.medium` overrides for container widths up to `768px`
 - node-level `responsive.compact` overrides for container widths up to `480px`
 - `hoverStyle`
 - structured `transition`
 - directional `borderRadius`
-- `objectFit`, `objectPosition`, and `aspectRatio`
+- `objectFit`, `objectPosition`, `aspectRatio`, `backdropBlur`, and structured `clipPath`
 - `Button` / `Toggle` disabled state
 - `Accordion` and `Tabs` local interactive state with hidden-content budgeting
 

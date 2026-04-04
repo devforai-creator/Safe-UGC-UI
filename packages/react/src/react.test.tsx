@@ -223,6 +223,29 @@ describe('mapStyle', () => {
     expect(mapStyle({ aspectRatio: 'wide' }, {}).aspectRatio).toBeUndefined();
   });
 
+  it('maps backdropBlur to backdropFilter', () => {
+    expect(mapStyle({ backdropBlur: 12 }, {}).backdropFilter).toBe('blur(12px)');
+  });
+
+  it('maps structured clipPath objects to CSS strings', () => {
+    expect(
+      (mapStyle({ clipPath: { type: 'circle', radius: '50%' } }, {}) as Record<string, unknown>).clipPath,
+    ).toBe('circle(50%)');
+
+    expect(
+      (mapStyle({
+        clipPath: {
+          type: 'inset',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          round: 20,
+        },
+      }, {}) as Record<string, unknown>).clipPath,
+    ).toBe('inset(0px 0px 0px 0px round 20px)');
+  });
+
   it('converts transform object to CSS string', () => {
     const result = mapStyle({ transform: { scale: 1.2, translateX: 10 } }, {});
     expect(result.transform).toContain('scale(1.2)');
@@ -1617,11 +1640,31 @@ describe('$style rendering', () => {
 });
 
 describe('responsive rendering', () => {
+  it('applies medium overrides before compact overrides', () => {
+    const node = {
+      type: 'Box',
+      style: { width: '720px', padding: 24, color: '#fff' },
+      responsive: {
+        medium: { width: '100%', padding: 16 },
+        compact: { padding: 12 },
+      },
+      children: [],
+    };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: false, medium: true })}</>,
+    );
+    const div = container.querySelector('div');
+    expect(div?.style.width).toBe('100%');
+    expect(div?.style.padding).toBe('16px');
+    expect(div?.style.color).toBe('rgb(255, 255, 255)');
+  });
+
   it('applies compact overrides when renderTree receives compact responsive state', () => {
     const node = {
       type: 'Box',
       style: { width: '360px', padding: 24 },
       responsive: {
+        medium: { width: '80%', padding: 16 },
         compact: { width: '100%', padding: 12, flexDirection: 'column' },
       },
       children: [],

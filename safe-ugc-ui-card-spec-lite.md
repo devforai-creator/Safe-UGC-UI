@@ -43,9 +43,13 @@ Interaction: `Button`, `Toggle`, `Accordion`, `Tabs`
 - **Static-only style props** (literal only):  
   `position`, `top/right/bottom/left`, `zIndex`, `overflow`
 - **Structured style objects** must stay object literals, but leaf values may use `$ref`:  
-  `transform.*`, `border*.*`, `boxShadow.*`, `backgroundGradient.direction`, `backgroundGradient.stops[*].*`
+  `transform.*`, `border*.*`, `boxShadow.*`, `backgroundGradient.direction`, `backgroundGradient.stops[*].*`, `clipPath.*`
 - **Image fit/position props**: `objectFit` (`cover|contain|fill|none|scale-down`) and `objectPosition` (CSS object-position string) are allowed, including inside `hoverStyle`.
 - **Aspect ratio**: `aspectRatio` accepts a positive number or a ratio string like `"16 / 9"`.
+- **Responsive overrides**: use node-level `responsive.medium` for container widths up to `768px`, and `responsive.compact` for widths up to `480px`. Merge order is base style -> `medium` -> `compact`.
+- **Responsive restrictions**: `hoverStyle` and `transition` are forbidden inside both `responsive.medium` and `responsive.compact`.
+- **Backdrop blur**: `backdropBlur` accepts a number from `0` to `40` and maps to a safe blur radius.
+- **Structured clipPath**: `clipPath` must be an object, not a raw CSS string. Supported shapes are `{ "type": "circle", "radius": ... }`, `{ "type": "ellipse", "rx": ..., "ry": ... }`, and `{ "type": "inset", "top": ..., "right": ..., "bottom": ..., "left": ..., "round"?: ... }`.
 - **Alignment aliases**: `"start"` / `"end"` are preferred, but `"flex-start"` / `"flex-end"` are also accepted.
 - **fontWeight**: accepts `"normal"`, `"bold"`, numeric values `100`–`900`, and numeric strings like `"900"`.
 - **Hover effects**: `style.hoverStyle` is allowed on every component. It follows the same validation rules as `style`, cannot contain another `hoverStyle`, and may use `$style` with the same merge semantics as base `style`.
@@ -108,6 +112,7 @@ Inside template: `$item` and `$index`.
 8) Using raw placeholder strings like `"@{$username}"` instead of structured `$template`
 9) Putting `$use` inside `fragments.*` or adding extra fields like `style` to a `$use` wrapper
 10) Reusing the same `Accordion.items[*].id` twice, or referencing a missing `defaultExpanded` / `defaultTab` id
+11) Using raw string `clipPath` or raw `backdropFilter` instead of structured `clipPath` or numeric `backdropBlur`
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

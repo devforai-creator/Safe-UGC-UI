@@ -64,7 +64,10 @@ const STRUCTURED_OBJECT_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
   // Shadow
   'boxShadow',
   'textShadow',
+  'clipPath',
 ]);
+
+const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
 
 /**
  * Validate the `style` of a node according to the value type table.
@@ -148,17 +151,19 @@ export function validateValueTypes(
       typeof responsive === 'object' &&
       !Array.isArray(responsive)
     ) {
-      const compact = (responsive as Record<string, unknown>).compact;
-      if (
-        compact != null &&
-        typeof compact === 'object' &&
-        !Array.isArray(compact)
-      ) {
-        validateNodeStyle(
-          compact as Record<string, unknown>,
-          `${ctx.path}.responsive.compact`,
-          errors,
-        );
+      for (const mode of RESPONSIVE_OVERRIDE_KEYS) {
+        const override = (responsive as Record<string, unknown>)[mode];
+        if (
+          override != null &&
+          typeof override === 'object' &&
+          !Array.isArray(override)
+        ) {
+          validateNodeStyle(
+            override as Record<string, unknown>,
+            `${ctx.path}.responsive.${mode}`,
+            errors,
+          );
+        }
       }
     }
   });

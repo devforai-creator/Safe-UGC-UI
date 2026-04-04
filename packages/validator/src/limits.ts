@@ -26,7 +26,7 @@ import {
   type ResponsiveMode,
   RESPONSIVE_MODES,
   getEffectiveStyleForMode,
-  getMergedCompactResponsiveStyle,
+  getMergedResponsiveStyleOverride,
 } from './responsive-utils.js';
 
 // ---------------------------------------------------------------------------
@@ -224,6 +224,7 @@ function countTemplateMetrics(
     styleBytes: 0,
     overflowAutoCount: {
       default: 0,
+      medium: 0,
       compact: 0,
     },
   };
@@ -247,12 +248,15 @@ function countTemplateMetrics(
         result.styleBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
       }
 
-      const compactStyleForBytes = getMergedCompactResponsiveStyle(
-        node,
-        cardStyles,
-      );
-      if (compactStyleForBytes) {
-        result.styleBytes += utf8ByteLength(JSON.stringify(compactStyleForBytes));
+      for (const mode of ['medium', 'compact'] as const) {
+        const responsiveStyleForBytes = getMergedResponsiveStyleOverride(
+          node,
+          cardStyles,
+          mode,
+        );
+        if (responsiveStyleForBytes) {
+          result.styleBytes += utf8ByteLength(JSON.stringify(responsiveStyleForBytes));
+        }
       }
 
       for (const mode of RESPONSIVE_MODES) {
@@ -303,6 +307,7 @@ export function validateLimits(
   let styleObjectsBytes = 0;
   const overflowAutoCount: Record<ResponsiveMode, number> = {
     default: 0,
+    medium: 0,
     compact: 0,
   };
 
@@ -333,12 +338,15 @@ export function validateLimits(
         styleObjectsBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
       }
 
-      const compactStyleForBytes = getMergedCompactResponsiveStyle(
-        node,
-        card.cardStyles,
-      );
-      if (compactStyleForBytes) {
-        styleObjectsBytes += utf8ByteLength(JSON.stringify(compactStyleForBytes));
+      for (const mode of ['medium', 'compact'] as const) {
+        const responsiveStyleForBytes = getMergedResponsiveStyleOverride(
+          node,
+          card.cardStyles,
+          mode,
+        );
+        if (responsiveStyleForBytes) {
+          styleObjectsBytes += utf8ByteLength(JSON.stringify(responsiveStyleForBytes));
+        }
       }
     }
 

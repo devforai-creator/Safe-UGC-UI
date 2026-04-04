@@ -30,6 +30,8 @@ import {
   getEffectiveStyleForMode,
 } from './responsive-utils.js';
 
+const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -492,17 +494,19 @@ export function validateSecurity(card: {
       typeof responsive === 'object' &&
       !Array.isArray(responsive)
     ) {
-      const compact = (responsive as Record<string, unknown>).compact;
-      if (
-        compact != null &&
-        typeof compact === 'object' &&
-        !Array.isArray(compact)
-      ) {
-        scanStyleStringsForUrl(
-          compact as Record<string, unknown>,
-          `${path}.responsive.compact`,
-          errors,
-        );
+      for (const mode of RESPONSIVE_OVERRIDE_KEYS) {
+        const override = (responsive as Record<string, unknown>)[mode];
+        if (
+          override != null &&
+          typeof override === 'object' &&
+          !Array.isArray(override)
+        ) {
+          scanStyleStringsForUrl(
+            override as Record<string, unknown>,
+            `${path}.responsive.${mode}`,
+            errors,
+          );
+        }
       }
     }
 

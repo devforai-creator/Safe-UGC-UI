@@ -22,7 +22,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { validate, validateRaw } from '@safe-ugc-ui/validator';
-import { COMPACT_BREAKPOINT_MAX_WIDTH, type UGCCard } from '@safe-ugc-ui/types';
+import {
+  COMPACT_BREAKPOINT_MAX_WIDTH,
+  MEDIUM_BREAKPOINT_MAX_WIDTH,
+  type UGCCard,
+} from '@safe-ugc-ui/types';
 
 import { UGCContainer } from './UGCContainer.js';
 import { renderTree } from './node-renderer.js';
@@ -159,6 +163,9 @@ export function UGCRenderer({
 
   const responsive = useMemo(
     () => ({
+      medium:
+        containerWidth != null &&
+        containerWidth <= MEDIUM_BREAKPOINT_MAX_WIDTH,
       compact:
         containerWidth != null &&
         containerWidth <= COMPACT_BREAKPOINT_MAX_WIDTH,

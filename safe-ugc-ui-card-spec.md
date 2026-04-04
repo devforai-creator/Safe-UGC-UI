@@ -405,8 +405,10 @@ Every component accepts an optional `style` object. Every component may also inc
 - `boxShadow.offsetX`, `boxShadow.offsetY`, `boxShadow.blur`, `boxShadow.spread`, `boxShadow.color`
 - `textShadow.offsetX`, `textShadow.offsetY`, `textShadow.blur`, `textShadow.color`
 - `backgroundGradient.direction`, `backgroundGradient.stops[].color`, `backgroundGradient.stops[].position`
+- `clipPath.radius`, `clipPath.rx`, `clipPath.ry`, `clipPath.top`, `clipPath.right`, `clipPath.bottom`, `clipPath.left`, `clipPath.round`
 
 Example: `borderLeft.color` may use `$ref`, but `borderLeft` itself cannot be a `$ref`.
+The same rule applies to `clipPath`: the shape object must be literal, while its length leaf fields may use `$ref`.
 
 All other style properties accept literal values or `$ref`.
 
@@ -650,6 +652,7 @@ Both properties are allowed in `hoverStyle` and as `transition` targets. This en
 | Property | Values | Constraints |
 |----------|--------|-------------|
 | `opacity` | number | 0–1 |
+| `backdropBlur` | number | 0–40 |
 | `overflow` | `"visible"` \| `"hidden"` \| `"auto"` | see overflow rules below |
 | `position` | `"static"` \| `"relative"` \| `"absolute"` | `"absolute"` is allowed inside Stack only |
 | `top`, `right`, `bottom`, `left` | number or length string | only meaningful with `position: "absolute"` |
@@ -663,11 +666,33 @@ Both properties are allowed in `hoverStyle` and as `transition` targets. This en
 - `position: "absolute"` is only allowed on direct children of a `Stack` component
 - Using `position: "absolute"` inside Box, Row, Column, or Grid is forbidden
 
+**Backdrop blur rules:**
+- `backdropBlur` accepts only numeric values
+- Allowed range: `0–40`
+- The renderer maps it to `backdrop-filter: blur(...)`
+- Raw `backdropFilter` strings remain forbidden
+
+**Structured `clipPath`:**
+
+`clipPath` is allowed only in structured object form. Raw CSS clip-path strings are rejected.
+
+Supported shapes:
+
+| Shape | Fields |
+|-------|--------|
+| `circle` | `{ "type": "circle", "radius": Length }` |
+| `ellipse` | `{ "type": "ellipse", "rx": Length, "ry": Length }` |
+| `inset` | `{ "type": "inset", "top": Length, "right": Length, "bottom": Length, "left": Length, "round"?: Length }` |
+
+`Length` follows the same safe single-value model used elsewhere in the style system: bare numbers, `"100px"`, `"50%"`, `"2em"`, `"1.5rem"`.
+
 ### 3.12 Forbidden Properties
 
-These are **never allowed**: `backgroundImage`, `cursor`, `listStyleImage`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `transition` (raw CSS string), `clipPath`, `mask`.
+These are **never allowed**: `backgroundImage`, `cursor`, `listStyleImage`, `content`, `filter`, `backdropFilter`, `mixBlendMode`, `animation`, `mask`.
 
 > **Note:** The `transition` key is only allowed in the structured object form described in Section 3.14. Raw CSS transition strings are forbidden.
+>
+> **Note:** `clipPath` is only allowed in the structured object form described in Section 3.11. Raw CSS clip-path strings are forbidden.
 
 ### 3.13 Hover Style
 
@@ -844,10 +869,11 @@ In this example, the Text node receives all properties from the `heading` style,
 
 Nodes may include an optional `responsive` object. It contains breakpoint-specific style overrides that are merged on top of the node's base `style`.
 
-Version 1 supports one breakpoint:
+Version 1 currently supports two breakpoints:
 
 | Breakpoint | Activates When |
 |------------|----------------|
+| `medium` | The rendered card container is `768px` wide or narrower |
 | `compact` | The rendered card container is `480px` wide or narrower |
 
 ```json
@@ -859,6 +885,10 @@ Version 1 supports one breakpoint:
     "gap": 16
   },
   "responsive": {
+    "medium": {
+      "padding": 16,
+      "gap": 12
+    },
     "compact": {
       "width": "100%",
       "padding": 12,
@@ -871,16 +901,18 @@ Version 1 supports one breakpoint:
 **Merge behavior:**
 
 - The base `style` is resolved first, including any `$style` reference
-- The active `responsive.compact` style is resolved next, including any `$style` reference
-- The responsive override is then merged **shallowly** on top of the base style
+- The active `responsive.medium` style is resolved next, including any `$style` reference
+- The active `responsive.compact` style is resolved after that, including any `$style` reference
+- Responsive overrides are merged **shallowly** on top of the base style in this order: base -> `medium` -> `compact`
 - Structured values such as `transform`, `border`, `backgroundGradient`, `boxShadow`, and `textShadow` are replaced as whole values when overridden
 
 **Rules:**
 
 - `responsive` lives on the node, not inside `style`
-- Only the `compact` breakpoint is currently supported
+- Only `medium` and `compact` are currently supported
+- `responsive.medium` accepts the same style properties as the base style, plus optional `$style`
 - `responsive.compact` accepts the same style properties as the base style, plus optional `$style`
-- `hoverStyle` and `transition` are **not allowed** inside `responsive.compact`
+- `hoverStyle` and `transition` are **not allowed** inside `responsive.medium` or `responsive.compact`
 - The merged responsive override is validated with the same property allowlist, value ranges, and security rules as any other style object
 - Base `hoverStyle` and base `transition` continue to work in compact mode unless the card is otherwise invalid
 
@@ -1175,9 +1207,11 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | transition delay | 0–1000 ms |
 | hoverStyle nesting | forbidden (no hoverStyle inside hoverStyle) |
 | `$style` inside card.styles definitions | forbidden, including `hoverStyle.$style` |
-| responsive breakpoints | `compact` only |
+| responsive breakpoints | `medium`, `compact` |
+| medium breakpoint threshold | container width ≤ 768 px |
 | compact breakpoint threshold | container width ≤ 480 px |
-| `hoverStyle` / `transition` inside `responsive.compact` | forbidden |
+| `backdropBlur` | 0–40 |
+| `hoverStyle` / `transition` inside `responsive.medium` / `responsive.compact` | forbidden |
 
 ---
 
@@ -1689,8 +1723,8 @@ Before outputting a card, verify:
 - [ ] `$style` inside `hoverStyle` references a valid `styles` entry
 - [ ] No `$style` anywhere inside `styles` definitions
 - [ ] `responsive` is at node level, not inside `style`
-- [ ] Only `responsive.compact` is used
-- [ ] `responsive.compact` does not contain `hoverStyle` or `transition`
+- [ ] If `responsive` is used, only `responsive.medium` and/or `responsive.compact` are present
+- [ ] `responsive.medium` and `responsive.compact` do not contain `hoverStyle` or `transition`
 - [ ] `transition` uses structured object(s), not raw CSS strings
 - [ ] `transition.property` is in the allowed property list
 - [ ] `transition.duration` is 0–2000 ms

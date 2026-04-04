@@ -126,6 +126,7 @@ export interface RenderContext {
   limits: RuntimeLimits;
   responsive: {
     compact: boolean;
+    medium: boolean;
   };
 }
 
@@ -223,21 +224,22 @@ function mergeStyleWithCardStyles(
   };
 }
 
-function getCompactResponsiveStyle(
+function getResponsiveOverrideStyle(
   nodeResponsive: Record<string, unknown> | undefined,
+  mode: 'medium' | 'compact',
 ): Record<string, unknown> | undefined {
   if (!nodeResponsive) return undefined;
 
-  const compact = nodeResponsive.compact;
+  const override = nodeResponsive[mode];
   if (
-    compact == null ||
-    typeof compact !== 'object' ||
-    Array.isArray(compact)
+    override == null ||
+    typeof override !== 'object' ||
+    Array.isArray(override)
   ) {
     return undefined;
   }
 
-  return compact as Record<string, unknown>;
+  return override as Record<string, unknown>;
 }
 
 function mergeEffectiveNodeStyle(
@@ -245,28 +247,31 @@ function mergeEffectiveNodeStyle(
   ctx: RenderContext,
 ): Record<string, unknown> | undefined {
   const baseStyle = mergeStyleWithCardStyles(node.style, ctx.cardStyles);
-  if (!ctx.responsive.compact) {
-    return baseStyle;
-  }
-
+  const mediumOverride = mergeNamedStyle(
+    getResponsiveOverrideStyle(node.responsive, 'medium'),
+    ctx.cardStyles,
+  );
   const compactOverride = mergeNamedStyle(
-    getCompactResponsiveStyle(node.responsive),
+    getResponsiveOverrideStyle(node.responsive, 'compact'),
     ctx.cardStyles,
   );
 
-  if (!compactOverride) {
-    return baseStyle;
-  }
+  const {
+    hoverStyle: _mediumHoverStyle,
+    transition: _mediumTransition,
+    ...mediumStyleWithoutInteractiveFields
+  } = mediumOverride ?? {};
 
   const {
-    hoverStyle: _hoverStyle,
-    transition: _transition,
+    hoverStyle: _compactHoverStyle,
+    transition: _compactTransition,
     ...compactStyleWithoutInteractiveFields
-  } = compactOverride;
+  } = compactOverride ?? {};
 
   return {
     ...(baseStyle ?? {}),
-    ...compactStyleWithoutInteractiveFields,
+    ...(ctx.responsive.medium ? mediumStyleWithoutInteractiveFields : {}),
+    ...(ctx.responsive.compact ? compactStyleWithoutInteractiveFields : {}),
   };
 }
 
@@ -782,7 +787,7 @@ export function renderTree(
   iconResolver?: (name: string) => ReactNode,
   onAction?: (type: string, actionId: string, payload?: unknown) => void,
   onError?: (errors: Array<{ code: string; message: string; path: string }>) => void,
-  responsive: { compact: boolean } = { compact: false },
+  responsive: { compact: boolean; medium?: boolean } = { compact: false, medium: false },
   fragments?: Record<string, unknown>,
 ): ReactNode {
   const limits: RuntimeLimits = {
@@ -801,7 +806,10 @@ export function renderTree(
     onAction,
     onError,
     limits,
-    responsive,
+    responsive: {
+      compact: responsive.compact,
+      medium: responsive.medium ?? responsive.compact,
+    },
   };
   return renderNode(rootNode, ctx, 'root');
 }

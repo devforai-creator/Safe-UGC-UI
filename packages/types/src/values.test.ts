@@ -344,12 +344,11 @@ describe('constants', () => {
     expect(FORBIDDEN_STYLE_PROPERTIES).toContain('mixBlendMode');
     expect(FORBIDDEN_STYLE_PROPERTIES).toContain('animation');
     expect(FORBIDDEN_STYLE_PROPERTIES).toContain('transition');
-    expect(FORBIDDEN_STYLE_PROPERTIES).toContain('clipPath');
     expect(FORBIDDEN_STYLE_PROPERTIES).toContain('mask');
   });
 
-  it('FORBIDDEN_STYLE_PROPERTIES contains exactly 11 entries', () => {
-    expect(FORBIDDEN_STYLE_PROPERTIES).toHaveLength(11);
+  it('FORBIDDEN_STYLE_PROPERTIES contains exactly 10 entries', () => {
+    expect(FORBIDDEN_STYLE_PROPERTIES).toHaveLength(10);
   });
 
   it('ALLOWED_FONT_FAMILIES contains the expected font tokens', () => {

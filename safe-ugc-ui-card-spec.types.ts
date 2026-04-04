@@ -125,6 +125,13 @@ export interface ShadowObject {
   color: Dynamic<Color>;
 }
 
+export interface TextShadowObject {
+  offsetX: Dynamic<number>;
+  offsetY: Dynamic<number>;
+  blur?: Dynamic<number>;
+  color: Dynamic<Color>;
+}
+
 export interface GradientStop {
   color: Dynamic<Color>;
   position: Dynamic<string>; // e.g. "0%", "100%"
@@ -141,7 +148,35 @@ export interface RadialGradient {
   stops: GradientStop[];
 }
 
-export type GradientObject = LinearGradient | RadialGradient;
+export interface RepeatingLinearGradient {
+  type: 'repeating-linear';
+  direction: Dynamic<string>; // e.g. "180deg"
+  stops: GradientStop[];
+}
+
+export type GradientObject = LinearGradient | RadialGradient | RepeatingLinearGradient;
+
+export type ClipPathCircle = {
+  type: 'circle';
+  radius: Dynamic<Length>;
+};
+
+export type ClipPathEllipse = {
+  type: 'ellipse';
+  rx: Dynamic<Length>;
+  ry: Dynamic<Length>;
+};
+
+export type ClipPathInset = {
+  type: 'inset';
+  top: Dynamic<Length>;
+  right: Dynamic<Length>;
+  bottom: Dynamic<Length>;
+  left: Dynamic<Length>;
+  round?: Dynamic<Length>;
+};
+
+export type ClipPath = ClipPathCircle | ClipPathEllipse | ClipPathInset;
 
 export interface TransformObject {
   rotate?: Dynamic<string>; // e.g. "45deg"
@@ -166,7 +201,7 @@ export type TransitionField = TransitionDef | TransitionDef[];
  *
  * Positioning and overflow controls stay literal-only.
  * Structured style objects must be object literals, but selected leaf fields
- * inside border/transform/boxShadow/backgroundGradient may use $ref.
+ * inside border/transform/boxShadow/backgroundGradient/clipPath may use $ref.
  */
 export interface BaseStyle {
   // Layout — dynamic
@@ -203,8 +238,10 @@ export interface BaseStyle {
   // Color — dynamic
   backgroundColor?: Dynamic<Color>;
   color?: Dynamic<Color>;
+  backdropBlur?: Dynamic<number>;
 
   // Typography — dynamic
+  fontFamily?: Dynamic<'sans' | 'serif' | 'mono' | 'rounded' | 'display' | 'handwriting'>;
   fontSize?: Dynamic<Length>;
   fontWeight?: Dynamic<FontWeightValue>;
   fontStyle?: Dynamic<FontStyleValue>;
@@ -212,6 +249,7 @@ export interface BaseStyle {
   textDecoration?: Dynamic<TextDecorationValue>;
   lineHeight?: Dynamic<number | Length>;
   letterSpacing?: Dynamic<Length>;
+  textShadow?: TextShadowObject | TextShadowObject[];
 
   // Border radius — dynamic
   borderRadius?: Dynamic<Length>;
@@ -248,6 +286,7 @@ export interface BaseStyle {
   borderLeft?: BorderObject;
   boxShadow?: ShadowObject | ShadowObject[];
   backgroundGradient?: GradientObject;
+  clipPath?: ClipPath;
 
   // $style reference
   $style?: string;
@@ -268,6 +307,7 @@ export interface Style extends BaseStyle {
 }
 
 export interface ResponsiveProps {
+  medium?: Omit<Style, 'hoverStyle' | 'transition'>;
   compact?: Omit<Style, 'hoverStyle' | 'transition'>;
 }
 
@@ -280,7 +320,7 @@ export interface TextSpanStyle {
   fontStyle?: Dynamic<FontStyleValue>;
   textDecoration?: Dynamic<TextDecorationValue>;
   letterSpacing?: Dynamic<Length>;
-  textShadow?: ShadowObject | ShadowObject[];
+  textShadow?: TextShadowObject | TextShadowObject[];
 }
 
 export interface TextSpan {

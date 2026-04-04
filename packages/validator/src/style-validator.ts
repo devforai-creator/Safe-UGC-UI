@@ -35,6 +35,7 @@ import {
   LETTER_SPACING_MAX,
   OPACITY_MIN,
   OPACITY_MAX,
+  BACKDROP_BLUR_MAX,
   CSS_NAMED_COLORS,
   TRANSITION_DURATION_MAX,
   TRANSITION_DELAY_MAX,
@@ -63,6 +64,8 @@ const LENGTH_AUTO_ALLOWED = new Set([
   'width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
   'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
 ]);
+
+const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
 
 // Properties that have range limits AND accept string lengths
 const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> = {
@@ -171,6 +174,10 @@ function parseLengthValue(value: string): number | null {
     return null;
   }
   return Number(match[1]);
+}
+
+function isLiteralLength(value: unknown): value is string | number {
+  return typeof value === 'number' || typeof value === 'string';
 }
 
 function isValidAspectRatioLiteral(value: string | number): boolean {
@@ -316,6 +323,60 @@ function validateTextShadowObject(
         `${path}.color`,
       ),
     );
+  }
+}
+
+function validateClipPathLength(
+  value: unknown,
+  path: string,
+  errors: ValidationError[],
+): void {
+  if (value == null || isDynamic(value)) {
+    return;
+  }
+
+  if (typeof value === 'number') {
+    return;
+  }
+
+  if (typeof value === 'string' && isValidLength(value)) {
+    return;
+  }
+
+  errors.push(
+    createError(
+      'INVALID_LENGTH',
+      `Invalid length "${String(value)}" at "${path}"`,
+      path,
+    ),
+  );
+}
+
+function validateClipPathObject(
+  clipPath: Record<string, unknown>,
+  path: string,
+  errors: ValidationError[],
+): void {
+  switch (clipPath.type) {
+    case 'circle':
+      validateClipPathLength(clipPath.radius, `${path}.radius`, errors);
+      return;
+
+    case 'ellipse':
+      validateClipPathLength(clipPath.rx, `${path}.rx`, errors);
+      validateClipPathLength(clipPath.ry, `${path}.ry`, errors);
+      return;
+
+    case 'inset':
+      validateClipPathLength(clipPath.top, `${path}.top`, errors);
+      validateClipPathLength(clipPath.right, `${path}.right`, errors);
+      validateClipPathLength(clipPath.bottom, `${path}.bottom`, errors);
+      validateClipPathLength(clipPath.left, `${path}.left`, errors);
+      validateClipPathLength(clipPath.round, `${path}.round`, errors);
+      return;
+
+    default:
+      return;
   }
 }
 
@@ -526,6 +587,19 @@ function validateSingleStyle(
           'STYLE_VALUE_OUT_OF_RANGE',
           `opacity (${v}) must be between ${OPACITY_MIN} and ${OPACITY_MAX} at "${stylePath}.opacity"`,
           `${stylePath}.opacity`,
+        ),
+      );
+    }
+  }
+
+  if ('backdropBlur' in style && isLiteralNumber(style.backdropBlur)) {
+    const v = style.backdropBlur;
+    if (v < 0 || v > BACKDROP_BLUR_MAX) {
+      errors.push(
+        createError(
+          'STYLE_VALUE_OUT_OF_RANGE',
+          `backdropBlur (${v}) must be between 0 and ${BACKDROP_BLUR_MAX} at "${stylePath}.backdropBlur"`,
+          `${stylePath}.backdropBlur`,
         ),
       );
     }
@@ -797,6 +871,20 @@ function validateSingleStyle(
         ),
       );
     }
+  }
+
+  if (
+    'clipPath' in style &&
+    style.clipPath != null &&
+    typeof style.clipPath === 'object' &&
+    !Array.isArray(style.clipPath) &&
+    !isDynamic(style.clipPath)
+  ) {
+    validateClipPathObject(
+      style.clipPath as Record<string, unknown>,
+      `${stylePath}.clipPath`,
+      errors,
+    );
   }
 
   // ------------------------------------------------------------------
@@ -1129,26 +1217,28 @@ export function validateStyles(
       typeof responsive === 'object' &&
       !Array.isArray(responsive)
     ) {
-      const compact = (responsive as Record<string, unknown>).compact;
-      if (
-        compact != null &&
-        typeof compact === 'object' &&
-        !Array.isArray(compact)
-      ) {
-        const compactPath = `${ctx.path}.responsive.compact`;
-        const mergedCompact = resolveStyleRef(
-          compact as Record<string, unknown>,
-          compactPath,
-          cardStyles,
-          errors,
-        );
+      for (const mode of RESPONSIVE_OVERRIDE_KEYS) {
+        const override = (responsive as Record<string, unknown>)[mode];
+        if (
+          override != null &&
+          typeof override === 'object' &&
+          !Array.isArray(override)
+        ) {
+          const overridePath = `${ctx.path}.responsive.${mode}`;
+          const mergedOverride = resolveStyleRef(
+            override as Record<string, unknown>,
+            overridePath,
+            cardStyles,
+            errors,
+          );
 
-        if (mergedCompact) {
-          validateSingleStyle(mergedCompact, compactPath, errors, cardStyles, {
-            allowHoverStyle: false,
-            allowTransition: false,
-            allowHoverStyleRefs: false,
-          });
+          if (mergedOverride) {
+            validateSingleStyle(mergedOverride, overridePath, errors, cardStyles, {
+              allowHoverStyle: false,
+              allowTransition: false,
+              allowHoverStyleRefs: false,
+            });
+          }
         }
       }
     }

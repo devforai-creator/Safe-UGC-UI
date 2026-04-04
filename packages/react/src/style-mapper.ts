@@ -114,6 +114,25 @@ function resolveStructuredString(
   return resolved;
 }
 
+function resolveStructuredLength(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): string | number | undefined {
+  const resolved = resolveStyleValue(value, state, locals);
+  if (typeof resolved === 'number') {
+    return resolved;
+  }
+  if (typeof resolved === 'string' && !containsForbiddenCssFunction(resolved)) {
+    return resolved;
+  }
+  return undefined;
+}
+
+function toCssLength(value: string | number): string {
+  return typeof value === 'number' ? `${value}px` : value;
+}
+
 // ---------------------------------------------------------------------------
 // Helper: transform object -> CSS transform string
 // ---------------------------------------------------------------------------
@@ -389,6 +408,87 @@ function resolveBorderObject(
   return resolved;
 }
 
+function clipPathToCss(clipPath: Record<string, unknown>): string {
+  switch (clipPath.type) {
+    case 'circle':
+      return `circle(${toCssLength(clipPath.radius as string | number)})`;
+
+    case 'ellipse':
+      return `ellipse(${toCssLength(clipPath.rx as string | number)} ${toCssLength(clipPath.ry as string | number)})`;
+
+    case 'inset': {
+      const base = [
+        toCssLength(clipPath.top as string | number),
+        toCssLength(clipPath.right as string | number),
+        toCssLength(clipPath.bottom as string | number),
+        toCssLength(clipPath.left as string | number),
+      ].join(' ');
+
+      const round = clipPath.round;
+      return round !== undefined
+        ? `inset(${base} round ${toCssLength(round as string | number)})`
+        : `inset(${base})`;
+    }
+
+    default:
+      return '';
+  }
+}
+
+function resolveClipPathObject(
+  clipPath: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  if (!isRecord(clipPath) || typeof clipPath.type !== 'string') {
+    return undefined;
+  }
+
+  switch (clipPath.type) {
+    case 'circle': {
+      const radius = resolveStructuredLength(clipPath.radius, state, locals);
+      return radius !== undefined ? { type: 'circle', radius } : undefined;
+    }
+
+    case 'ellipse': {
+      const rx = resolveStructuredLength(clipPath.rx, state, locals);
+      const ry = resolveStructuredLength(clipPath.ry, state, locals);
+      return rx !== undefined && ry !== undefined
+        ? { type: 'ellipse', rx, ry }
+        : undefined;
+    }
+
+    case 'inset': {
+      const top = resolveStructuredLength(clipPath.top, state, locals);
+      const right = resolveStructuredLength(clipPath.right, state, locals);
+      const bottom = resolveStructuredLength(clipPath.bottom, state, locals);
+      const left = resolveStructuredLength(clipPath.left, state, locals);
+      const round = resolveStructuredLength(clipPath.round, state, locals);
+
+      if (
+        top === undefined ||
+        right === undefined ||
+        bottom === undefined ||
+        left === undefined
+      ) {
+        return undefined;
+      }
+
+      return {
+        type: 'inset',
+        top,
+        right,
+        bottom,
+        left,
+        ...(round !== undefined ? { round } : {}),
+      };
+    }
+
+    default:
+      return undefined;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Helper: map spec alignment values to CSS flexbox values
 // ---------------------------------------------------------------------------
@@ -510,6 +610,23 @@ export function mapStyle(
     const transitionCss = mapTransition(style.transition);
     if (transitionCss) {
       css.transition = transitionCss;
+    }
+  }
+
+  const resolvedBackdropBlur = resolveStructuredNumber(style.backdropBlur, state, locals);
+  if (
+    resolvedBackdropBlur !== undefined &&
+    Number.isFinite(resolvedBackdropBlur) &&
+    resolvedBackdropBlur >= 0
+  ) {
+    (css as Record<string, unknown>).backdropFilter = `blur(${resolvedBackdropBlur}px)`;
+  }
+
+  const resolvedClipPath = resolveClipPathObject(style.clipPath, state, locals);
+  if (resolvedClipPath) {
+    const clipPathCss = clipPathToCss(resolvedClipPath);
+    if (clipPathCss) {
+      (css as Record<string, unknown>).clipPath = clipPathCss;
     }
   }
 

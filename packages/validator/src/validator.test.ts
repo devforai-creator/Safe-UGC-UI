@@ -93,6 +93,29 @@ describe('validateSchema', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('accepts responsive.medium, backdropBlur, and clipPath in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          style: {
+            backdropBlur: 12,
+            clipPath: { type: 'circle', radius: '50%' },
+          },
+          responsive: {
+            medium: {
+              width: '100%',
+              gap: 12,
+            },
+          },
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
   it('accepts templates, spans, and text clamping fields in schema validation', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
@@ -646,6 +669,28 @@ describe('validateValueTypes', () => {
     const errors = validateValueTypes(views);
     expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
     expect(errors.some((e) => e.path.includes('responsive.compact.position'))).toBe(true);
+  });
+
+  it('rejects $ref on a structured clipPath object', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { clipPath: { $ref: '$clip' } },
+    });
+    const errors = validateValueTypes(views);
+    expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
+    expect(errors.some((e) => e.path.includes('style.clipPath'))).toBe(true);
+  });
+
+  it('rejects $ref on a static-only responsive medium property', () => {
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        medium: { position: { $ref: '$pos' } },
+      },
+    });
+    const errors = validateValueTypes(views);
+    expect(codes(errors)).toContain('DYNAMIC_NOT_ALLOWED');
+    expect(errors.some((e) => e.path.includes('responsive.medium.position'))).toBe(true);
   });
 
   it('rejects $ref on a static-only style property (overflow)', () => {
@@ -2564,6 +2609,52 @@ describe('validateStyles — new style fields', () => {
     expect(codes(errors)).toContain('INVALID_VALUE');
     expect(errors.some((e) => e.path.includes('aspectRatio'))).toBe(true);
   });
+
+  it('accepts valid backdropBlur and structured clipPath', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        backdropBlur: 12,
+        clipPath: {
+          type: 'ellipse',
+          rx: '50%',
+          ry: '40%',
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects backdropBlur outside the allowed range', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        backdropBlur: 64,
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
+    expect(errors.some((e) => e.path.includes('backdropBlur'))).toBe(true);
+  });
+
+  it('rejects malformed structured clipPath lengths', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        clipPath: {
+          type: 'inset',
+          top: 'wide',
+          right: 0,
+          bottom: 0,
+          left: 0,
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_LENGTH');
+    expect(errors.some((e) => e.path.includes('clipPath.top'))).toBe(true);
+  });
 });
 
 describe('validateStyles — textShadow', () => {
@@ -2882,6 +2973,37 @@ describe('validateStyles — responsive compact', () => {
   });
 });
 
+describe('validateStyles — responsive medium', () => {
+  it('accepts a valid responsive medium override', () => {
+    const cardStyles = {
+      mediumCard: { width: '100%', padding: 16 },
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { width: '480px', padding: 24 },
+      responsive: {
+        medium: { $style: 'mediumCard', backgroundColor: '#000' },
+      },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects hoverStyle inside responsive medium overrides', () => {
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        medium: {
+          hoverStyle: { opacity: 0.5 },
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path.includes('responsive.medium.hoverStyle'))).toBe(true);
+  });
+});
+
 describe('validateSecurity — responsive compact', () => {
   it('rejects position fixed inside responsive compact overrides', () => {
     const card = makeCard(makeViews({
@@ -2916,6 +3038,21 @@ describe('validateSecurity — responsive compact', () => {
   });
 });
 
+describe('validateSecurity — responsive medium', () => {
+  it('rejects position fixed inside responsive medium overrides', () => {
+    const card = makeCard(makeViews({
+      type: 'Box',
+      responsive: {
+        medium: { position: 'fixed' },
+      },
+    }));
+    const errors = validateSecurity({
+      views: card.views as Record<string, unknown>,
+    });
+    expect(codes(errors)).toContain('POSITION_FIXED_FORBIDDEN');
+  });
+});
+
 describe('validateLimits — responsive compact', () => {
   it('counts overflow:auto against the max using the compact mode maximum', () => {
     const card = {
@@ -2926,6 +3063,24 @@ describe('validateLimits — responsive compact', () => {
           { type: 'Box', responsive: { compact: { overflow: 'auto' } } },
           { type: 'Box', responsive: { compact: { overflow: 'auto' } } },
           { type: 'Box', responsive: { compact: { overflow: 'auto' } } },
+        ],
+      }),
+    };
+    const errors = validateLimits(card);
+    expect(codes(errors)).toContain('OVERFLOW_AUTO_COUNT_EXCEEDED');
+  });
+});
+
+describe('validateLimits — responsive medium', () => {
+  it('counts overflow:auto against the max using the medium mode maximum', () => {
+    const card = {
+      state: {},
+      views: makeViews({
+        type: 'Box',
+        children: [
+          { type: 'Box', responsive: { medium: { overflow: 'auto' } } },
+          { type: 'Box', responsive: { medium: { overflow: 'auto' } } },
+          { type: 'Box', responsive: { medium: { overflow: 'auto' } } },
         ],
       }),
     };
