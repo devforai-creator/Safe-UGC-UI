@@ -14,7 +14,7 @@ pick up the same project context.
 
 - Safe UGC UI is a pnpm workspace for schema, validation, and React rendering of untrusted UI cards.
 - Phase 2 plus the `v1.0` interactive container milestone are implemented.
-- Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, and `@safe-ugc-ui/react` at `1.2.1`.
+- Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, and `@safe-ugc-ui/react` at `1.3.0`.
 - The `v1.1` safe visual/layout pack is implemented on `main`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, `backdropBlur`, structured `clipPath`, and node-level `responsive.medium` / `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, structural `Switch` branching, and `Button` / `Toggle` support `disabled`.
@@ -61,7 +61,7 @@ pick up the same project context.
 - **반드시 `pnpm publish`를 사용한다.** `npm publish`를 쓰면 `workspace:*` 의존성이 실제 버전으로 치환되지 않는다.
 - 절차: 버전 bump → `pnpm build` → `pnpm test:run` → 각 패키지에서 `pnpm --filter <pkg> publish --access public --no-git-checks`.
 - `.npmrc`에 토큰을 임시로 넣었다면 publish 후 즉시 삭제한다.
-- 1.2.0은 `npm publish`로 잘못 나갔으므로 사용하지 않는다. 유효한 최신 버전은 `1.2.1`이다.
+- 1.2.0은 `npm publish`로 잘못 나갔으므로 사용하지 않는다. 현재 유효한 최신 버전은 `1.3.0`이다.
 
 ## Security Notes
 
