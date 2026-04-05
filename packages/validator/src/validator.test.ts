@@ -229,6 +229,118 @@ describe('validateSchema', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('accepts Switch nodes with $if inside children arrays', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          children: [
+            {
+              type: 'Switch',
+              $if: true,
+              value: { $ref: '$theme' },
+              cases: {
+                knight: {
+                  type: 'Text',
+                  content: 'Knight frame',
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts root Switch nodes with $if in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Switch',
+          $if: true,
+          value: 'knight',
+          cases: {
+            knight: {
+              type: 'Text',
+              content: 'Knight frame',
+            },
+          },
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts Box nodes with $if wrapping Switch descendants in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          children: [
+            {
+              type: 'Box',
+              $if: true,
+              children: [
+                {
+                  type: 'Switch',
+                  $if: true,
+                  value: 'knight',
+                  cases: {
+                    knight: {
+                      type: 'Text',
+                      content: 'Knight frame',
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
+  it('reports invalid Switch case keys with a precise schema path and message', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          children: [
+            {
+              type: 'Switch',
+              $if: true,
+              value: 'knight',
+              cases: {
+                'bad key': {
+                  type: 'Text',
+                  content: 'Knight frame',
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        code: 'SCHEMA_ERROR',
+        path: 'views.Main.children[0].cases.bad key',
+        message: 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+      }),
+    );
+  });
+
   it('rejects invalid $if condition shape in schema validation', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },

@@ -411,7 +411,10 @@ export const switchNodeSchema = z.object({
   type: z.literal('Switch'),
   value: dynamicSchema(z.string().min(1)),
   cases: z.record(
-    z.string().regex(switchCaseNamePattern),
+    z.string().regex(
+      switchCaseNamePattern,
+      'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+    ),
     z.lazy(() => renderableNodeSchema),
   ),
   default: z.lazy(() => renderableNodeSchema).optional(),

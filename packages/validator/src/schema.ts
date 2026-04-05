@@ -19,6 +19,55 @@ import {
   toResult,
 } from './result.js';
 
+function formatIssuePath(path: Array<string | number>): string {
+  if (path.length === 0) {
+    return '';
+  }
+
+  let result = '';
+  for (const segment of path) {
+    if (typeof segment === 'number') {
+      result += `[${segment}]`;
+      continue;
+    }
+
+    result += result.length === 0 ? segment : `.${segment}`;
+  }
+
+  return result;
+}
+
+function formatIssueMessage(issue: {
+  code?: string;
+  message: string;
+  unionErrors?: Array<{
+    issues: Array<{
+      path: Array<string | number>;
+      message: string;
+    }>;
+  }>;
+}): string {
+  if (issue.code !== 'invalid_union' || !issue.unionErrors) {
+    return issue.message;
+  }
+
+  const nested = issue.unionErrors
+    .flatMap((unionError) => unionError.issues)
+    .slice(0, 3)
+    .map((nestedIssue) => {
+      const nestedPath = formatIssuePath(nestedIssue.path);
+      return nestedPath.length > 0
+        ? `${nestedPath}: ${nestedIssue.message}`
+        : nestedIssue.message;
+    });
+
+  if (nested.length === 0) {
+    return issue.message;
+  }
+
+  return `${issue.message} (${nested.join('; ')})`;
+}
+
 // ---------------------------------------------------------------------------
 // validateSchema
 // ---------------------------------------------------------------------------
@@ -105,9 +154,9 @@ export function validateSchema(input: unknown): ValidationResult {
 
   if (!result.success) {
     for (const issue of result.error.issues) {
-      const path = issue.path.join('.');
+      const path = formatIssuePath(issue.path);
       errors.push(
-        createError('SCHEMA_ERROR', issue.message, path),
+        createError('SCHEMA_ERROR', formatIssueMessage(issue), path),
       );
     }
   }
