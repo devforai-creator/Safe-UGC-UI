@@ -10,6 +10,7 @@
  *   - Content:     Text, Image                     (have fields, no children)
  *   - Display:     ProgressBar, Avatar, Icon, Badge, Chip, Divider, Spacer
  *   - Interaction: Button, Toggle, Accordion, Tabs
+ *   - Structural:  Switch
  *
  * Naming convention:
  *   - Zod schema  -> `fooNodeSchema`
@@ -34,6 +35,8 @@ import {
   buttonPropsSchema,
   togglePropsSchema,
 } from './props.js';
+
+const switchCaseNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
 // ===========================================================================
 // 1. FragmentUseNode — reusable subtree reference
@@ -401,7 +404,30 @@ export type ToggleNode = {
 };
 
 // ---------------------------------------------------------------------------
-// 7.3 AccordionNode
+// 7.3 SwitchNode
+// ---------------------------------------------------------------------------
+
+export const switchNodeSchema = z.object({
+  type: z.literal('Switch'),
+  value: dynamicSchema(z.string().min(1)),
+  cases: z.record(
+    z.string().regex(switchCaseNamePattern),
+    z.lazy(() => renderableNodeSchema),
+  ),
+  default: z.lazy(() => renderableNodeSchema).optional(),
+  $if: conditionSchema.optional(),
+}).strict();
+
+export type SwitchNode = {
+  type: 'Switch';
+  value: string | { $ref: string };
+  cases: Record<string, RenderableNode>;
+  default?: RenderableNode;
+  $if?: z.infer<typeof conditionSchema>;
+};
+
+// ---------------------------------------------------------------------------
+// 7.4 AccordionNode
 // ---------------------------------------------------------------------------
 
 const interactiveItemIdSchema = z.string().min(1).max(64);
@@ -464,7 +490,7 @@ export type AccordionNode = {
 };
 
 // ---------------------------------------------------------------------------
-// 7.4 TabsNode
+// 7.5 TabsNode
 // ---------------------------------------------------------------------------
 
 export const tabsNodeSchema = z.object({
@@ -509,6 +535,7 @@ export type UGCNode =
   | SpacerNode
   | ButtonNode
   | ToggleNode
+  | SwitchNode
   | AccordionNode
   | TabsNode;
 
@@ -530,6 +557,7 @@ export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
     spacerNodeSchema,
     buttonNodeSchema,
     toggleNodeSchema,
+    switchNodeSchema,
     accordionNodeSchema,
     tabsNodeSchema,
   ]),

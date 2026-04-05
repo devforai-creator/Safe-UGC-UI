@@ -392,6 +392,12 @@ export interface ToggleFields {
   disabled?: Dynamic<boolean>;
 }
 
+export interface SwitchFields {
+  value: Dynamic<string>;
+  cases: Record<SwitchCaseName, RenderableNode>;
+  default?: RenderableNode;
+}
+
 export interface AccordionItem {
   id: string;
   label: TextValue;
@@ -426,6 +432,8 @@ export interface BaseNode {
   style?: Style;
   responsive?: ResponsiveProps;
 }
+
+export type SwitchCaseName = string; // /^[A-Za-z][A-Za-z0-9_-]*$/
 
 export interface LayoutNode extends BaseNode {
   children?: Children;
@@ -480,6 +488,10 @@ export interface ButtonNode extends BaseNode, ButtonFields {
 export interface ToggleNode extends BaseNode, ToggleFields {
   type: 'Toggle';
 }
+export interface SwitchNode extends SwitchFields {
+  type: 'Switch';
+  $if?: Condition;
+}
 export interface AccordionNode extends BaseNode, AccordionFields {
   type: 'Accordion';
 }
@@ -509,6 +521,7 @@ export type UGCNode =
   | SpacerNode
   | ButtonNode
   | ToggleNode
+  | SwitchNode
   | AccordionNode
   | TabsNode;
 

@@ -21,8 +21,8 @@ import { isFragmentUseLike, type TraversableNode, type TraversalContext } from '
 
 /**
  * Mapping from component type to the list of required field names.
- * Layout nodes (Box, Row, Column, Stack, Grid) and structural nodes
- * (Divider, Spacer) have no required fields.
+ * Layout nodes (Box, Row, Column, Stack, Grid) plus structural/display
+ * nodes without mandatory fields (Divider, Spacer) are omitted.
  */
 const REQUIRED_FIELDS: Record<string, string[]> = {
   Image: ['src'],
@@ -35,6 +35,7 @@ const REQUIRED_FIELDS: Record<string, string[]> = {
   Toggle: ['value', 'onToggle'],
   Accordion: ['items'],
   Tabs: ['tabs'],
+  Switch: ['value', 'cases'],
 };
 
 // ---------------------------------------------------------------------------
@@ -311,6 +312,24 @@ function validateNode(
           );
         }
       }
+    }
+  }
+
+  if (node.type === 'Switch') {
+    const rawCases = node.cases;
+    if (
+      rawCases == null ||
+      typeof rawCases !== 'object' ||
+      Array.isArray(rawCases) ||
+      Object.keys(rawCases).length === 0
+    ) {
+      errors.push(
+        createError(
+          'INVALID_VALUE',
+          '"Switch" node must define at least one case.',
+          `${path}.cases`,
+        ),
+      );
     }
   }
 

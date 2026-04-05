@@ -272,6 +272,11 @@ function getScannableNodeFields(
   delete nodeFields.style;
   delete nodeFields.children;
 
+  if (node.type === 'Switch') {
+    delete nodeFields.cases;
+    delete nodeFields.default;
+  }
+
   const interactiveField =
     node.type === 'Accordion'
       ? 'items'

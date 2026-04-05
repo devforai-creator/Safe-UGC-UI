@@ -232,7 +232,9 @@ function countTemplateMetrics(
   traverseCard(
     { __template: template },
     (node: TraversableNode) => {
-      result.nodes += 1;
+      if (node.type !== 'Switch') {
+        result.nodes += 1;
+      }
 
       if (node.type === 'Text') {
         result.textBytes += countTextNodeLiteralBytes(node as Record<string, unknown>);
@@ -315,7 +317,9 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     // 1. Node count
     // -----------------------------------------------------------------------
-    nodeCount++;
+    if (node.type !== 'Switch') {
+      nodeCount++;
+    }
 
     // -----------------------------------------------------------------------
     // 2. Text content total bytes

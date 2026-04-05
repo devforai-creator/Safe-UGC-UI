@@ -1529,6 +1529,53 @@ describe('New components rendering', () => {
     ]);
   });
 
+  it('Switch renders the matching case from state', () => {
+    const node = {
+      type: 'Switch',
+      value: { $ref: '$theme' },
+      cases: {
+        knight: {
+          type: 'Text',
+          content: 'Knight frame',
+        },
+        villain: {
+          type: 'Text',
+          content: 'Villain frame',
+        },
+      },
+      default: {
+        type: 'Text',
+        content: 'Default frame',
+      },
+    };
+    render(<>{renderTree(node, { theme: 'villain' }, {})}</>);
+
+    expect(screen.getByText('Villain frame')).toBeTruthy();
+    expect(screen.queryByText('Knight frame')).toBeNull();
+    expect(screen.queryByText('Default frame')).toBeNull();
+  });
+
+  it('Switch falls back to default when no case matches', () => {
+    const node = {
+      type: 'Switch',
+      value: { $ref: '$theme' },
+      cases: {
+        knight: {
+          type: 'Text',
+          content: 'Knight frame',
+        },
+      },
+      default: {
+        type: 'Text',
+        content: 'Default frame',
+      },
+    };
+    render(<>{renderTree(node, { theme: 'unknown' }, {})}</>);
+
+    expect(screen.getByText('Default frame')).toBeTruthy();
+    expect(screen.queryByText('Knight frame')).toBeNull();
+  });
+
   it('ProgressBar renders with value and max', () => {
     const node = { type: 'ProgressBar',  value: 50, max: 100  };
     const { container } = render(<>{renderTree(node, {}, {})}</>);

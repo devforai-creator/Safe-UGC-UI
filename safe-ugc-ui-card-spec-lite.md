@@ -14,11 +14,12 @@ Use this as the **quick guide** for LLM output. It is a strict subset of the ful
 }
 ```
 
-## 2) Components (18 total)
+## 2) Components and Structural Nodes
 Layout: `Box`, `Row`, `Column`, `Stack`, `Grid` (use `children`)
 Content: `Text`, `Image`
 Display: `ProgressBar`, `Avatar`, `Icon`, `Badge`, `Chip`, `Divider`, `Spacer`
 Interaction: `Button`, `Toggle`, `Accordion`, `Tabs`
+Structural: `Switch`
 **All component fields are top-level** — do not use a `props` wrapper.
 - `Stack` is the overlay container: absolute children are positioned relative to it.
 
@@ -78,12 +79,18 @@ Interaction: `Button`, `Toggle`, `Accordion`, `Tabs`
 Inside template: `$item` and `$index`.  
 `in` must resolve to an array (state or loop-local). `undefined` → empty render.
 
-## 8) Fragment Reuse
+## 8) Fragment Reuse and Structural Switching
 - Use top-level `fragments` to define reusable node subtrees.
 - Use `{ "$use": "fragmentName" }` anywhere a node is allowed, including child arrays and loop templates.
 - `$use` may include only optional `$if`.
 - Fragment names are static strings.
 - Fragments may not contain another `$use`.
+- Use `Switch` when the structure changes by a bounded theme or state key.
+- `Switch.value` accepts a literal string or `$ref`.
+- `Switch.cases` maps static case names to renderable nodes or `$use`.
+- `Switch.default` is optional; it renders when no case matches.
+- `Switch` is structural only: do not add `style`, `responsive`, or `children` to it.
+- All declared `Switch` branches count toward validator limits even if only one branch renders at runtime.
 
 ## 9) Interaction Details
 - `Button.action` and `Toggle.onToggle` are static strings.
@@ -113,6 +120,7 @@ Inside template: `$item` and `$index`.
 9) Putting `$use` inside `fragments.*` or adding extra fields like `style` to a `$use` wrapper
 10) Reusing the same `Accordion.items[*].id` twice, or referencing a missing `defaultExpanded` / `defaultTab` id
 11) Using raw string `clipPath` or raw `backdropFilter` instead of structured `clipPath` or numeric `backdropBlur`
+12) Putting `style` on `Switch` or using runtime-generated case names instead of static `cases` keys
 
 ---
 If you need full rules, see `safe-ugc-ui-card-spec.md`.

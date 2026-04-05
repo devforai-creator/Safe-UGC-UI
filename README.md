@@ -10,7 +10,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 - Published packages are currently `1.0.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
 - The `v1.1` safe visual/layout pack is implemented on `main`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, `backdropBlur`, structured `clipPath`, and node-level `responsive.medium` / `responsive.compact` overrides.
-- Nodes support `$if` conditional rendering, and `Button` / `Toggle` support `disabled`.
+- Nodes support `$if` conditional rendering, structural `Switch` branching, and `Button` / `Toggle` support `disabled`.
 - Text authoring supports structured `$template`, `Text.spans`, and `Text.maxLines` / `truncate`.
 - Cards support top-level `fragments` and `$use` references for non-recursive subtree reuse.
 - `Accordion` and `Tabs` are implemented as renderer-owned interactive containers.
@@ -139,16 +139,18 @@ A card is a JSON object with these main areas:
 - `fragments`: reusable node subtrees referenced via `$use`
 - `views`: one or more renderable trees
 
-Currently implemented components:
+Currently implemented node types:
 
 - `Box`, `Row`, `Column`, `Text`, `Image`
 - `Stack`, `Grid`, `Spacer`, `Divider`, `Icon`
 - `ProgressBar`, `Avatar`, `Badge`, `Chip`, `Button`, `Toggle`, `Accordion`, `Tabs`
+- `Switch` (structural branch selector)
 
 Supported card-level features:
 
 - `$ref` state binding
 - node-level `$if` conditional rendering
+- structural `Switch` branch selection with static cases
 - `for...in` loops
 - `fragments` plus `$use` subtree reuse
 - reusable `styles` plus `$style` references

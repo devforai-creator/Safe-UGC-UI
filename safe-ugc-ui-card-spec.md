@@ -52,7 +52,7 @@ The `assets` field declares which local assets the card references. Each value m
 
 ## 2. Components
 
-Seventeen component types are available, organized into three categories.
+Eighteen rendered component types plus one structural selector are available, organized into layout/content-display, interaction, and structural groups.
 
 ### 2.1 Layout Components
 
@@ -388,6 +388,40 @@ Keyboard behavior:
 - `ArrowUp` / `ArrowDown` are treated the same as left/right
 - `Home` selects the first enabled tab
 - `End` selects the last enabled tab
+
+### 2.4 Structural Selectors
+
+Structural selectors choose which statically declared subtree should render. They do not render DOM and do not accept `style`, `responsive`, or `children` fields.
+
+#### Switch
+Selects one branch by string key. Use it when layout or framing changes by a bounded state value such as a theme, character, or mode.
+
+```json
+{
+  "type": "Switch",
+  "value": { "$ref": "$theme" },
+  "cases": {
+    "knight": { "$use": "knightFrame" },
+    "villain": { "$use": "villainFrame" }
+  },
+  "default": { "$use": "defaultFrame" }
+}
+```
+
+| Field | Required | Type | Dynamic |
+|------|----------|------|---------|
+| `value` | Yes | string | literal or $ref |
+| `cases` | Yes | object map | static structure only |
+| `default` | No | renderable node | static node or `$use` |
+| `$if` | No | condition | same as other nodes |
+
+Rules:
+
+- `cases` must contain at least 1 entry
+- case names are static strings matching `/^[A-Za-z][A-Za-z0-9_-]*$/`
+- each `cases[key]` value must be a renderable node or `$use`
+- `default`, if present, must be a renderable node or `$use`
+- all declared `Switch` branches count toward static validation limits even though runtime renders at most one branch
 
 ---
 
@@ -1100,6 +1134,31 @@ Rules:
 - fragments may not contain another `$use`
 - expanded fragment nodes count toward the same node, text, style, overflow, and loop limits as inline nodes
 
+### 4.6.2 Structural Switching (`Switch`)
+
+`Switch` chooses one statically declared branch by string key:
+
+```json
+{
+  "type": "Switch",
+  "value": { "$ref": "$runtime.image.theme" },
+  "cases": {
+    "knight": { "$use": "KnightFrame" },
+    "villain": { "$use": "VillainFrame" }
+  },
+  "default": { "$use": "DefaultFrame" }
+}
+```
+
+Branch selection rules:
+
+- `value` accepts a literal string or `$ref`
+- `cases` is a static object whose keys are case names and whose values are renderable nodes
+- if `value` resolves to a case key, that branch renders
+- otherwise `default` renders when present; if no `default` is provided, nothing renders
+- all `cases` and `default` branches are still validated statically
+- all declared branches count toward validator limits even when a different branch is selected at runtime
+
 ### 4.7 Node-Level Conditions (`$if`)
 
 Any node may include an optional `$if` field. If the condition resolves to `true`, the node renders.
@@ -1678,6 +1737,7 @@ Before outputting a card, verify:
 - [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
 - [ ] Interaction nodes (`Button`, `Toggle`, `Accordion`) use top-level fields (no `props` object)
 - [ ] `Tabs` uses top-level fields (no `props` object)
+- [ ] `Switch` uses only `type`, `value`, `cases`, optional `default`, and optional `$if`
 - [ ] `Text` defines exactly one of `content` or `spans`
 - [ ] `Text.maxLines`, if present, is between 1 and 10
 - [ ] `Text.truncate`, if present, is `"ellipsis"` or `"clip"`
@@ -1693,6 +1753,9 @@ Before outputting a card, verify:
 - [ ] `Tabs.tabs[*]` defines `id`, `label`, and `content`
 - [ ] `Tabs.tabs[*].id` values are unique
 - [ ] `Tabs.defaultTab`, if present, refers only to declared tab ids
+- [ ] `Switch.value` is a string literal or `$ref`
+- [ ] `Switch.cases` contains at least one static case key matching `/^[A-Za-z][A-Za-z0-9_-]*$/`
+- [ ] `Switch.cases[*]` and `Switch.default`, if present, are renderable nodes or `$use`
 
 **Dynamic values:**
 - [ ] Dynamic values use `$ref` or structured `$template` where allowed
@@ -1700,6 +1763,7 @@ Before outputting a card, verify:
 - [ ] Node-level `$if` uses a boolean literal, boolean `$ref`, or a supported condition object
 - [ ] `$use` names are static strings and resolve to an existing fragment
 - [ ] `fragments.*` does not contain nested `$use`
+- [ ] All declared `Switch` branches count toward static limits
 - [ ] State values referenced by `$ref` exist in the `state` object
 
 **Styles:**

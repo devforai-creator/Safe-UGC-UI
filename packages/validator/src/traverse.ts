@@ -132,6 +132,37 @@ export function getEmbeddedRenderables(
 ): EmbeddedRenderableEntry[] {
   const entries: EmbeddedRenderableEntry[] = [];
 
+  if (node.type === 'Switch') {
+    const rawCases = node.cases;
+    if (
+      rawCases != null &&
+      typeof rawCases === 'object' &&
+      !Array.isArray(rawCases)
+    ) {
+      for (const [caseName, renderable] of Object.entries(rawCases)) {
+        if (isTraversableNode(renderable) || isFragmentUseLike(renderable)) {
+          entries.push({
+            pathSuffix: `cases.${caseName}`,
+            renderable,
+          });
+        }
+      }
+    }
+
+    const defaultRenderable = node.default;
+    if (
+      isTraversableNode(defaultRenderable) ||
+      isFragmentUseLike(defaultRenderable)
+    ) {
+      entries.push({
+        pathSuffix: 'default',
+        renderable: defaultRenderable,
+      });
+    }
+
+    return entries;
+  }
+
   const interactiveField =
     node.type === 'Accordion'
       ? 'items'

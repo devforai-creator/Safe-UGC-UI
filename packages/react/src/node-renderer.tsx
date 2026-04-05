@@ -376,6 +376,35 @@ function resolveTabsItems(
   });
 }
 
+function renderSwitchBranch(
+  node: UGCNodeLike,
+  ctx: RenderContext,
+  key: string | number,
+): ReactNode {
+  const resolvedValue = resolveValue(node.value, ctx.state, ctx.locals);
+  const branchName = typeof resolvedValue === 'string' ? resolvedValue : undefined;
+  const rawCases =
+    node.cases != null &&
+    typeof node.cases === 'object' &&
+    !Array.isArray(node.cases)
+      ? node.cases as Record<string, unknown>
+      : undefined;
+
+  if (branchName && rawCases && rawCases[branchName] !== undefined) {
+    return renderNode(
+      rawCases[branchName],
+      ctx,
+      `${String(key)}.cases.${branchName}`,
+    );
+  }
+
+  if ('default' in node) {
+    return renderNode(node.default, ctx, `${String(key)}.default`);
+  }
+
+  return null;
+}
+
 // ---------------------------------------------------------------------------
 // renderNode --- recursive node renderer
 // ---------------------------------------------------------------------------
@@ -441,6 +470,10 @@ export function renderNode(
 
   if ('$if' in n && !evaluateCondition(n.$if, ctx.state, ctx.locals)) {
     return null;
+  }
+
+  if (n.type === 'Switch') {
+    return renderSwitchBranch(n, ctx, key);
   }
 
   // --- Compute all deltas before committing any ---

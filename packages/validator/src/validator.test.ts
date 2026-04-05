@@ -205,6 +205,30 @@ describe('validateSchema', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('accepts Switch nodes in schema validation', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Switch',
+          value: { $ref: '$theme' },
+          cases: {
+            knight: {
+              type: 'Text',
+              content: 'Knight frame',
+            },
+          },
+          default: {
+            type: 'Text',
+            content: 'Default frame',
+          },
+        },
+      },
+    };
+    const result = validateSchema(card);
+    expect(result.valid).toBe(true);
+  });
+
   it('rejects invalid $if condition shape in schema validation', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
@@ -496,6 +520,29 @@ describe('validateNodes', () => {
     expect(errors.some((e) => e.path.includes('defaultTab'))).toBe(true);
   });
 
+  it('accepts a valid Switch node', () => {
+    const views = makeViews({
+      type: 'Switch',
+      value: { $ref: '$theme' },
+      cases: {
+        knight: {
+          type: 'Text',
+          content: 'Knight',
+        },
+        villain: {
+          type: 'Text',
+          content: 'Villain',
+        },
+      },
+      default: {
+        type: 'Text',
+        content: 'Fallback',
+      },
+    });
+    const errors = validateNodes(views);
+    expect(errors).toHaveLength(0);
+  });
+
   it('rejects a ForLoop with "in" not starting with $', () => {
     const views = makeViews({
       type: 'Box',
@@ -632,6 +679,24 @@ describe('validateFragments', () => {
     const errors = validateFragments(views, fragments);
     expect(codes(errors)).toContain('FRAGMENT_NESTED_USE');
     expect(errors.some((e) => e.path.includes('fragments.outer.children[0]'))).toBe(true);
+  });
+
+  it('accepts fragment references inside Switch branches', () => {
+    const views = makeViews({
+      type: 'Switch',
+      value: 'profile',
+      cases: {
+        profile: { $use: 'profilePanel' },
+      },
+    });
+    const fragments = {
+      profilePanel: {
+        type: 'Text',
+        content: 'Profile panel',
+      },
+    };
+    const errors = validateFragments(views, fragments);
+    expect(errors).toHaveLength(0);
   });
 });
 
@@ -1588,6 +1653,26 @@ describe('validateLimits', () => {
           content: { type: 'Text', content: huge },
         },
       ],
+    });
+    const errors = validateLimits({ views });
+    expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');
+  });
+
+  it('counts non-selected Switch branches toward the global text budget', () => {
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const views = makeViews({
+      type: 'Switch',
+      value: 'summary',
+      cases: {
+        summary: {
+          type: 'Text',
+          content: 'visible',
+        },
+        hidden: {
+          type: 'Text',
+          content: huge,
+        },
+      },
     });
     const errors = validateLimits({ views });
     expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');

@@ -300,8 +300,8 @@ describe('constants', () => {
     expect(ZINDEX_MAX).toBe(100);
   });
 
-  it('ALL_COMPONENT_TYPES contains exactly 18 entries', () => {
-    expect(ALL_COMPONENT_TYPES).toHaveLength(18);
+  it('ALL_COMPONENT_TYPES contains exactly 19 entries', () => {
+    expect(ALL_COMPONENT_TYPES).toHaveLength(19);
   });
 
   it('ALL_COMPONENT_TYPES includes all expected layout components', () => {
@@ -327,11 +327,12 @@ describe('constants', () => {
     expect(ALL_COMPONENT_TYPES).toContain('Chip');
   });
 
-  it('ALL_COMPONENT_TYPES includes interaction components', () => {
+  it('ALL_COMPONENT_TYPES includes interaction and structural components', () => {
     expect(ALL_COMPONENT_TYPES).toContain('Button');
     expect(ALL_COMPONENT_TYPES).toContain('Toggle');
     expect(ALL_COMPONENT_TYPES).toContain('Accordion');
     expect(ALL_COMPONENT_TYPES).toContain('Tabs');
+    expect(ALL_COMPONENT_TYPES).toContain('Switch');
   });
 
   it('FORBIDDEN_STYLE_PROPERTIES contains expected entries', () => {
