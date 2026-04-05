@@ -1,6 +1,6 @@
 {
   "name": "@safe-ugc-ui/validator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Security validator for Safe UGC UI card JSON",
   "license": "MIT",
   "repository": {
