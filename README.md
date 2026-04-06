@@ -7,7 +7,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 ## Status
 
 - Phase 2 plus the `v1.0` interactive container milestone are implemented.
-- Published packages are currently `1.3.0`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
+- Published packages are currently `1.3.1`: `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react`.
 - The `v1.1` safe visual/layout pack is implemented on `main`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, `backdropBlur`, structured `clipPath`, and node-level `responsive.medium` / `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, structural `Switch` branching, and `Button` / `Toggle` support `disabled`.
@@ -107,8 +107,8 @@ Key renderer props:
 
 - `viewName` to render a specific named view
 - `assets` to resolve `@assets/...` references to host-controlled URLs
-- `state` to override or extend `card.state`
-- `containerStyle` to style the outer isolation container
+- `state` to override or extend `card.state`; the merged state is revalidated before rendering
+- `containerStyle` to style the outer isolation container without replacing protected isolation properties
 - `iconResolver` to map icon names to React nodes
 - `onAction` to receive Button and Toggle action events
 
@@ -183,7 +183,7 @@ The validation pipeline enforces:
 - prototype-pollution protection in `$ref` paths
 
 `UGCContainer` adds renderer-side isolation with `overflow: hidden`, `isolation: isolate`,
-`contain: content`, and `position: relative`.
+`contain: content`, and `position: relative`, and `containerStyle` cannot override those keys.
 
 ## Development
 

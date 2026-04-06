@@ -28,11 +28,13 @@ const containerStyle: CSSProperties = {
 /**
  * Security isolation wrapper for UGC content.
  * All UGC card renderings should be wrapped in this container.
+ * Consumer styles may extend the container, but cannot override the
+ * core isolation properties defined above.
  */
 export const UGCContainer = forwardRef<HTMLDivElement, UGCContainerProps>(
   function UGCContainer({ children, style }, ref) {
     const mergedStyle: CSSProperties = style
-      ? { ...containerStyle, ...style }
+      ? { ...style, ...containerStyle }
       : containerStyle;
 
     return <div ref={ref} style={mergedStyle}>{children}</div>;

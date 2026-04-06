@@ -976,6 +976,8 @@ Use `state` to define data, and `$ref` to bind it into fields or style values.
 
 State values can be strings, numbers, booleans, arrays, or nested objects.
 
+If a host merges additional runtime state before rendering, the effective merged state is validated with the same loop, style, security, and limit rules as card-authored `state`.
+
 ### 4.2 Referencing State
 
 Use `{ "$ref": "$variableName" }` in fields or style values:
@@ -1003,6 +1005,7 @@ Use `{ "$ref": "$variableName" }` in fields or style values:
 - Max path depth: 5 levels
 - Array index: digits only, max 9999
 - If the referenced value doesn't exist, it resolves to empty/undefined
+- If a host supplies runtime state overrides, `$ref` resolution and validation use the merged effective state
 
 ### 4.4 $ref in $style Context
 
@@ -1271,6 +1274,19 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | compact breakpoint threshold | container width ≤ 480 px |
 | `backdropBlur` | 0–40 |
 | `hoverStyle` / `transition` inside `responsive.medium` / `responsive.compact` | forbidden |
+
+---
+
+### 5.1 Reference Renderer Isolation
+
+The reference React renderer wraps card output in an isolated container with:
+
+- `overflow: hidden`
+- `isolation: isolate`
+- `contain: content`
+- `position: relative`
+
+Host-provided container styling may extend that wrapper, but must not override those protection keys.
 
 ---
 

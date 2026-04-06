@@ -13,7 +13,7 @@
  *   - card:           UGCCard object or raw JSON string
  *   - viewName:       Name of the view to render (defaults to first view)
  *   - assets:         Mapping of asset keys to actual URLs
- *   - state:          Optional state override (merged with card.state)
+ *   - state:          Optional state override (merged with card.state, then revalidated)
  *   - onError:        Optional error callback
  *   - iconResolver:   Optional callback to resolve icon names to ReactNode
  *   - onAction:       Optional callback for Button/Toggle actions
@@ -46,10 +46,10 @@ export interface UGCRendererProps {
   /** Asset map: keys are asset identifiers, values are resolved URLs. */
   assets?: AssetMap;
 
-  /** Optional state override. Merged on top of the card's own state. */
+  /** Optional state override. Merged on top of card.state and revalidated before render. */
   state?: Record<string, unknown>;
 
-  /** Optional CSS style for the outer container. */
+  /** Optional CSS style for the outer container. Protected isolation keys stay enforced. */
   containerStyle?: CSSProperties;
 
   /** Optional callback invoked when validation fails or runtime limits are hit. */
@@ -88,21 +88,37 @@ export function UGCRenderer({
   );
 
   const result = useMemo(() => {
-    // 1. Validate
-    const validationResult =
-      typeof card === 'string' ? validateRaw(card) : validate(card);
+    let parsedCard: UGCCard | Record<string, unknown>;
 
+    if (typeof card === 'string') {
+      const rawValidationResult = validateRaw(card);
+      if (!rawValidationResult.valid) {
+        return { valid: false as const, errors: rawValidationResult.errors };
+      }
+
+      parsedCard = JSON.parse(card) as UGCCard;
+    } else {
+      parsedCard = card;
+    }
+
+    // Revalidate after merging runtime state so host-provided overrides
+    // cannot bypass state-dependent validator rules.
+    const mergedCard = {
+      ...(parsedCard as Record<string, unknown>),
+      state: {
+        ...(((parsedCard as Record<string, unknown>).state as Record<string, unknown> | undefined) ?? {}),
+        ...(stateOverride ?? {}),
+      },
+    };
+
+    const validationResult = validate(mergedCard);
     if (!validationResult.valid) {
       return { valid: false as const, errors: validationResult.errors };
     }
 
-    // 2. Parse card object
-    const cardObj: UGCCard =
-      typeof card === 'string'
-        ? (JSON.parse(card) as UGCCard)
-        : card;
+    const cardObj = mergedCard as UGCCard;
 
-    // 3. Determine which view to render
+    // Determine which view to render
     const views = cardObj.views;
     const viewKeys = Object.keys(views);
     const selectedView = viewName && viewName in views
@@ -113,13 +129,9 @@ export function UGCRenderer({
       return { valid: false as const, errors: [] };
     }
 
-    // 4. Merge state
-    const mergedState: Record<string, unknown> = {
-      ...(cardObj.state ?? {}),
-      ...(stateOverride ?? {}),
-    };
+    const mergedState = cardObj.state ?? {};
 
-    // 5. Extract card-level styles
+    // Extract card-level styles
     const cardStyles = cardObj.styles as Record<string, Record<string, unknown>> | undefined;
     const fragments = cardObj.fragments as Record<string, unknown> | undefined;
 

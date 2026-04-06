@@ -22,7 +22,7 @@ untrusted UI cards.
 ## Project Status
 
 - Phase 2 plus the `v1.0` interactive container milestone are implemented.
-- Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` at `1.3.0`.
+- Published packages are `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`, `@safe-ugc-ui/validator`, `@safe-ugc-ui/react` at `1.3.1`.
 - The `v1.1` safe visual/layout pack is implemented on `main`.
 - The style system includes font family tokens, text shadow, repeating linear gradients, `aspectRatio`, `backdropBlur`, structured `clipPath`, and node-level `responsive.medium` / `responsive.compact` overrides.
 - Nodes support `$if` conditional rendering, structural `Switch` branching, and `Button` / `Toggle` support `disabled`.
@@ -73,4 +73,5 @@ untrusted UI cards.
 
 - JSON Schema is structural only; security and limits live in the validator.
 - Asset references must go through `@assets/...` and are checked in both validator and renderer.
-- `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`.
+- `UGCRenderer` revalidates against the merged runtime state before rendering.
+- `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`, and those keys are not overridable via `containerStyle`.

@@ -1,7 +1,11 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
+import {
+  BACKDROP_BLUR_MAX,
+  FONT_SIZE_MAX,
+  TEXT_CONTENT_TOTAL_MAX_BYTES,
+} from '@safe-ugc-ui/types';
 import {
   resolveRef,
   resolveTemplate,
@@ -225,6 +229,24 @@ describe('mapStyle', () => {
 
   it('maps backdropBlur to backdropFilter', () => {
     expect(mapStyle({ backdropBlur: 12 }, {}).backdropFilter).toBe('blur(12px)');
+  });
+
+  it('drops out-of-range backdropBlur resolved from state', () => {
+    expect(
+      mapStyle(
+        { backdropBlur: { $ref: '$blur' } },
+        { blur: BACKDROP_BLUR_MAX + 1 },
+      ).backdropFilter,
+    ).toBeUndefined();
+  });
+
+  it('drops out-of-range fontSize resolved from state', () => {
+    expect(
+      mapStyle(
+        { fontSize: { $ref: '$size' } },
+        { size: `${FONT_SIZE_MAX + 1}px` },
+      ).fontSize,
+    ).toBeUndefined();
   });
 
   it('maps structured clipPath objects to CSS strings', () => {
@@ -758,6 +780,60 @@ describe('UGCRenderer', () => {
     expect(outerDiv.style.width).toBe('500px');
     // Security isolation styles still present
     expect(outerDiv.style.overflow).toBe('hidden');
+  });
+
+  it('keeps protected isolation styles when containerStyle tries to override them', () => {
+    const { container } = render(
+      <UGCRenderer
+        card={validCard as any}
+        containerStyle={{
+          width: '500px',
+          overflow: 'visible',
+          position: 'static',
+          contain: 'none',
+          isolation: 'auto',
+        }}
+      />,
+    );
+    const outerDiv = container.firstElementChild as HTMLElement;
+    expect(outerDiv.style.width).toBe('500px');
+    expect(outerDiv.style.overflow).toBe('hidden');
+    expect(outerDiv.style.position).toBe('relative');
+    expect(outerDiv.style.contain).toBe('content');
+    expect(outerDiv.style.isolation).toBe('isolate');
+  });
+
+  it('rejects invalid merged state overrides before render', () => {
+    const onError = vi.fn();
+    const card = {
+      meta: { name: 'loop-state', version: '1.0.0' },
+      state: { items: ['ok'] },
+      views: {
+        Main: {
+          type: 'Box',
+          children: {
+            for: 'item',
+            in: '$items',
+            template: { type: 'Text', content: { $ref: '$item' } },
+          },
+        },
+      },
+    };
+
+    const { container } = render(
+      <UGCRenderer
+        card={card as any}
+        state={{ items: 'not-an-array' }}
+        onError={onError}
+      />,
+    );
+
+    expect(container.innerHTML).toBe('');
+    expect(onError).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'LOOP_SOURCE_NOT_ARRAY' }),
+      ]),
+    );
   });
 
   it('onError receives error details for missing meta fields', () => {

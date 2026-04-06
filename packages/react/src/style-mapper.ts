@@ -15,7 +15,29 @@
  */
 
 import type { CSSProperties } from 'react';
-import { ALLOWED_TRANSITION_PROPERTIES } from '@safe-ugc-ui/types';
+import {
+  ALLOWED_TRANSITION_PROPERTIES,
+  BACKDROP_BLUR_MAX,
+  BORDER_RADIUS_MAX,
+  BOX_SHADOW_BLUR_MAX,
+  BOX_SHADOW_SPREAD_MAX,
+  CSS_NAMED_COLORS,
+  FONT_SIZE_MAX,
+  FONT_SIZE_MIN,
+  LETTER_SPACING_MAX,
+  LETTER_SPACING_MIN,
+  OPACITY_MAX,
+  OPACITY_MIN,
+  TEXT_SHADOW_BLUR_MAX,
+  TRANSFORM_SCALE_MAX,
+  TRANSFORM_SCALE_MIN,
+  TRANSFORM_TRANSLATE_MAX,
+  TRANSFORM_TRANSLATE_MIN,
+  TRANSITION_DELAY_MAX,
+  TRANSITION_DURATION_MAX,
+  ZINDEX_MAX,
+  ZINDEX_MIN,
+} from '@safe-ugc-ui/types';
 import { resolveValue } from './state-resolver.js';
 
 // ---------------------------------------------------------------------------
@@ -46,6 +68,72 @@ const FONT_FAMILY_STACKS: Record<string, string> = {
   handwriting: '"Bradley Hand", "Segoe Print", "Comic Sans MS", "Marker Felt", cursive',
 };
 
+const DISPLAY_VALUES = new Set(['flex', 'block', 'none']);
+const FLEX_DIRECTION_VALUES = new Set(['row', 'column', 'row-reverse', 'column-reverse']);
+const JUSTIFY_CONTENT_VALUES = new Set([
+  'start',
+  'flex-start',
+  'center',
+  'end',
+  'flex-end',
+  'space-between',
+  'space-around',
+  'space-evenly',
+]);
+const ALIGN_ITEMS_VALUES = new Set([
+  'start',
+  'flex-start',
+  'center',
+  'end',
+  'flex-end',
+  'stretch',
+  'baseline',
+]);
+const ALIGN_SELF_VALUES = new Set([
+  'auto',
+  'start',
+  'flex-start',
+  'center',
+  'end',
+  'flex-end',
+  'stretch',
+]);
+const FLEX_WRAP_VALUES = new Set(['nowrap', 'wrap', 'wrap-reverse']);
+const TEXT_ALIGN_VALUES = new Set(['left', 'center', 'right', 'justify']);
+const TEXT_DECORATION_VALUES = new Set(['none', 'underline', 'line-through']);
+const FONT_STYLE_VALUES = new Set(['normal', 'italic']);
+const OBJECT_FIT_VALUES = new Set(['cover', 'contain', 'fill', 'none', 'scale-down']);
+const OVERFLOW_VALUES = new Set(['visible', 'hidden', 'auto']);
+const POSITION_VALUES = new Set(['static', 'relative', 'absolute']);
+const FONT_WEIGHT_STRING_VALUES = new Set([
+  'normal',
+  'bold',
+  '100',
+  '200',
+  '300',
+  '400',
+  '500',
+  '600',
+  '700',
+  '800',
+  '900',
+]);
+const FONT_WEIGHT_NUMBER_VALUES = new Set([100, 200, 300, 400, 500, 600, 700, 800, 900]);
+const LENGTH_AUTO_ALLOWED = new Set([
+  'width',
+  'height',
+  'minWidth',
+  'maxWidth',
+  'minHeight',
+  'maxHeight',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
+]);
+const LENGTH_PATTERN = /^-?[0-9]+(\.[0-9]+)?(px|%|em|rem)?$/;
+
 // ---------------------------------------------------------------------------
 // Forbidden CSS functions (defense-in-depth)
 // ---------------------------------------------------------------------------
@@ -55,6 +143,45 @@ const FORBIDDEN_CSS_FUNCTIONS_LOWER = ['url(', 'var(', 'calc(', 'env(', 'express
 function containsForbiddenCssFunction(value: string): boolean {
   const lower = value.toLowerCase();
   return FORBIDDEN_CSS_FUNCTIONS_LOWER.some(fn => lower.includes(fn));
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isValidLengthString(value: string): boolean {
+  return LENGTH_PATTERN.test(value);
+}
+
+function parseLengthValue(value: string): number | null {
+  const match = value.match(/^(-?[0-9]+(\.[0-9]+)?)(px|%|em|rem)?$/);
+  if (!match) {
+    return null;
+  }
+  return Number(match[1]);
+}
+
+function isValidColor(value: string): boolean {
+  const lower = value.toLowerCase();
+
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/.test(lower)) {
+    return true;
+  }
+
+  if (
+    lower.startsWith('rgb(') ||
+    lower.startsWith('rgba(') ||
+    lower.startsWith('hsl(') ||
+    lower.startsWith('hsla(')
+  ) {
+    return true;
+  }
+
+  if (CSS_NAMED_COLORS.has(lower)) {
+    return true;
+  }
+
+  return lower === 'transparent' || lower === 'currentcolor';
 }
 
 function isValidAspectRatio(value: unknown): value is string | number {
@@ -90,13 +217,30 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+interface NumberRangeOptions {
+  min?: number;
+  max?: number;
+}
+
 function resolveStructuredNumber(
   value: unknown,
   state: Record<string, unknown>,
   locals?: Record<string, unknown>,
+  range?: NumberRangeOptions,
 ): number | undefined {
   const resolved = resolveStyleValue(value, state, locals);
-  return typeof resolved === 'number' ? resolved : undefined;
+  if (!isFiniteNumber(resolved)) {
+    return undefined;
+  }
+
+  if (
+    (range?.min !== undefined && resolved < range.min) ||
+    (range?.max !== undefined && resolved > range.max)
+  ) {
+    return undefined;
+  }
+
+  return resolved;
 }
 
 function resolveStructuredString(
@@ -114,19 +258,247 @@ function resolveStructuredString(
   return resolved;
 }
 
+function resolveStructuredColor(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): string | undefined {
+  const resolved = resolveStructuredString(value, state, locals);
+  if (resolved === undefined || !isValidColor(resolved)) {
+    return undefined;
+  }
+
+  return resolved;
+}
+
 function resolveStructuredLength(
   value: unknown,
   state: Record<string, unknown>,
   locals?: Record<string, unknown>,
 ): string | number | undefined {
   const resolved = resolveStyleValue(value, state, locals);
-  if (typeof resolved === 'number') {
+  if (isFiniteNumber(resolved)) {
     return resolved;
   }
-  if (typeof resolved === 'string' && !containsForbiddenCssFunction(resolved)) {
+
+  if (
+    typeof resolved === 'string' &&
+    !containsForbiddenCssFunction(resolved) &&
+    isValidLengthString(resolved)
+  ) {
     return resolved;
   }
+
   return undefined;
+}
+
+function resolveDirectLengthValue(
+  prop: typeof DIRECT_MAP_PROPS[number],
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+  range?: NumberRangeOptions,
+): string | number | undefined {
+  const resolved = resolveStyleValue(value, state, locals);
+
+  if (isFiniteNumber(resolved)) {
+    if (
+      (range?.min !== undefined && resolved < range.min) ||
+      (range?.max !== undefined && resolved > range.max)
+    ) {
+      return undefined;
+    }
+
+    return resolved;
+  }
+
+  if (typeof resolved !== 'string' || containsForbiddenCssFunction(resolved)) {
+    return undefined;
+  }
+
+  if (resolved === 'auto') {
+    return LENGTH_AUTO_ALLOWED.has(prop) ? resolved : undefined;
+  }
+
+  if (!isValidLengthString(resolved)) {
+    return undefined;
+  }
+
+  const numericValue = parseLengthValue(resolved);
+  if (
+    numericValue !== null &&
+    (
+      (range?.min !== undefined && numericValue < range.min) ||
+      (range?.max !== undefined && numericValue > range.max)
+    )
+  ) {
+    return undefined;
+  }
+
+  return resolved;
+}
+
+function resolveLineHeightValue(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): string | number | undefined {
+  const resolved = resolveStyleValue(value, state, locals);
+
+  if (isFiniteNumber(resolved)) {
+    return resolved;
+  }
+
+  if (typeof resolved !== 'string' || containsForbiddenCssFunction(resolved)) {
+    return undefined;
+  }
+
+  return isValidLengthString(resolved) ? resolved : undefined;
+}
+
+function resolveAllowedStringValue(
+  value: unknown,
+  state: Record<string, unknown>,
+  locals: Record<string, unknown> | undefined,
+  allowed: ReadonlySet<string>,
+): string | undefined {
+  const resolved = resolveStructuredString(value, state, locals);
+  if (resolved === undefined || !allowed.has(resolved)) {
+    return undefined;
+  }
+
+  return resolved;
+}
+
+function resolveDirectMappedPropValue(
+  prop: typeof DIRECT_MAP_PROPS[number],
+  value: unknown,
+  state: Record<string, unknown>,
+  locals?: Record<string, unknown>,
+): unknown {
+  switch (prop) {
+    case 'display':
+      return resolveAllowedStringValue(value, state, locals, DISPLAY_VALUES);
+    case 'flexDirection':
+      return resolveAllowedStringValue(value, state, locals, FLEX_DIRECTION_VALUES);
+    case 'justifyContent':
+      return resolveAllowedStringValue(value, state, locals, JUSTIFY_CONTENT_VALUES);
+    case 'alignItems':
+      return resolveAllowedStringValue(value, state, locals, ALIGN_ITEMS_VALUES);
+    case 'alignSelf':
+      return resolveAllowedStringValue(value, state, locals, ALIGN_SELF_VALUES);
+    case 'flexWrap':
+      return resolveAllowedStringValue(value, state, locals, FLEX_WRAP_VALUES);
+    case 'textAlign':
+      return resolveAllowedStringValue(value, state, locals, TEXT_ALIGN_VALUES);
+    case 'textDecoration':
+      return resolveAllowedStringValue(value, state, locals, TEXT_DECORATION_VALUES);
+    case 'fontStyle':
+      return resolveAllowedStringValue(value, state, locals, FONT_STYLE_VALUES);
+    case 'objectFit':
+      return resolveAllowedStringValue(value, state, locals, OBJECT_FIT_VALUES);
+    case 'overflow':
+      return resolveAllowedStringValue(value, state, locals, OVERFLOW_VALUES);
+    case 'position':
+      return resolveAllowedStringValue(value, state, locals, POSITION_VALUES);
+    case 'flex':
+      return resolveStructuredNumber(value, state, locals);
+    case 'gap':
+    case 'width':
+    case 'height':
+    case 'minWidth':
+    case 'maxWidth':
+    case 'minHeight':
+    case 'maxHeight':
+    case 'padding':
+    case 'paddingTop':
+    case 'paddingRight':
+    case 'paddingBottom':
+    case 'paddingLeft':
+    case 'margin':
+    case 'marginTop':
+    case 'marginRight':
+    case 'marginBottom':
+    case 'marginLeft':
+    case 'top':
+    case 'right':
+    case 'bottom':
+    case 'left':
+      return resolveDirectLengthValue(prop, value, state, locals);
+    case 'backgroundColor':
+    case 'color':
+      return resolveStructuredColor(value, state, locals);
+    case 'borderRadius':
+    case 'borderRadiusTopLeft':
+    case 'borderRadiusTopRight':
+    case 'borderRadiusBottomLeft':
+    case 'borderRadiusBottomRight':
+      return resolveDirectLengthValue(
+        prop,
+        value,
+        state,
+        locals,
+        { min: 0, max: BORDER_RADIUS_MAX },
+      );
+    case 'fontSize':
+      return resolveDirectLengthValue(
+        prop,
+        value,
+        state,
+        locals,
+        { min: FONT_SIZE_MIN, max: FONT_SIZE_MAX },
+      );
+    case 'fontWeight': {
+      const resolved = resolveStyleValue(value, state, locals);
+      if (
+        typeof resolved === 'string' &&
+        !containsForbiddenCssFunction(resolved) &&
+        FONT_WEIGHT_STRING_VALUES.has(resolved)
+      ) {
+        return resolved;
+      }
+      if (typeof resolved === 'number' && FONT_WEIGHT_NUMBER_VALUES.has(resolved)) {
+        return resolved;
+      }
+      return undefined;
+    }
+    case 'lineHeight':
+      return resolveLineHeightValue(value, state, locals);
+    case 'letterSpacing':
+      return resolveDirectLengthValue(
+        prop,
+        value,
+        state,
+        locals,
+        { min: LETTER_SPACING_MIN, max: LETTER_SPACING_MAX },
+      );
+    case 'opacity':
+      return resolveStructuredNumber(
+        value,
+        state,
+        locals,
+        { min: OPACITY_MIN, max: OPACITY_MAX },
+      );
+    case 'zIndex':
+      return resolveStructuredNumber(
+        value,
+        state,
+        locals,
+        { min: ZINDEX_MIN, max: ZINDEX_MAX },
+      );
+    case 'gridTemplateColumns':
+    case 'gridTemplateRows':
+    case 'gridColumn':
+    case 'gridRow':
+    case 'objectPosition':
+      return resolveStructuredString(value, state, locals);
+    case 'aspectRatio': {
+      const resolved = resolveStyleValue(value, state, locals);
+      return isValidAspectRatio(resolved) ? resolved : undefined;
+    }
+    default:
+      return undefined;
+  }
 }
 
 function toCssLength(value: string | number): string {
@@ -167,9 +539,24 @@ function resolveTransformObject(
 
   const resolved: Record<string, unknown> = {};
   const rotate = resolveStructuredString(transform.rotate, state, locals);
-  const scale = resolveStructuredNumber(transform.scale, state, locals);
-  const translateX = resolveStructuredNumber(transform.translateX, state, locals);
-  const translateY = resolveStructuredNumber(transform.translateY, state, locals);
+  const scale = resolveStructuredNumber(
+    transform.scale,
+    state,
+    locals,
+    { min: TRANSFORM_SCALE_MIN, max: TRANSFORM_SCALE_MAX },
+  );
+  const translateX = resolveStructuredNumber(
+    transform.translateX,
+    state,
+    locals,
+    { min: TRANSFORM_TRANSLATE_MIN, max: TRANSFORM_TRANSLATE_MAX },
+  );
+  const translateY = resolveStructuredNumber(
+    transform.translateY,
+    state,
+    locals,
+    { min: TRANSFORM_TRANSLATE_MIN, max: TRANSFORM_TRANSLATE_MAX },
+  );
 
   if (rotate !== undefined) resolved.rotate = rotate;
   if (scale !== undefined) resolved.scale = scale;
@@ -204,9 +591,19 @@ function resolveShadowObject(
   const resolved: Record<string, unknown> = {};
   const offsetX = resolveStructuredNumber(shadow.offsetX, state, locals);
   const offsetY = resolveStructuredNumber(shadow.offsetY, state, locals);
-  const blur = resolveStructuredNumber(shadow.blur, state, locals);
-  const spread = resolveStructuredNumber(shadow.spread, state, locals);
-  const color = resolveStructuredString(shadow.color, state, locals);
+  const blur = resolveStructuredNumber(
+    shadow.blur,
+    state,
+    locals,
+    { min: 0, max: BOX_SHADOW_BLUR_MAX },
+  );
+  const spread = resolveStructuredNumber(
+    shadow.spread,
+    state,
+    locals,
+    { min: 0, max: BOX_SHADOW_SPREAD_MAX },
+  );
+  const color = resolveStructuredColor(shadow.color, state, locals);
 
   if (offsetX !== undefined) resolved.offsetX = offsetX;
   if (offsetY !== undefined) resolved.offsetY = offsetY;
@@ -267,8 +664,13 @@ function resolveTextShadowObject(
   const resolved: Record<string, unknown> = {};
   const offsetX = resolveStructuredNumber(shadow.offsetX, state, locals);
   const offsetY = resolveStructuredNumber(shadow.offsetY, state, locals);
-  const blur = resolveStructuredNumber(shadow.blur, state, locals);
-  const color = resolveStructuredString(shadow.color, state, locals);
+  const blur = resolveStructuredNumber(
+    shadow.blur,
+    state,
+    locals,
+    { min: 0, max: TEXT_SHADOW_BLUR_MAX },
+  );
+  const color = resolveStructuredColor(shadow.color, state, locals);
 
   if (offsetX !== undefined) resolved.offsetX = offsetX;
   if (offsetY !== undefined) resolved.offsetY = offsetY;
@@ -339,7 +741,7 @@ function resolveGradientStop(
     return undefined;
   }
 
-  const color = resolveStructuredString(stop.color, state, locals);
+  const color = resolveStructuredColor(stop.color, state, locals);
   const position = resolveStructuredString(stop.position, state, locals);
   if (color === undefined || position === undefined) {
     return undefined;
@@ -360,6 +762,10 @@ function resolveGradientObject(
   const resolvedStops = gradient.stops
     .map((stop) => resolveGradientStop(stop, state, locals))
     .filter((stop): stop is { color: string; position: string } => stop !== undefined);
+
+  if (resolvedStops.length === 0) {
+    return undefined;
+  }
 
   const resolved: Record<string, unknown> = {
     type: gradient.type,
@@ -399,7 +805,7 @@ function resolveBorderObject(
   const resolved: Record<string, unknown> = {};
   const width = resolveStructuredNumber(border.width, state, locals);
   const style = resolveStructuredString(border.style, state, locals);
-  const color = resolveStructuredString(border.color, state, locals);
+  const color = resolveStructuredColor(border.color, state, locals);
 
   if (width !== undefined) resolved.width = width;
   if (style !== undefined && BORDER_STYLE_VALUES.has(style)) resolved.style = style;
@@ -528,7 +934,7 @@ export function mapStyle(
   // Direct-mapped properties (resolve dynamic values)
   for (const prop of DIRECT_MAP_PROPS) {
     if (prop in style) {
-      let resolved = resolveStyleValue(style[prop], state, locals);
+      let resolved = resolveDirectMappedPropValue(prop, style[prop], state, locals);
       if (resolved !== undefined) {
         // Map spec alignment values (start/end) to CSS flexbox values
         if (
@@ -613,12 +1019,13 @@ export function mapStyle(
     }
   }
 
-  const resolvedBackdropBlur = resolveStructuredNumber(style.backdropBlur, state, locals);
-  if (
-    resolvedBackdropBlur !== undefined &&
-    Number.isFinite(resolvedBackdropBlur) &&
-    resolvedBackdropBlur >= 0
-  ) {
+  const resolvedBackdropBlur = resolveStructuredNumber(
+    style.backdropBlur,
+    state,
+    locals,
+    { min: 0, max: BACKDROP_BLUR_MAX },
+  );
+  if (resolvedBackdropBlur !== undefined) {
     (css as Record<string, unknown>).backdropFilter = `blur(${resolvedBackdropBlur}px)`;
   }
 
@@ -686,6 +1093,9 @@ export function mapTransition(transition: unknown): string | undefined {
     const property = t.property;
     const duration = t.duration;
     if (typeof property !== 'string' || typeof duration !== 'number') continue;
+    if (!Number.isFinite(duration) || duration < 0 || duration > TRANSITION_DURATION_MAX) {
+      continue;
+    }
 
     // Defense-in-depth: reject properties not in whitelist at render time
     if (!(ALLOWED_TRANSITION_PROPERTIES as readonly string[]).includes(property)) {
@@ -701,6 +1111,16 @@ export function mapTransition(transition: unknown): string | undefined {
     let part = `${cssProperty} ${duration}ms`;
     if (typeof t.easing === 'string' && ALLOWED_EASINGS.has(t.easing)) {
       part += ` ${t.easing}`;
+    }
+    if (
+      typeof t.delay === 'number' &&
+      (
+        !Number.isFinite(t.delay) ||
+        t.delay < 0 ||
+        t.delay > TRANSITION_DELAY_MAX
+      )
+    ) {
+      continue;
     }
     if (typeof t.delay === 'number' && t.delay > 0) {
       part += ` ${t.delay}ms`;
