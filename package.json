@@ -5,6 +5,7 @@
     "build": "pnpm -r build",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "clean": "pnpm -r exec rm -rf dist"
   },
   "devDependencies": {

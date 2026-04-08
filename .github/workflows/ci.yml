@@ -35,5 +35,39 @@ jobs:
       - name: Audit
         run: pnpm audit
 
-      - name: Test
-        run: pnpm test:run
+      - name: Test with coverage
+        run: pnpm test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          node <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('node:fs');
+          const path = 'coverage/coverage-summary.json';
+
+          console.log('## Coverage');
+          console.log('');
+
+          if (!fs.existsSync(path)) {
+            console.log('Coverage report was not generated.');
+            process.exit(0);
+          }
+
+          const summary = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const total = summary.total;
+
+          console.log('| Metric | Percent | Covered / Total |');
+          console.log('| --- | ---: | ---: |');
+          console.log(`| Lines | ${total.lines.pct}% | ${total.lines.covered} / ${total.lines.total} |`);
+          console.log(`| Statements | ${total.statements.pct}% | ${total.statements.covered} / ${total.statements.total} |`);
+          console.log(`| Functions | ${total.functions.pct}% | ${total.functions.covered} / ${total.functions.total} |`);
+          console.log(`| Branches | ${total.branches.pct}% | ${total.branches.covered} / ${total.branches.total} |`);
+          EOF
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
+          if-no-files-found: warn

@@ -224,6 +224,7 @@ pnpm install
 pnpm build
 pnpm test
 pnpm test:run
+pnpm test:coverage
 pnpm clean
 pnpm --filter @safe-ugc-ui/schema build
 pnpm --filter @safe-ugc-ui/demo dev

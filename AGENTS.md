@@ -37,6 +37,7 @@ untrusted UI cards.
 - `pnpm build` — build all workspace packages.
 - `pnpm test` — run Vitest in workspace mode.
 - `pnpm test:run` — non-watch test run.
+- `pnpm test:coverage` — run the workspace test suite with coverage output.
 - `pnpm clean` — remove package `dist` directories.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app locally.

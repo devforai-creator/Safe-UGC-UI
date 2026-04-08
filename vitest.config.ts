@@ -21,6 +21,8 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.test.tsx',
       ],
+      reportOnFailure: true,
+      reporter: ['text', 'json-summary', 'html', 'lcov'],
     },
   },
 });

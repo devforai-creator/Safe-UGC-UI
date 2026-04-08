@@ -37,6 +37,7 @@ pick up the same project context.
 - `pnpm build` — build all packages.
 - `pnpm test` — run workspace Vitest.
 - `pnpm test:run` — non-watch test run.
+- `pnpm test:coverage` — run the workspace test suite with coverage output.
 - `pnpm clean` — remove `dist` folders.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app.
