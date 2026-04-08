@@ -5,9 +5,10 @@
  *
  * Pipeline:
  *   1. Accept a card (UGCCard object or raw JSON string)
- *   2. Validate via @safe-ugc-ui/validator
- *   3. If invalid, render nothing (or optional error fallback)
- *   4. If valid, wrap in UGCContainer and render the view tree
+ *   2. Safe-load via @safe-ugc-ui/validator
+ *   3. Merge runtime state and revalidate
+ *   4. If invalid, render nothing (or optional error fallback)
+ *   5. If valid, wrap in UGCContainer and render the view tree
  *
  * Props:
  *   - card:           UGCCard object or raw JSON string
@@ -21,7 +22,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { validate, validateRaw } from '@safe-ugc-ui/validator';
+import { loadCard, loadCardRaw, validate } from '@safe-ugc-ui/validator';
 import {
   COMPACT_BREAKPOINT_MAX_WIDTH,
   MEDIUM_BREAKPOINT_MAX_WIDTH,
@@ -88,25 +89,21 @@ export function UGCRenderer({
   );
 
   const result = useMemo(() => {
-    let parsedCard: UGCCard | Record<string, unknown>;
-
-    if (typeof card === 'string') {
-      const rawValidationResult = validateRaw(card);
-      if (!rawValidationResult.valid) {
-        return { valid: false as const, errors: rawValidationResult.errors };
-      }
-
-      parsedCard = JSON.parse(card) as UGCCard;
-    } else {
-      parsedCard = card;
+    const loadResult = typeof card === 'string'
+      ? loadCardRaw(card)
+      : loadCard(card);
+    if (!loadResult.valid) {
+      return { valid: false as const, errors: loadResult.errors };
     }
+
+    const parsedCard = loadResult.card;
 
     // Revalidate after merging runtime state so host-provided overrides
     // cannot bypass state-dependent validator rules.
     const mergedCard = {
-      ...(parsedCard as Record<string, unknown>),
+      ...parsedCard,
       state: {
-        ...(((parsedCard as Record<string, unknown>).state as Record<string, unknown> | undefined) ?? {}),
+        ...(parsedCard.state ?? {}),
         ...(stateOverride ?? {}),
       },
     };

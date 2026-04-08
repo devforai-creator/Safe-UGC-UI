@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { MAX_NODE_COUNT, TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
 import {
+  loadCard,
+  loadCardRaw,
   validate,
   validateRaw,
   validateSchema,
@@ -2287,6 +2289,68 @@ describe('validateRaw', () => {
     expect(result.valid).toBe(false);
     // Should fail on schema validation
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('loadCard', () => {
+  it('returns the typed card for valid parsed input', () => {
+    const card = makeCard(makeViews({ type: 'Box' }));
+
+    const result = loadCard(card);
+
+    expect(result.valid).toBe(true);
+    if (!result.valid) {
+      throw new Error('Expected loadCard() to succeed');
+    }
+    expect(result.card).toEqual(card);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('returns errors and no card for invalid parsed input', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: { Main: { type: 'Box' } },
+      assets: { hero: 'https://evil.com/bg.png' },
+    };
+
+    const result = loadCard(card);
+
+    expect(result.valid).toBe(false);
+    expect(result.card).toBeNull();
+    expect(codes(result.errors)).toContain('INVALID_ASSET_PATH');
+  });
+});
+
+describe('loadCardRaw', () => {
+  it('returns the typed card for valid raw JSON input', () => {
+    const card = makeCard(
+      makeViews({ type: 'Text', content: 'Loaded safely' }),
+    );
+
+    const result = loadCardRaw(JSON.stringify(card));
+
+    expect(result.valid).toBe(true);
+    if (!result.valid) {
+      throw new Error('Expected loadCardRaw() to succeed');
+    }
+    expect(result.card).toEqual(card);
+    expect(result.errors).toEqual([]);
+  });
+
+  it('returns INVALID_JSON and no card for malformed JSON', () => {
+    const result = loadCardRaw('{ this is not valid json }}}');
+
+    expect(result.valid).toBe(false);
+    expect(result.card).toBeNull();
+    expect(codes(result.errors)).toContain('INVALID_JSON');
+  });
+
+  it('returns CARD_SIZE_EXCEEDED and no card for oversized input', () => {
+    const result = loadCardRaw('x'.repeat(1_000_001));
+
+    expect(result.valid).toBe(false);
+    expect(result.card).toBeNull();
+    expect(codes(result.errors)).toContain('CARD_SIZE_EXCEEDED');
   });
 });
 

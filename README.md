@@ -22,7 +22,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 |---------|---------|
 | `@safe-ugc-ui/types` | Zod schemas, inferred TypeScript types, constants, helpers |
 | `@safe-ugc-ui/schema` | JSON Schema generation and the built `ugc-card.schema.json` artifact |
-| `@safe-ugc-ui/validator` | Structural, style, security, and limit validation |
+| `@safe-ugc-ui/validator` | Structural, style, security, limit validation, and safe card loading |
 | `@safe-ugc-ui/react` | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers |
 | `@safe-ugc-ui/demo` | Vite-based playground for editing card JSON and previewing output |
 
@@ -52,13 +52,13 @@ pnpm add @safe-ugc-ui/types
 
 ## Quick Start
 
-### Validate a card
+### Load a card safely
 
-Use `validateRaw()` when the input is still a JSON string so the validator can reject oversized
-payloads before parsing:
+Use `loadCardRaw()` when the input is still a JSON string so the validator can reject oversized
+payloads before parsing, run the full validation pipeline, and return a typed card only on success:
 
 ```ts
-import { validateRaw } from '@safe-ugc-ui/validator';
+import { loadCardRaw } from '@safe-ugc-ui/validator';
 
 const rawCard = `{
   "meta": { "name": "hello", "version": "1.0.0" },
@@ -71,14 +71,19 @@ const rawCard = `{
   }
 }`;
 
-const result = validateRaw(rawCard);
+const result = loadCardRaw(rawCard);
 
 if (!result.valid) {
   console.error(result.errors);
+} else {
+  console.log(result.card.views.Main);
 }
 ```
 
-If the card is already parsed, use `validate()` instead.
+If the card is already parsed, use `loadCard()` instead.
+
+Use `validateRaw()` or `validate()` when you only need diagnostics and do not need the typed
+`UGCCard` returned.
 
 For most validator errors, `ValidationError.path` points to the exact failing field. For some
 structural `SCHEMA_ERROR`s that come from nested Zod unions, `path` points to the nearest stable
@@ -86,16 +91,24 @@ ancestor and `message` includes up to three deeper child locations.
 
 ### Render a card in React
 
-`UGCRenderer` accepts either a parsed card object or a raw JSON string. It validates before
-rendering and returns `null` on failure.
+Prefer validating at host ingest time with `loadCardRaw()` or `loadCard()`. `UGCRenderer` still
+validates before rendering and revalidates merged runtime state, so the render boundary stays
+defensive even when the host passes a parsed card object.
 
 ```tsx
 import { UGCRenderer } from '@safe-ugc-ui/react';
+import { loadCardRaw } from '@safe-ugc-ui/validator';
 
-export function CardPreview({ card }: { card: string }) {
+export function CardPreview({ rawCard }: { rawCard: string }) {
+  const result = loadCardRaw(rawCard);
+  if (!result.valid) {
+    console.error(result.errors);
+    return null;
+  }
+
   return (
     <UGCRenderer
-      card={card}
+      card={result.card}
       assets={{
         '@assets/avatar.png': 'https://cdn.example.com/avatar.png',
       }}
@@ -176,6 +189,14 @@ For full details, see:
 ## Security Model
 
 JSON Schema is structural only. Actual safety checks live in `@safe-ugc-ui/validator`.
+
+Recommended host boundary:
+
+- call `loadCardRaw()` for untrusted raw JSON at import/ingest time
+- use `loadCard()` only when the host has already parsed the payload
+- treat `validateRaw()` and `validate()` as lower-level diagnostics APIs
+- treat low-level renderer internals such as `renderTree()` as advanced APIs that assume prior validation
+- let `UGCRenderer` revalidate merged runtime state before rendering
 
 The validation pipeline enforces:
 

@@ -54,7 +54,8 @@ import { Tabs } from './components/Tabs.js';
 
 /**
  * A generic UGC node shape. We use Record<string, unknown> for flexibility
- * since the validator has already verified the structure before rendering.
+ * since callers are expected to validate via loadCard/loadCardRaw or
+ * UGCRenderer before using this low-level renderer directly.
  */
 interface UGCNodeLike {
   type: string;
@@ -802,6 +803,9 @@ function renderForLoop(
 
 /**
  * Render a full view tree starting from the root node.
+ *
+ * This is a low-level API. Callers must validate the card and any merged
+ * runtime state before calling renderTree directly.
  *
  * @param rootNode - The root node of the view
  * @param state - Card state for $ref resolution

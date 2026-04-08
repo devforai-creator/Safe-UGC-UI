@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { UGCRenderer } from '@safe-ugc-ui/react';
-import { validate } from '@safe-ugc-ui/validator';
+import { loadCardRaw } from '@safe-ugc-ui/validator';
 import { SAMPLES } from './sample-card';
 
 const DEMO_ASSETS: Record<string, string> = {
@@ -36,25 +36,11 @@ export function App() {
   };
 
   const { card, errors } = useMemo(() => {
-    try {
-      const parsed = JSON.parse(jsonText);
-      const result = validate(parsed);
-      return {
-        card: result.valid ? parsed : null,
-        errors: result.errors,
-      };
-    } catch (e) {
-      return {
-        card: null,
-        errors: [
-          {
-            code: 'JSON_PARSE_ERROR',
-            message: e instanceof Error ? e.message : 'Invalid JSON',
-            path: '',
-          },
-        ],
-      };
-    }
+    const result = loadCardRaw(jsonText);
+    return {
+      card: result.valid ? result.card : null,
+      errors: result.errors,
+    };
   }, [jsonText]);
 
   return (

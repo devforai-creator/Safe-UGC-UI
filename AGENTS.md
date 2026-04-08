@@ -14,7 +14,7 @@ untrusted UI cards.
 
 - `packages/types/src` — Zod schemas, inferred TS types, and numeric/string constraints.
 - `packages/schema/src` — JSON Schema generation; build output lands at `packages/schema/dist/ugc-card.schema.json`.
-- `packages/validator/src` — validation pipeline for schema, nodes, values, styles, security, and limits.
+- `packages/validator/src` — validation pipeline plus safe card load/import helpers for schema, nodes, values, styles, security, and limits.
 - `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, asset/style/state helpers, and 18 React components.
 - `packages/demo` — Vite playground that edits JSON and previews rendered cards.
 - Build outputs land in `packages/*/dist`. Tests live next to source as `*.test.ts` or `*.test.tsx`.
@@ -73,6 +73,8 @@ untrusted UI cards.
 ## Specs & Security Notes
 
 - JSON Schema is structural only; security and limits live in the validator.
+- Prefer `loadCardRaw()` for untrusted raw JSON ingress and `loadCard()` for already-parsed inputs.
 - Asset references must go through `@assets/...` and are checked in both validator and renderer.
+- Low-level renderer exports such as `renderTree()` assume prior validation by the caller.
 - `UGCRenderer` revalidates against the merged runtime state before rendering.
 - `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`, and those keys are not overridable via `containerStyle`.

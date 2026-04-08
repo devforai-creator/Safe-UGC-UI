@@ -19,7 +19,7 @@ export {
   Button, Toggle, Accordion, Tabs,
 } from './components/index.js';
 
-// Node renderer (for advanced usage)
+// Node renderer (advanced usage only; caller must validate card input first)
 export { renderNode, renderTree } from './node-renderer.js';
 export type { RenderContext, RuntimeLimits } from './node-renderer.js';
 
