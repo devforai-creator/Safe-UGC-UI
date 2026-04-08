@@ -19,7 +19,7 @@ import {
   toResult,
 } from './result.js';
 
-function formatIssuePath(path: Array<string | number>): string {
+function formatIssuePath(path: readonly PropertyKey[]): string {
   if (path.length === 0) {
     return '';
   }
@@ -31,28 +31,55 @@ function formatIssuePath(path: Array<string | number>): string {
       continue;
     }
 
-    result += result.length === 0 ? segment : `.${segment}`;
+    const key = typeof segment === 'symbol' ? String(segment) : segment;
+    result += result.length === 0 ? key : `.${key}`;
   }
 
   return result;
 }
 
-function formatIssueMessage(issue: {
+type IssueLike = {
   code?: string;
   message: string;
-  unionErrors?: Array<{
-    issues: Array<{
-      path: Array<string | number>;
-      message: string;
-    }>;
-  }>;
-}): string {
-  if (issue.code !== 'invalid_union' || !issue.unionErrors) {
+  path: readonly PropertyKey[];
+  errors?: Array<Array<{
+    code?: string;
+    message: string;
+    path: readonly PropertyKey[];
+    errors?: IssueLike['errors'];
+    issues?: IssueLike[];
+  }>>;
+  issues?: IssueLike[];
+};
+
+function collectNestedIssues(
+  issue: IssueLike,
+  parentPath: readonly PropertyKey[] = [],
+): Array<{
+  path: readonly PropertyKey[];
+  message: string;
+}> {
+  const fullPath = [...parentPath, ...issue.path];
+
+  if (issue.code === 'invalid_union' && issue.errors) {
+    return issue.errors.flatMap((unionIssues) =>
+      unionIssues.flatMap((unionIssue) => collectNestedIssues(unionIssue, fullPath)),
+    );
+  }
+
+  if ((issue.code === 'invalid_key' || issue.code === 'invalid_element') && issue.issues) {
+    return issue.issues.flatMap((nestedIssue) => collectNestedIssues(nestedIssue, fullPath));
+  }
+
+  return [{ path: fullPath, message: issue.message }];
+}
+
+function formatIssueMessage(issue: IssueLike): string {
+  if (issue.code !== 'invalid_union' || !issue.errors) {
     return issue.message;
   }
 
-  const nested = issue.unionErrors
-    .flatMap((unionError) => unionError.issues)
+  const nested = collectNestedIssues(issue)
     .slice(0, 3)
     .map((nestedIssue) => {
       const nestedPath = formatIssuePath(nestedIssue.path);

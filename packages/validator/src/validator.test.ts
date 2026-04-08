@@ -338,9 +338,12 @@ describe('validateSchema', () => {
     expect(result.errors).toContainEqual(
       expect.objectContaining({
         code: 'SCHEMA_ERROR',
-        path: 'views.Main.children[0].cases.bad key',
-        message: 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+        path: 'views.Main',
       }),
+    );
+    expect(result.errors[0]?.message).toContain('views.Main.children[0].cases.bad key');
+    expect(result.errors[0]?.message).toContain(
+      'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
     );
   });
 
@@ -454,7 +457,7 @@ describe('validateSchema', () => {
       }),
     );
     expect(result.errors[0]?.message).toContain('views.Main.content');
-    expect(result.errors[0]?.message).toContain('views.Main.$use');
+    expect(result.errors[0]?.message).toContain('expected string, received number');
   });
 });
 

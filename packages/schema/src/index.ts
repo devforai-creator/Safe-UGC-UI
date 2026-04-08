@@ -15,7 +15,7 @@
  */
 
 import { ugcCardSchema } from '@safe-ugc-ui/types';
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 
 /**
  * Generate the UGC Card JSON Schema at runtime.
@@ -24,8 +24,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
  * Equivalent to the static `ugc-card.schema.json` file produced at build time.
  */
 export function generateCardSchema(): Record<string, unknown> {
-  return zodToJsonSchema(ugcCardSchema, {
-    name: 'UGCCard',
-    nameStrategy: 'title',
+  return z.toJSONSchema(ugcCardSchema, {
+    target: 'draft-07',
   }) as Record<string, unknown>;
 }

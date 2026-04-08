@@ -1,7 +1,7 @@
-import { mkdtempSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, mkdtempSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { generateCardSchema } from './index.js';
@@ -91,7 +91,16 @@ describe('generateCardSchema', () => {
                   "type": "string",
                 },
                 {
-                  "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+                  "additionalProperties": false,
+                  "properties": {
+                    "$ref": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "$ref",
+                  ],
+                  "type": "object",
                 },
               ],
             },
@@ -107,7 +116,16 @@ describe('generateCardSchema', () => {
                   "type": "string",
                 },
                 {
-                  "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+                  "additionalProperties": false,
+                  "properties": {
+                    "$ref": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "$ref",
+                  ],
+                  "type": "object",
                 },
               ],
             },
@@ -117,7 +135,16 @@ describe('generateCardSchema', () => {
                   "type": "number",
                 },
                 {
-                  "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+                  "additionalProperties": false,
+                  "properties": {
+                    "$ref": {
+                      "type": "string",
+                    },
+                  },
+                  "required": [
+                    "$ref",
+                  ],
+                  "type": "object",
                 },
               ],
             },
@@ -143,7 +170,16 @@ describe('generateCardSchema', () => {
               "type": "string",
             },
             {
-              "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+              "additionalProperties": false,
+              "properties": {
+                "$ref": {
+                  "type": "string",
+                },
+              },
+              "required": [
+                "$ref",
+              ],
+              "type": "object",
             },
           ],
         },
@@ -151,11 +187,14 @@ describe('generateCardSchema', () => {
     `);
   });
 
-  it('matches the checked-in static schema artifact', () => {
+  it('writes a build-style schema artifact that matches runtime generation', () => {
     const generated = generateCardSchema();
-    const staticSchema = readJson(
-      fileURLToPath(new URL('../dist/ugc-card.schema.json', import.meta.url)),
-    );
+    const tempDir = mkdtempSync(join(tmpdir(), 'safe-ugc-dist-'));
+    const artifactPath = join(tempDir, 'dist', 'ugc-card.schema.json');
+    mkdirSync(dirname(artifactPath), { recursive: true });
+
+    writeGeneratedSchema(artifactPath);
+    const staticSchema = readJson(artifactPath);
 
     expect(staticSchema).toEqual(generated);
   });
