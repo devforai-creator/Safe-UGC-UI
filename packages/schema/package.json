@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@safe-ugc-ui/types": "workspace:*",
-    "zod-to-json-schema": "^3.24.0"
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0"
