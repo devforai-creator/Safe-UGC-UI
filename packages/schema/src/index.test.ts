@@ -62,6 +62,95 @@ describe('generateCardSchema', () => {
     ).toHaveLength(2);
   });
 
+  it('keeps representative structured style schema output stable', () => {
+    const schema = generateCardSchema() as {
+      properties?: {
+        styles?: {
+          additionalProperties?: {
+            properties?: Record<string, unknown>;
+          };
+        };
+      };
+    };
+
+    const styleProps = schema.properties?.styles?.additionalProperties?.properties as
+      | Record<string, any>
+      | undefined;
+
+    expect({
+      border: styleProps?.border,
+      fontFamily: styleProps?.fontFamily,
+    }).toMatchInlineSnapshot(`
+      {
+        "border": {
+          "additionalProperties": false,
+          "properties": {
+            "color": {
+              "anyOf": [
+                {
+                  "type": "string",
+                },
+                {
+                  "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+                },
+              ],
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "solid",
+                    "dashed",
+                    "dotted",
+                    "none",
+                  ],
+                  "type": "string",
+                },
+                {
+                  "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+                },
+              ],
+            },
+            "width": {
+              "anyOf": [
+                {
+                  "type": "number",
+                },
+                {
+                  "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+                },
+              ],
+            },
+          },
+          "required": [
+            "width",
+            "style",
+            "color",
+          ],
+          "type": "object",
+        },
+        "fontFamily": {
+          "anyOf": [
+            {
+              "enum": [
+                "sans",
+                "serif",
+                "mono",
+                "rounded",
+                "display",
+                "handwriting",
+              ],
+              "type": "string",
+            },
+            {
+              "$ref": "#/definitions/UGCCard/properties/styles/additionalProperties/properties/display/anyOf/1",
+            },
+          ],
+        },
+      }
+    `);
+  });
+
   it('matches the checked-in static schema artifact', () => {
     const generated = generateCardSchema();
     const staticSchema = readJson(

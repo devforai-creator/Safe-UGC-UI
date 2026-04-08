@@ -4,6 +4,7 @@ import {
   validate,
   validateRaw,
   validateSchema,
+  parseCard,
   validateFragments,
   validateNodes,
   validateConditions,
@@ -11,6 +12,8 @@ import {
   validateStyles,
   validateSecurity,
   validateLimits,
+  traverseCard,
+  traverseNode,
   createError,
   toResult,
 } from './index.js';
@@ -430,6 +433,153 @@ describe('validateSchema', () => {
     };
     const result = validateSchema(card);
     expect(result.valid).toBe(true);
+  });
+
+  it('summarizes nested union issues with child paths in schema errors', () => {
+    const result = validateSchema({
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Text',
+          content: 123,
+        },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({
+        code: 'SCHEMA_ERROR',
+        path: 'views.Main',
+      }),
+    );
+    expect(result.errors[0]?.message).toContain('views.Main.content');
+    expect(result.errors[0]?.message).toContain('views.Main.$use');
+  });
+});
+
+describe('parseCard', () => {
+  it('returns the parsed card for structurally valid input', () => {
+    const card = makeCard(makeViews({ type: 'Box' }));
+
+    expect(parseCard(card)).toEqual(card);
+  });
+
+  it('returns null for structurally invalid input', () => {
+    expect(parseCard({ meta: { name: 'test', version: '1.0.0' }, views: { Main: {} } })).toBeNull();
+  });
+});
+
+describe('traverse helpers', () => {
+  it('traverseNode stops descending when the visitor returns false', () => {
+    const visited: string[] = [];
+
+    traverseNode(
+      {
+        type: 'Box',
+        children: [{ type: 'Text', content: 'child' }],
+      },
+      {
+        path: 'views.Main',
+        depth: 0,
+        parentType: null,
+        loopDepth: 0,
+        overflowAutoAncestor: false,
+        stackDepth: 0,
+      },
+      (_node, context) => {
+        visited.push(context.path);
+        return false;
+      },
+    );
+
+    expect(visited).toEqual(['views.Main']);
+  });
+
+  it('traverseCard expands fragments and preserves traversal context', () => {
+    const visits: Array<{
+      type: string;
+      path: string;
+      depth: number;
+      parentType: string | null;
+      loopDepth: number;
+      overflowAutoAncestor: boolean;
+      stackDepth: number;
+    }> = [];
+
+    traverseCard(
+      {
+        Main: { $use: 'hero' },
+      },
+      (node, context) => {
+        visits.push({
+          type: node.type,
+          path: context.path,
+          depth: context.depth,
+          parentType: context.parentType,
+          loopDepth: context.loopDepth,
+          overflowAutoAncestor: context.overflowAutoAncestor,
+          stackDepth: context.stackDepth,
+        });
+      },
+      undefined,
+      {
+        hero: {
+          type: 'Stack',
+          style: { overflow: 'auto' },
+          children: [
+            { type: 'Text', content: 'Header' },
+            {
+              type: 'Box',
+              children: {
+                for: 'item',
+                in: '$items',
+                template: { type: 'Text', content: 'Loop child' },
+              },
+            },
+          ],
+        },
+      },
+    );
+
+    expect(visits).toEqual([
+      {
+        type: 'Stack',
+        path: 'views.Main',
+        depth: 0,
+        parentType: null,
+        loopDepth: 0,
+        overflowAutoAncestor: false,
+        stackDepth: 0,
+      },
+      {
+        type: 'Text',
+        path: 'views.Main.children[0]',
+        depth: 1,
+        parentType: 'Stack',
+        loopDepth: 0,
+        overflowAutoAncestor: true,
+        stackDepth: 1,
+      },
+      {
+        type: 'Box',
+        path: 'views.Main.children[1]',
+        depth: 1,
+        parentType: 'Stack',
+        loopDepth: 0,
+        overflowAutoAncestor: true,
+        stackDepth: 1,
+      },
+      {
+        type: 'Text',
+        path: 'views.Main.children[1].children.template',
+        depth: 2,
+        parentType: 'Box',
+        loopDepth: 1,
+        overflowAutoAncestor: true,
+        stackDepth: 1,
+      },
+    ]);
   });
 });
 
