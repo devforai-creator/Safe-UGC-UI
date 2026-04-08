@@ -17,6 +17,7 @@ import {
   createError,
   toResult,
 } from './index.js';
+import { collectNestedIssues } from './schema.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -335,16 +336,15 @@ describe('validateSchema', () => {
     };
     const result = validateSchema(card);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(
-      expect.objectContaining({
-        code: 'SCHEMA_ERROR',
-        path: 'views.Main',
-      }),
-    );
-    expect(result.errors[0]?.message).toContain('views.Main.children[0].cases.bad key');
-    expect(result.errors[0]?.message).toContain(
-      'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
-    );
+    expect(result.errors).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "SCHEMA_ERROR",
+          "message": "Invalid input (views.Main.children[0].cases.bad key: Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.; views.Main.children[0].$use: Invalid input: expected string, received undefined; views.Main.children[0]: Unrecognized keys: "type", "value", "cases")",
+          "path": "views.Main",
+        },
+      ]
+    `);
   });
 
   it('rejects invalid $if condition shape in schema validation', () => {
@@ -450,14 +450,88 @@ describe('validateSchema', () => {
     });
 
     expect(result.valid).toBe(false);
-    expect(result.errors).toContainEqual(
-      expect.objectContaining({
-        code: 'SCHEMA_ERROR',
-        path: 'views.Main',
-      }),
-    );
-    expect(result.errors[0]?.message).toContain('views.Main.content');
-    expect(result.errors[0]?.message).toContain('expected string, received number');
+    expect(result.errors).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "SCHEMA_ERROR",
+          "message": "Invalid input (views.Main.content: Invalid input: expected string, received number; views.Main.content: Invalid input: expected object, received number; views.Main.content: Invalid input: expected object, received number)",
+          "path": "views.Main",
+        },
+      ]
+    `);
+  });
+});
+
+describe('collectNestedIssues', () => {
+  it('reconstructs leaf paths through nested union and invalid_key issues', () => {
+    const issue: Parameters<typeof collectNestedIssues>[0] = {
+      code: 'invalid_union',
+      message: 'Invalid input',
+      path: ['views', 'Main'],
+      errors: [[{
+        code: 'invalid_key',
+        message: 'Invalid key in record',
+        path: ['children', 0, 'cases'],
+        issues: [{
+          code: 'custom',
+          message: 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+          path: ['bad key'],
+        }],
+      }], [{
+        code: 'invalid_union',
+        message: 'Invalid input',
+        path: ['content'],
+        errors: [[{
+          code: 'invalid_type',
+          message: 'Invalid input: expected string, received number',
+          path: [],
+        }], [{
+          code: 'invalid_type',
+          message: 'Invalid input: expected object, received number',
+          path: [],
+        }]],
+      }]],
+    };
+
+    expect(collectNestedIssues(issue)).toEqual([
+      {
+        path: ['views', 'Main', 'children', 0, 'cases', 'bad key'],
+        message: 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+      },
+      {
+        path: ['views', 'Main', 'content'],
+        message: 'Invalid input: expected string, received number',
+      },
+      {
+        path: ['views', 'Main', 'content'],
+        message: 'Invalid input: expected object, received number',
+      },
+    ]);
+  });
+
+  it('reconstructs leaf paths through invalid_element issues', () => {
+    const issue: Parameters<typeof collectNestedIssues>[0] = {
+      code: 'invalid_union',
+      message: 'Invalid input',
+      path: ['views', 'Main'],
+      errors: [[{
+        code: 'invalid_element',
+        message: 'Invalid element',
+        path: ['children', 1],
+        issues: [{
+          code: 'custom',
+          message: 'Color must be a valid CSS color.',
+          path: ['style', 'color'],
+        }],
+      }]],
+    };
+
+    expect(collectNestedIssues(issue)).toEqual([
+      {
+        path: ['views', 'Main', 'children', 1, 'style', 'color'],
+        message: 'Color must be a valid CSS color.',
+      },
+    ]);
   });
 });
 

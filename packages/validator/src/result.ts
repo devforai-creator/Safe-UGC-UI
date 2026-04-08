@@ -92,6 +92,10 @@ export interface ValidationError {
   /**
    * JSON-pointer-like path to the error location.
    * e.g. `"views.StatusWindow.children[0].style.zIndex"`
+   *
+   * For some structural `SCHEMA_ERROR`s produced from nested Zod unions, this
+   * may point to the nearest stable ancestor path. In those cases `message`
+   * includes summarized child locations.
    */
   path: string;
 }

@@ -52,7 +52,13 @@ type IssueLike = {
   issues?: IssueLike[];
 };
 
-function collectNestedIssues(
+/**
+ * Expand nested Zod 4 issues into leaf diagnostics with fully qualified paths.
+ *
+ * This helper is exported for package-local tests, but it is not re-exported
+ * from the package entrypoint.
+ */
+export function collectNestedIssues(
   issue: IssueLike,
   parentPath: readonly PropertyKey[] = [],
 ): Array<{
@@ -101,6 +107,10 @@ function formatIssueMessage(issue: IssueLike): string {
 
 /**
  * Validate the structural shape of a card using the Zod schema.
+ *
+ * For nested Zod union/container failures, this keeps a single `SCHEMA_ERROR`
+ * at the nearest stable ancestor path and appends up to three deeper child
+ * locations to `message`.
  *
  * @param input - An unknown value (already parsed from JSON).
  * @returns A ValidationResult. If valid, the parsed UGCCard can be accessed

@@ -80,6 +80,10 @@ if (!result.valid) {
 
 If the card is already parsed, use `validate()` instead.
 
+For most validator errors, `ValidationError.path` points to the exact failing field. For some
+structural `SCHEMA_ERROR`s that come from nested Zod unions, `path` points to the nearest stable
+ancestor and `message` includes up to three deeper child locations.
+
 ### Render a card in React
 
 `UGCRenderer` accepts either a parsed card object or a raw JSON string. It validates before
