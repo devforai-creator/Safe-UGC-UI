@@ -1871,7 +1871,7 @@ describe('UGCRenderer with new fields', () => {
     const iconResolver = (name: string) => <span data-testid="ugc-icon">{name}</span>;
     const card = {
       meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Icon',  name: 'heart'  } },
+      views: { Main: { type: 'Icon' as const,  name: 'heart'  } },
     };
     render(<UGCRenderer card={card} iconResolver={iconResolver} />);
     expect(screen.getByTestId('ugc-icon')).not.toBeNull();
@@ -1882,7 +1882,7 @@ describe('UGCRenderer with new fields', () => {
     const onAction = vi.fn();
     const card = {
       meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Button',  label: 'Act', action: 'click'  } },
+      views: { Main: { type: 'Button' as const,  label: 'Act', action: 'click'  } },
     };
     const { container } = render(<UGCRenderer card={card} onAction={onAction} />);
     const btn = container.querySelector('button');
@@ -1897,7 +1897,7 @@ describe('UGCRenderer with new fields', () => {
       styles: { heading: { fontSize: 24 } },
       views: {
         Main: {
-          type: 'Box',
+          type: 'Box' as const,
           style: { $style: 'heading', color: '#000' },
           children: [],
         },
@@ -1942,7 +1942,7 @@ describe('Review feedback fixes', () => {
     const { container } = render(
       <>{renderTree(root, {}, {})}</>,
     );
-    const inner = container.querySelector('div > div');
+    const inner = container.querySelector('div > div') as HTMLElement | null;
     // jsdom normalizes "0%" to "" for width, so check it's not NaN
     expect(inner?.style.width).not.toContain('NaN');
   });
@@ -1955,7 +1955,7 @@ describe('Review feedback fixes', () => {
     const { container } = render(
       <>{renderTree(root, {}, {})}</>,
     );
-    const inner = container.querySelector('div > div');
+    const inner = container.querySelector('div > div') as HTMLElement | null;
     // jsdom normalizes "0%" to "" for width, so check it's not NaN
     expect(inner?.style.width).not.toContain('NaN');
   });
