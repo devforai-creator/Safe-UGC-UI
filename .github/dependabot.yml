@@ -28,7 +28,6 @@ updates:
       schema-runtime:
         patterns:
           - "zod"
-          - "zod-to-json-schema"
       build-tooling:
         patterns:
           - "typescript"
