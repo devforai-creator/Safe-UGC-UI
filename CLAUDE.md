@@ -33,6 +33,7 @@ pick up the same project context.
 
 ## Commands
 
+- Tooling baseline for local development: Node.js `>= 20.19.0`, pnpm `>= 9`.
 - `pnpm build` — build all packages.
 - `pnpm test` — run workspace Vitest.
 - `pnpm test:run` — non-watch test run.

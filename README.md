@@ -189,7 +189,7 @@ The validation pipeline enforces:
 
 ### Prerequisites
 
-- Node.js `>= 20`
+- Node.js `>= 20.19.0`
 - pnpm `>= 9`
 
 ### Common commands

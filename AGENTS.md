@@ -33,6 +33,7 @@ untrusted UI cards.
 
 ## Build, Test, and Development Commands
 
+- Tooling baseline for local development: Node.js `>= 20.19.0`, pnpm `>= 9`.
 - `pnpm build` — build all workspace packages.
 - `pnpm test` — run Vitest in workspace mode.
 - `pnpm test:run` — non-watch test run.
