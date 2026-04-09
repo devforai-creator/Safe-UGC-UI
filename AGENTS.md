@@ -71,6 +71,7 @@ untrusted UI cards.
 - `workspace:*` dependencies are resolved to concrete versions during publish.
 - Releases are published by GitHub Actions via npm trusted publishing from `v*` tags.
 - Typical release flow: bump versions, `pnpm build`, `pnpm test:run`, commit and push the release commit, then push a matching `vX.Y.Z` tag.
+- The `publish.yml` workflow performs the actual publish by running `pnpm -r publish --access public --no-git-checks` on GitHub-hosted runners; maintainers normally do not publish from local machines.
 
 ## Specs & Security Notes
 
