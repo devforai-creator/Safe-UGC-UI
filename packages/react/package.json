@@ -1,6 +1,6 @@
 {
   "name": "@safe-ugc-ui/react",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "React renderer for Safe UGC UI cards with sandboxed execution",
   "license": "MIT",
   "repository": {
