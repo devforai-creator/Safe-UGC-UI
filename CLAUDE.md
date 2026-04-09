@@ -61,8 +61,9 @@ pick up the same project context.
 ## Publishing
 
 - **반드시 `pnpm publish`를 사용한다.** `npm publish`를 쓰면 `workspace:*` 의존성이 실제 버전으로 치환되지 않는다.
-- 절차: 버전 bump → `pnpm build` → `pnpm test:run` → 각 패키지에서 `pnpm --filter <pkg> publish --access public --no-git-checks`.
-- `.npmrc`에 토큰을 임시로 넣었다면 publish 후 즉시 삭제한다.
+- 릴리스는 GitHub Actions의 `publish.yml`이 npm trusted publishing으로 처리한다.
+- 절차: 버전 bump → `pnpm build` → `pnpm test:run` → 릴리스 커밋 push → `vX.Y.Z` 태그 push.
+- 로컬 `.npmrc`에 npm write 토큰을 지속적으로 저장하지 않는다.
 - 1.2.0은 `npm publish`로 잘못 나갔으므로 사용하지 않는다. 이후 릴리스에서도 최신 버전 표기와 package.json 버전을 함께 갱신한다.
 
 ## Security Notes

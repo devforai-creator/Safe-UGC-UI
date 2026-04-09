@@ -1,6 +1,12 @@
 {
   "name": "@safe-ugc-ui/schema",
   "version": "2.1.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devforai-creator/Safe-UGC-UI.git",
+    "directory": "packages/schema"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

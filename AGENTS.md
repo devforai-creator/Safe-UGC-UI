@@ -69,7 +69,8 @@ untrusted UI cards.
 
 - Published under the `@safe-ugc-ui` scope on npm.
 - `workspace:*` dependencies are resolved to concrete versions during publish.
-- Typical release flow: bump versions, `pnpm build`, then `pnpm -r publish --access public --no-git-checks`.
+- Releases are published by GitHub Actions via npm trusted publishing from `v*` tags.
+- Typical release flow: bump versions, `pnpm build`, `pnpm test:run`, commit and push the release commit, then push a matching `vX.Y.Z` tag.
 
 ## Specs & Security Notes
 

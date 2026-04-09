@@ -249,6 +249,7 @@ Tests live alongside source as `*.test.ts` or `*.test.tsx`.
 
 - Update `README.md`, `AGENTS.md`, and `CLAUDE.md` together when package versions, public APIs,
   commands, or workflow expectations change.
+- Releases are published by GitHub Actions via npm trusted publishing from `v*` tags after local `pnpm build` and `pnpm test:run` checks pass.
 - Treat `safe-ugc-ui-card-spec.md` as the source of truth for current card behavior.
 - Treat `safe-ugc-ui-spec-v0.3.md` as design history, not the current implementation contract.
 
