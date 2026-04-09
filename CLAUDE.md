@@ -70,6 +70,9 @@ pick up the same project context.
 - JSON Schema is structural only; enforcement lives in the validator.
 - Prefer `loadCardRaw()` for untrusted raw JSON ingress and `loadCard()` for already-parsed inputs.
 - Asset references must use `@assets/...`.
+- Final `assets` map values are host-controlled; origin policy and remote URL provenance are host responsibilities.
+- Card-authored `state` and any host-provided runtime `state` overrides are treated as untrusted inputs for validation and limits.
 - Low-level renderer exports such as `renderTree()` assume prior validation by the caller.
-- `UGCRenderer` revalidates merged runtime state before rendering.
+- `UGCRenderer` revalidates the effective merged runtime state before rendering.
+- Text and style limits apply to resolved render output, not just authored literals.
 - `UGCContainer` supplies renderer-side layout isolation, and `containerStyle` cannot override the protected isolation keys.

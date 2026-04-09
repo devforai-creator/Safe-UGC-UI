@@ -18,6 +18,7 @@ import {
   MAX_OVERFLOW_AUTO_COUNT,
   MAX_STACK_NESTING,
   PROTOTYPE_POLLUTION_SEGMENTS,
+  isRef,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -67,31 +68,78 @@ function isTemplateObject(
   );
 }
 
-function countLiteralTemplatedStringBytes(value: unknown): number {
-  if (typeof value === 'string') {
-    return utf8ByteLength(value);
+function stringifyTextScalar(value: unknown): string {
+  if (value === undefined) {
+    return '';
+  }
+  if (value === null) {
+    return 'null';
+  }
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  ) {
+    return String(value);
+  }
+  return '';
+}
+
+function countResolvedTemplatedStringBytes(
+  value: unknown,
+  state?: Record<string, unknown>,
+): number {
+  if (isTemplateObject(value)) {
+    const resolved = value.$template
+      .map((part) => {
+        if (isRef(part)) {
+          return stringifyTextScalar(
+            state ? resolveRefFromState(part.$ref, state) : undefined,
+          );
+        }
+        return stringifyTextScalar(part);
+      })
+      .join('');
+    return utf8ByteLength(resolved);
   }
 
-  if (!isTemplateObject(value)) {
+  if (isRef(value)) {
+    return utf8ByteLength(
+      stringifyTextScalar(
+        state ? resolveRefFromState(value.$ref, state) : undefined,
+      ),
+    );
+  }
+
+  return utf8ByteLength(stringifyTextScalar(value));
+}
+
+function countInteractiveLabelBytes(
+  items: unknown,
+  state?: Record<string, unknown>,
+): number {
+  if (!Array.isArray(items)) {
     return 0;
   }
 
-  return value.$template.reduce((total: number, part): number => {
-    if (typeof part === 'string') {
-      return total + utf8ByteLength(part);
-    }
+  return items.reduce((total, item) => {
     if (
-      typeof part === 'number' ||
-      typeof part === 'boolean' ||
-      part === null
+      item == null ||
+      typeof item !== 'object' ||
+      Array.isArray(item)
     ) {
-      return total + utf8ByteLength(String(part));
+      return total;
     }
-    return total;
+
+    const label = (item as Record<string, unknown>).label;
+    return total + countResolvedTemplatedStringBytes(label, state);
   }, 0);
 }
 
-function countTextNodeLiteralBytes(node: Record<string, unknown>): number {
+function countNodeTextBytes(
+  node: Record<string, unknown>,
+  state?: Record<string, unknown>,
+): number {
   if (Array.isArray(node.spans)) {
     return node.spans.reduce((total, span) => {
       if (
@@ -102,16 +150,104 @@ function countTextNodeLiteralBytes(node: Record<string, unknown>): number {
         return total;
       }
 
-      return total + countLiteralTemplatedStringBytes(
+      return total + countResolvedTemplatedStringBytes(
         (span as Record<string, unknown>).text,
+        state,
       );
     }, 0);
   }
 
-  return countLiteralTemplatedStringBytes(node.content);
+  switch (node.type) {
+    case 'Text':
+      return countResolvedTemplatedStringBytes(node.content, state);
+    case 'Badge':
+    case 'Chip':
+    case 'Button':
+      return countResolvedTemplatedStringBytes(node.label, state);
+    case 'Accordion':
+      return countInteractiveLabelBytes(node.items, state);
+    case 'Tabs':
+      return countInteractiveLabelBytes(node.tabs, state);
+    default:
+      return 0;
+  }
 }
 
-function countTextSpanStyleBytes(node: Record<string, unknown>): number {
+function resolveSerializableStyleValue(
+  value: unknown,
+  state?: Record<string, unknown>,
+): unknown {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (isRef(value)) {
+    if (!state) {
+      return undefined;
+    }
+
+    const resolved = resolveRefFromState(value.$ref, state);
+    if (
+      resolved === null ||
+      typeof resolved === 'string' ||
+      typeof resolved === 'number' ||
+      typeof resolved === 'boolean'
+    ) {
+      return resolved;
+    }
+    return undefined;
+  }
+
+  if (Array.isArray(value)) {
+    const resolvedItems = value
+      .map((item) => resolveSerializableStyleValue(item, state))
+      .filter((item) => item !== undefined);
+    return resolvedItems.length > 0 ? resolvedItems : undefined;
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    const resolvedEntries = Object.entries(value as Record<string, unknown>)
+      .reduce<Record<string, unknown>>((acc, [key, child]) => {
+        const resolvedChild = resolveSerializableStyleValue(child, state);
+        if (resolvedChild !== undefined) {
+          acc[key] = resolvedChild;
+        }
+        return acc;
+      }, {});
+
+    return Object.keys(resolvedEntries).length > 0
+      ? resolvedEntries
+      : undefined;
+  }
+
+  return value;
+}
+
+function countResolvedStyleBytes(
+  style: Record<string, unknown> | undefined,
+  state?: Record<string, unknown>,
+): number {
+  const resolvedStyle = resolveSerializableStyleValue(style, state);
+  if (
+    resolvedStyle == null ||
+    typeof resolvedStyle !== 'object' ||
+    Array.isArray(resolvedStyle)
+  ) {
+    return 0;
+  }
+
+  const serialized = JSON.stringify(resolvedStyle);
+  if (!serialized || serialized === '{}') {
+    return 0;
+  }
+
+  return utf8ByteLength(serialized);
+}
+
+function countTextSpanStyleBytes(
+  node: Record<string, unknown>,
+  state?: Record<string, unknown>,
+): number {
   if (!Array.isArray(node.spans)) {
     return 0;
   }
@@ -134,7 +270,10 @@ function countTextSpanStyleBytes(node: Record<string, unknown>): number {
       return total;
     }
 
-    return total + utf8ByteLength(JSON.stringify(style));
+    return total + countResolvedStyleBytes(
+      style as Record<string, unknown>,
+      state,
+    );
   }, 0);
 }
 
@@ -215,6 +354,7 @@ interface TemplateMetrics {
  */
 function countTemplateMetrics(
   template: unknown,
+  state?: Record<string, unknown>,
   cardStyles?: Record<string, Record<string, unknown>>,
   fragments?: Record<string, unknown>,
 ): TemplateMetrics {
@@ -236,9 +376,16 @@ function countTemplateMetrics(
         result.nodes += 1;
       }
 
+      result.textBytes += countNodeTextBytes(
+        node as Record<string, unknown>,
+        state,
+      );
+
       if (node.type === 'Text') {
-        result.textBytes += countTextNodeLiteralBytes(node as Record<string, unknown>);
-        result.styleBytes += countTextSpanStyleBytes(node as Record<string, unknown>);
+        result.styleBytes += countTextSpanStyleBytes(
+          node as Record<string, unknown>,
+          state,
+        );
       }
 
       const baseStyleForBytes = getEffectiveStyleForMode(
@@ -247,7 +394,10 @@ function countTemplateMetrics(
         'default',
       );
       if (baseStyleForBytes) {
-        result.styleBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
+        result.styleBytes += countResolvedStyleBytes(
+          baseStyleForBytes,
+          state,
+        );
       }
 
       for (const mode of ['medium', 'compact'] as const) {
@@ -257,7 +407,10 @@ function countTemplateMetrics(
           mode,
         );
         if (responsiveStyleForBytes) {
-          result.styleBytes += utf8ByteLength(JSON.stringify(responsiveStyleForBytes));
+          result.styleBytes += countResolvedStyleBytes(
+            responsiveStyleForBytes,
+            state,
+          );
         }
       }
 
@@ -324,10 +477,17 @@ export function validateLimits(
     // -----------------------------------------------------------------------
     // 2. Text content total bytes
     // -----------------------------------------------------------------------
-  if (node.type === 'Text') {
-      textContentBytes += countTextNodeLiteralBytes(node as Record<string, unknown>);
-      styleObjectsBytes += countTextSpanStyleBytes(node as Record<string, unknown>);
-  }
+    textContentBytes += countNodeTextBytes(
+      node as Record<string, unknown>,
+      card.state,
+    );
+
+    if (node.type === 'Text') {
+      styleObjectsBytes += countTextSpanStyleBytes(
+        node as Record<string, unknown>,
+        card.state,
+      );
+    }
 
     // -----------------------------------------------------------------------
     // 3. Style objects total bytes (use merged style if $style is present)
@@ -339,7 +499,10 @@ export function validateLimits(
         'default',
       );
       if (baseStyleForBytes) {
-        styleObjectsBytes += utf8ByteLength(JSON.stringify(baseStyleForBytes));
+        styleObjectsBytes += countResolvedStyleBytes(
+          baseStyleForBytes,
+          card.state,
+        );
       }
 
       for (const mode of ['medium', 'compact'] as const) {
@@ -349,7 +512,10 @@ export function validateLimits(
           mode,
         );
         if (responsiveStyleForBytes) {
-          styleObjectsBytes += utf8ByteLength(JSON.stringify(responsiveStyleForBytes));
+          styleObjectsBytes += countResolvedStyleBytes(
+            responsiveStyleForBytes,
+            card.state,
+          );
         }
       }
     }
@@ -408,7 +574,12 @@ export function validateLimits(
           } else if (source.length > 1) {
             // Multiply template metrics by (N - 1) since traversal already
             // counts the template once
-            const tplMetrics = countTemplateMetrics(forLoop.template, card.cardStyles, card.fragments);
+            const tplMetrics = countTemplateMetrics(
+              forLoop.template,
+              card.state,
+              card.cardStyles,
+              card.fragments,
+            );
             const multiplier = source.length - 1;
             nodeCount += tplMetrics.nodes * multiplier;
             textContentBytes += tplMetrics.textBytes * multiplier;

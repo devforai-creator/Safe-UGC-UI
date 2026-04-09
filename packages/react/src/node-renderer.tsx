@@ -291,19 +291,25 @@ function resolveTextPayload(
         !Array.isArray(rawSpan.style)
           ? rawSpan.style as Record<string, unknown>
           : undefined;
+      const resolvedStyle = spanStyle
+        ? mapStyle(spanStyle, ctx.state, ctx.locals)
+        : undefined;
 
       return {
         text: resolveTextValue(rawSpan.text, ctx.state, ctx.locals),
-        style: spanStyle ? mapStyle(spanStyle, ctx.state, ctx.locals) : undefined,
-        rawStyleBytes: spanStyle ? utf8ByteLength(JSON.stringify(spanStyle)) : 0,
+        style: resolvedStyle,
+        styleBytes:
+          resolvedStyle && Object.keys(resolvedStyle).length > 0
+            ? utf8ByteLength(JSON.stringify(resolvedStyle))
+            : 0,
       };
     });
 
     const combinedText = spans.map((span) => span.text).join('');
     return {
-      spans: spans.map(({ rawStyleBytes: _rawStyleBytes, ...span }) => span),
+      spans: spans.map(({ styleBytes: _styleBytes, ...span }) => span),
       textBytes: utf8ByteLength(combinedText),
-      styleBytes: spans.reduce((sum, span) => sum + span.rawStyleBytes, 0),
+      styleBytes: spans.reduce((sum, span) => sum + span.styleBytes, 0),
     };
   }
 
@@ -313,6 +319,64 @@ function resolveTextPayload(
     textBytes: utf8ByteLength(content),
     styleBytes: 0,
   };
+}
+
+function countResolvedCssBytes(style: CSSProperties | undefined): number {
+  if (!style || Object.keys(style).length === 0) {
+    return 0;
+  }
+
+  return utf8ByteLength(JSON.stringify(style));
+}
+
+function countResolvedItemLabelBytes(
+  items: unknown,
+  ctx: RenderContext,
+): number {
+  if (!Array.isArray(items)) {
+    return 0;
+  }
+
+  return items.reduce((total, item) => {
+    if (
+      item == null ||
+      typeof item !== 'object' ||
+      Array.isArray(item)
+    ) {
+      return total;
+    }
+
+    const label = resolveTextValue(
+      (item as Record<string, unknown>).label,
+      ctx.state,
+      ctx.locals,
+    );
+    return total + utf8ByteLength(label);
+  }, 0);
+}
+
+function countDirectNodeTextBytes(
+  node: UGCNodeLike,
+  ctx: RenderContext,
+): number {
+  switch (node.type) {
+    case 'Badge':
+    case 'Chip':
+    case 'Button':
+      return utf8ByteLength(
+        resolveTextValue(
+          (node as Record<string, unknown>).label,
+          ctx.state,
+          ctx.locals,
+        ),
+      );
+    case 'Accordion':
+      return countResolvedItemLabelBytes(node.items, ctx);
+    case 'Tabs':
+      return countResolvedItemLabelBytes(node.tabs, ctx);
+    default:
+      return 0;
+  }
 }
 
 function resolveAccordionItems(
@@ -480,13 +544,17 @@ export function renderNode(
   // --- Compute all deltas before committing any ---
   const mergedRawStyle = mergeEffectiveNodeStyle(n, ctx);
   const rv = (val: unknown) => resolveValue(val, ctx.state, ctx.locals);
+  const cssStyle = mapStyle(mergedRawStyle, ctx.state, ctx.locals);
 
-  let styleDelta = mergedRawStyle ? utf8ByteLength(JSON.stringify(mergedRawStyle)) : 0;
+  const rawHoverStyle = mergedRawStyle?.hoverStyle as Record<string, unknown> | undefined;
+  const cssHoverStyle = rawHoverStyle ? mapStyle(rawHoverStyle, ctx.state, ctx.locals) : undefined;
+
+  let styleDelta = countResolvedCssBytes(cssStyle) + countResolvedCssBytes(cssHoverStyle);
   const overflowDelta = mergedRawStyle?.overflow === 'auto' ? 1 : 0;
 
   // Text payload: resolve once, reuse in render
   let resolvedTextPayload: ResolvedTextPayload | undefined;
-  let textDelta = 0;
+  let textDelta = countDirectNodeTextBytes(n, ctx);
   if (n.type === 'Text') {
     resolvedTextPayload = resolveTextPayload(n, ctx);
     textDelta = resolvedTextPayload.textBytes;
@@ -516,13 +584,6 @@ export function renderNode(
   ctx.limits.styleBytes += styleDelta;
   ctx.limits.overflowAutoCount += overflowDelta;
   ctx.limits.textBytes += textDelta;
-
-  // Resolve style to CSS
-  const cssStyle = mapStyle(mergedRawStyle, ctx.state, ctx.locals);
-
-  // Resolve hoverStyle to CSS (if present)
-  const rawHoverStyle = mergedRawStyle?.hoverStyle as Record<string, unknown> | undefined;
-  const cssHoverStyle = rawHoverStyle ? mapStyle(rawHoverStyle, ctx.state, ctx.locals) : undefined;
 
   // Render children recursively
   const childElements = renderChildren(n.children, ctx);

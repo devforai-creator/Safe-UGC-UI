@@ -92,8 +92,8 @@ ancestor and `message` includes up to three deeper child locations.
 ### Render a card in React
 
 Prefer validating at host ingest time with `loadCardRaw()` or `loadCard()`. `UGCRenderer` still
-validates before rendering and revalidates merged runtime state, so the render boundary stays
-defensive even when the host passes a parsed card object.
+validates before rendering and revalidates the effective merged runtime state, so the render
+boundary stays defensive even when the host passes a parsed card object.
 
 ```tsx
 import { UGCRenderer } from '@safe-ugc-ui/react';
@@ -123,7 +123,7 @@ export function CardPreview({ rawCard }: { rawCard: string }) {
 Key renderer props:
 
 - `viewName` to render a specific named view
-- `assets` to resolve `@assets/...` references to host-controlled URLs
+- `assets` to resolve `@assets/...` references to host-controlled URLs; the host owns final URL provenance and any origin allowlist policy
 - `state` to override or extend `card.state`; the merged state is revalidated before rendering
 - `containerStyle` to style the outer isolation container without replacing protected isolation properties
 - `iconResolver` to map icon names to React nodes
@@ -150,7 +150,7 @@ The build also emits a static file at `packages/schema/dist/ugc-card.schema.json
 A card is a JSON object with these main areas:
 
 - `meta`: card identity and version metadata
-- `assets`: named asset references that must use `@assets/...`
+- `assets`: named asset references that must use `@assets/...`; the host provides the final file or URL mapping
 - `state`: precomputed values referenced via `{ "$ref": "$path.to.value" }`
 - `styles`: named style presets for `$style` reuse
 - `fragments`: reusable node subtrees referenced via `$use`
@@ -196,7 +196,9 @@ Recommended host boundary:
 - use `loadCard()` only when the host has already parsed the payload
 - treat `validateRaw()` and `validate()` as lower-level diagnostics APIs
 - treat low-level renderer internals such as `renderTree()` as advanced APIs that assume prior validation
-- let `UGCRenderer` revalidate merged runtime state before rendering
+- treat card-authored `state` and any host-provided runtime `state` overrides as untrusted inputs
+- treat final `assets` map values as host-controlled inputs; card authors may reference `@assets/...`, but hosts decide the actual file/URL provenance and any origin restrictions
+- let `UGCRenderer` revalidate the effective merged runtime state before rendering
 
 The validation pipeline enforces:
 
@@ -204,7 +206,7 @@ The validation pipeline enforces:
 - path traversal checks for `@assets/...`
 - CSS function restrictions such as `url()`, `var()`, `calc()`, `expression()`
 - layout isolation rules like forbidding `position: fixed` and `position: sticky`
-- runtime-oriented limits for card size, node count, loop count, text size, and style size
+- runtime-oriented limits for card size, node count, loop count, renderable text output, and effective style output using the merged state
 - prototype-pollution protection in `$ref` paths
 
 `UGCContainer` adds renderer-side isolation with `overflow: hidden`, `isolation: isolate`,

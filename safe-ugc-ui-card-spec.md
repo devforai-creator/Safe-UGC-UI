@@ -31,7 +31,7 @@ A card is a JSON object with these top-level fields:
 
 ### Assets
 
-The `assets` field declares which local assets the card references. Each value must be an `@assets/` path. The platform provides the actual files — the card only declares which assets it needs.
+The `assets` field declares which local assets the card references. Each value must be an `@assets/` path. The platform provides the actual files or resolved URLs at render time — the card only declares which assets it needs.
 
 ```json
 {
@@ -46,7 +46,8 @@ The `assets` field declares which local assets the card references. Each value m
 - Every value must start with `@assets/`
 - No external or inline URLs (`https://`, `http://`, `//`, `data:`, `javascript:` are all rejected)
 - No path traversal (`../`)
-- The actual image files are provided by the platform at render time
+- The actual image files or final resolved URLs are provided by the platform at render time
+- Final asset URL provenance, remote fetch policy, and allowed origins are host/platform responsibilities rather than card-authored behavior
 
 ---
 
@@ -976,7 +977,9 @@ Use `state` to define data, and `$ref` to bind it into fields or style values.
 
 State values can be strings, numbers, booleans, arrays, or nested objects.
 
-If a host merges additional runtime state before rendering, the effective merged state is validated with the same loop, style, security, and limit rules as card-authored `state`.
+Card-authored `state` is untrusted input and participates in the same loop, style, security, and limit checks as the rest of the card.
+
+If a host merges additional runtime state before rendering, the effective merged state is also treated as untrusted for `$ref` resolution, loop validation, style/security checks, and text/style limits.
 
 ### 4.2 Referencing State
 
@@ -1006,6 +1009,7 @@ Use `{ "$ref": "$variableName" }` in fields or style values:
 - Array index: digits only, max 9999
 - If the referenced value doesn't exist, it resolves to empty/undefined
 - If a host supplies runtime state overrides, `$ref` resolution and validation use the merged effective state
+- Text and style budgets apply to resolved output using that effective merged state, not just authored literals
 
 ### 4.4 $ref in $style Context
 
@@ -1244,8 +1248,8 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 | Resource | Limit |
 |----------|-------|
 | Card JSON size | max 1 MB |
-| Text content total | max 200 KB (sum of all `Text` literal strings, `$template` literal parts, and `spans[*].text` literal parts) |
-| Style objects total | max 100 KB (sum of all style objects) |
+| Text content total | max 200 KB (sum of renderable text output after `$template` / `$ref` resolution for `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, `Accordion.items[*].label`, and `Tabs.tabs[*].label` using the effective merged state) |
+| Style objects total | max 100 KB (sum of effective style objects after `$style` merge and `$ref` resolution using the effective merged state, including responsive overrides) |
 | Total node count | max 10,000 |
 | Loop iterations | max 1000 per loop |
 | Nested loops | max 2 levels |

@@ -76,6 +76,9 @@ untrusted UI cards.
 - JSON Schema is structural only; security and limits live in the validator.
 - Prefer `loadCardRaw()` for untrusted raw JSON ingress and `loadCard()` for already-parsed inputs.
 - Asset references must go through `@assets/...` and are checked in both validator and renderer.
+- Final `assets` map values are host-controlled; origin policy and remote URL provenance are host responsibilities.
+- Card-authored `state` and any host-provided runtime `state` overrides are treated as untrusted inputs for validation and limits.
 - Low-level renderer exports such as `renderTree()` assume prior validation by the caller.
-- `UGCRenderer` revalidates against the merged runtime state before rendering.
+- `UGCRenderer` revalidates against the effective merged runtime state before rendering.
+- Text and style limits apply to resolved render output, not just authored literals.
 - `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`, and those keys are not overridable via `containerStyle`.

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { MAX_NODE_COUNT, TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
+import {
+  MAX_NODE_COUNT,
+  STYLE_OBJECTS_TOTAL_MAX_BYTES,
+  TEXT_CONTENT_TOTAL_MAX_BYTES,
+} from '@safe-ugc-ui/types';
 import {
   loadCard,
   loadCardRaw,
@@ -1939,6 +1943,28 @@ describe('validateLimits', () => {
     });
     const errors = validateLimits({ views });
     expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');
+  });
+
+  it('counts non-Text labels toward the global text budget', () => {
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const views = makeViews({
+      type: 'Button',
+      label: huge,
+      action: 'go',
+    });
+    const errors = validateLimits({ views });
+    expect(codes(errors)).toContain('TEXT_CONTENT_SIZE_EXCEEDED');
+  });
+
+  it('counts state-resolved style values toward the global style budget', () => {
+    const huge = '1fr '.repeat(Math.ceil(STYLE_OBJECTS_TOTAL_MAX_BYTES / 4) + 1);
+    const views = makeViews({
+      type: 'Grid',
+      style: { gridTemplateColumns: { $ref: '$cols' } },
+      children: [{ type: 'Text', content: 'x' }],
+    });
+    const errors = validateLimits({ views, state: { cols: huge } });
+    expect(codes(errors)).toContain('STYLE_SIZE_EXCEEDED');
   });
 
   it('counts expanded fragment nodes toward the global node budget', () => {

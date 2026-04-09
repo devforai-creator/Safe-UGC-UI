@@ -836,6 +836,37 @@ describe('UGCRenderer', () => {
     );
   });
 
+  it('rejects merged state overrides when resolved style bytes exceed the limit', () => {
+    const onError = vi.fn();
+    const card = {
+      meta: { name: 'style-state', version: '1.0.0' },
+      state: { cols: '1fr 1fr' },
+      views: {
+        Main: {
+          type: 'Grid' as const,
+          style: { gridTemplateColumns: { $ref: '$cols' } },
+          children: [{ type: 'Text' as const, content: 'x' }],
+        },
+      },
+    };
+    const hugeCols = '1fr '.repeat(30_000);
+
+    const { container } = render(
+      <UGCRenderer
+        card={card}
+        state={{ cols: hugeCols }}
+        onError={onError}
+      />,
+    );
+
+    expect(container.innerHTML).toBe('');
+    expect(onError).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'STYLE_SIZE_EXCEEDED' }),
+      ]),
+    );
+  });
+
   it('onError receives error details for missing meta fields', () => {
     const onError = vi.fn();
     const badCard = { meta: {}, views: {} };
@@ -1863,6 +1894,19 @@ describe('Runtime limits', () => {
     // Should have rendered some but not all text
     const spans = container.querySelectorAll('span');
     expect(spans.length).toBeLessThan(2000);
+  });
+
+  it('stops rendering when non-Text label bytes exceed limit', () => {
+    const onError = vi.fn();
+    const huge = 'x'.repeat(TEXT_CONTENT_TOTAL_MAX_BYTES + 1);
+    const node = { type: 'Button', label: huge, action: 'go' };
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>,
+    );
+    expect(container.innerHTML).toBe('');
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' }),
+    ]);
   });
 });
 
