@@ -3601,4 +3601,38 @@ describe('validateLimits — responsive medium', () => {
     const errors = validateLimits(card);
     expect(codes(errors)).toContain('OVERFLOW_AUTO_COUNT_EXCEEDED');
   });
+
+  it('counts medium-only overflow:auto even when compact overrides hide it again', () => {
+    const card = {
+      state: {},
+      views: makeViews({
+        type: 'Box',
+        children: [
+          {
+            type: 'Box',
+            responsive: {
+              medium: { overflow: 'auto' },
+              compact: { overflow: 'hidden' },
+            },
+          },
+          {
+            type: 'Box',
+            responsive: {
+              medium: { overflow: 'auto' },
+              compact: { overflow: 'hidden' },
+            },
+          },
+          {
+            type: 'Box',
+            responsive: {
+              medium: { overflow: 'auto' },
+              compact: { overflow: 'hidden' },
+            },
+          },
+        ],
+      }),
+    };
+    const errors = validateLimits(card);
+    expect(codes(errors)).toContain('OVERFLOW_AUTO_COUNT_EXCEEDED');
+  });
 });

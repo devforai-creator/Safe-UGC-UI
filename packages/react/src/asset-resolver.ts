@@ -33,3 +33,8 @@ export function resolveAsset(
 
   return undefined;
 }
+
+export function isSafeResolvedAssetUrl(url: string): boolean {
+  const normalized = url.trim().toLowerCase();
+  return !normalized.startsWith('@assets/') && !normalized.startsWith('javascript:');
+}

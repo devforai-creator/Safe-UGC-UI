@@ -18,6 +18,8 @@ import { resolveAsset } from './asset-resolver.js';
 import { renderTree } from './node-renderer.js';
 import { UGCContainer } from './UGCContainer.js';
 import { UGCRenderer } from './UGCRenderer.js';
+import { Avatar } from './components/Avatar.js';
+import { Image } from './components/Image.js';
 
 const originalResizeObserver = globalThis.ResizeObserver;
 const originalInnerWidth = window.innerWidth;
@@ -1732,6 +1734,36 @@ describe('New components rendering', () => {
     const img = container.querySelector('img');
     expect(img).not.toBeNull();
     expect(img!.getAttribute('src')).toBe('https://cdn.example.com/avatar.png');
+  });
+
+  it('Image renders nothing when asset map resolves to javascript:', () => {
+    const node = {
+      type: 'Image',
+      src: '@assets/avatar.png',
+    };
+    const assets = { 'avatar.png': ' javascript:alert(1)' };
+    const { container } = render(<>{renderTree(node, {}, assets)}</>);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('Avatar renders nothing when asset map resolves to javascript:', () => {
+    const node = {
+      type: 'Avatar',
+      src: '@assets/avatar.png',
+    };
+    const assets = { 'avatar.png': '\tJaVaScRiPt:alert(1)' };
+    const { container } = render(<>{renderTree(node, {}, assets)}</>);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('raw Image component rejects unresolved asset paths', () => {
+    const { container } = render(<Image src="@assets/avatar.png" />);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('raw Avatar component rejects javascript: src', () => {
+    const { container } = render(<Avatar src="javascript:alert(1)" />);
+    expect(container.querySelector('img')).toBeNull();
   });
 
   it('Icon renders when iconResolver is provided', () => {

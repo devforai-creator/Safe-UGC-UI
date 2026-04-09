@@ -665,6 +665,7 @@ export function validateLimits(
 
   const maxOverflowAutoCount = Math.max(
     overflowAutoCount.default,
+    overflowAutoCount.medium,
     overflowAutoCount.compact,
   );
 

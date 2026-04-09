@@ -27,7 +27,7 @@ import {
 import { resolveRef, resolveTextValue, resolveValue } from './state-resolver.js';
 import { evaluateCondition } from './condition-resolver.js';
 import { mapStyle } from './style-mapper.js';
-import { resolveAsset } from './asset-resolver.js';
+import { isSafeResolvedAssetUrl, resolveAsset } from './asset-resolver.js';
 import type { AssetMap } from './asset-resolver.js';
 import { Box } from './components/Box.js';
 import { Row } from './components/Row.js';
@@ -630,7 +630,7 @@ export function renderNode(
       if (src.includes('../')) return null;
       const resolved = resolveAsset(src, ctx.assets);
       if (!resolved) return null;
-      if (typeof resolved === 'string' && resolved.trim().toLowerCase().startsWith('javascript:')) return null;
+      if (!isSafeResolvedAssetUrl(resolved)) return null;
       const resolvedAlt = rv((n as Record<string, unknown>).alt);
       const alt = typeof resolvedAlt === 'string' ? resolvedAlt : undefined;
       return <Image key={key} src={resolved} alt={alt} style={cssStyle} hoverStyle={cssHoverStyle} />;
@@ -643,7 +643,7 @@ export function renderNode(
       if (src.includes('../')) return null;
       const resolved = resolveAsset(src, ctx.assets);
       if (!resolved) return null;
-      if (typeof resolved === 'string' && resolved.trim().toLowerCase().startsWith('javascript:')) return null;
+      if (!isSafeResolvedAssetUrl(resolved)) return null;
       const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;
