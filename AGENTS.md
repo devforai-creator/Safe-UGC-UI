@@ -12,7 +12,7 @@ untrusted UI cards.
 
 ## Project Structure & Module Organization
 
-- `packages/types/src` — Zod schemas, inferred TS types, and numeric/string constraints.
+- `packages/types/src` — Zod schemas, inferred TS types, numeric/string constraints, and shared ref-path helpers.
 - `packages/schema/src` — JSON Schema generation; build output lands at `packages/schema/dist/ugc-card.schema.json`.
 - `packages/validator/src` — validation pipeline plus safe card load/import helpers for schema, nodes, values, styles, security, and limits.
 - `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, asset/style/state helpers, and 18 React components.

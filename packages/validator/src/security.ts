@@ -12,8 +12,10 @@
  */
 
 import {
-  PROTOTYPE_POLLUTION_SEGMENTS,
+  hasForbiddenRefPathSegments,
   isRef,
+  parseRefPathSegments,
+  resolveRefPath,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -73,24 +75,19 @@ function scanForRefs(
   // Check if this object is a $ref
   if (isRef(obj)) {
     const refStr = (obj as { $ref: string }).$ref;
-    // Split by '.' and '[' to extract all path segments
-    const segments = refStr.split(/[.\[]/);
-    for (const segment of segments) {
-      // Remove trailing ']' from bracket access segments
-      const clean = segment.replace(/]$/, '');
-      if (
-        (PROTOTYPE_POLLUTION_SEGMENTS as readonly string[]).includes(clean)
-      ) {
-        errors.push(
-          createError(
-            'PROTOTYPE_POLLUTION',
-            `$ref "${refStr}" contains forbidden prototype pollution segment "${clean}".`,
-            path,
-          ),
-        );
-        // One error per ref is sufficient
-        return;
-      }
+    const segments = parseRefPathSegments(refStr);
+    const offendingSegment = segments.find((segment) =>
+      hasForbiddenRefPathSegments([segment]),
+    );
+    if (offendingSegment) {
+      errors.push(
+        createError(
+          'PROTOTYPE_POLLUTION',
+          `$ref "${refStr}" contains forbidden prototype pollution segment "${offendingSegment}".`,
+          path,
+        ),
+      );
+      return;
     }
     return;
   }
@@ -142,70 +139,6 @@ function validateAssetPath(
     return 'ASSET_PATH_TRAVERSAL';
   }
   return null;
-}
-
-// ---------------------------------------------------------------------------
-// Helper: resolveRefFromState
-// ---------------------------------------------------------------------------
-
-/**
- * Resolve a $ref path against a state object. Matches the algorithm in
- * `packages/react/src/state-resolver.ts`:
- *   - Strip leading `$` from the ref path
- *   - Split by `.`, then for each segment extract `[N]` bracket indices
- *   - Traverse state, using numeric indices for arrays
- *   - Block prototype pollution segments
- *
- * @returns The resolved value, or `undefined` if resolution fails.
- */
-function resolveRefFromState(
-  refPath: string,
-  state: Record<string, unknown>,
-): unknown {
-  // Strip leading $
-  const path = refPath.startsWith('$') ? refPath.slice(1) : refPath;
-  const dotSegments = path.split('.');
-
-  // Flatten dot-segments into individual traversal keys,
-  // expanding bracket notation (e.g. "items[0][1]" → ["items", "0", "1"])
-  const keys: string[] = [];
-  for (const dotSeg of dotSegments) {
-    // Match the base name (before any brackets) and any [N] patterns
-    const bracketPattern = /\[(\d+)\]/g;
-    const firstBracket = dotSeg.indexOf('[');
-    const baseName = firstBracket === -1 ? dotSeg : dotSeg.slice(0, firstBracket);
-    if (baseName) {
-      keys.push(baseName);
-    }
-    let match: RegExpExecArray | null;
-    while ((match = bracketPattern.exec(dotSeg)) !== null) {
-      keys.push(match[1]);
-    }
-  }
-
-  // Block prototype pollution
-  for (const key of keys) {
-    if (
-      (PROTOTYPE_POLLUTION_SEGMENTS as readonly string[]).includes(key)
-    ) {
-      return undefined;
-    }
-  }
-
-  // Traverse state
-  let current: unknown = state;
-  for (const key of keys) {
-    if (current == null || typeof current !== 'object') return undefined;
-
-    if (Array.isArray(current)) {
-      const index = Number(key);
-      if (!Number.isInteger(index) || index < 0) return undefined;
-      current = current[index];
-    } else {
-      current = (current as Record<string, unknown>)[key];
-    }
-  }
-  return current;
 }
 
 // ---------------------------------------------------------------------------
@@ -475,7 +408,7 @@ export function validateSecurity(card: {
       } else if (isRef(src)) {
         // $ref src — resolve from state if available
         if (state) {
-          const resolved = resolveRefFromState(
+          const resolved = resolveRefPath(
             (src as { $ref: string }).$ref,
             state,
           );

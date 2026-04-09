@@ -25,7 +25,7 @@ pick up the same project context.
 
 ## Project Structure
 
-- `packages/types/src` — Zod schemas, inferred TS types, and constraints.
+- `packages/types/src` — Zod schemas, inferred TS types, constraints, and shared ref-path helpers.
 - `packages/schema/src` — JSON Schema generation and the static schema artifact.
 - `packages/validator/src` — schema, node, value, style, security, limit validation, and safe card load/import helpers.
 - `packages/react/src` — `UGCRenderer`, `UGCContainer`, node renderer, components, asset/style/state helpers.

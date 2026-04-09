@@ -105,6 +105,23 @@ describe('resolveRef', () => {
     expect(resolveRef('$val', { val: false })).toBe(false);
     expect(resolveRef('$val', { val: null })).toBeNull();
   });
+
+  it('returns undefined when a ref path exceeds the shared depth limit', () => {
+    const state = {
+      a: {
+        b: {
+          c: {
+            d: {
+              e: {
+                f: 'too-deep',
+              },
+            },
+          },
+        },
+      },
+    };
+    expect(resolveRef('$a.b.c.d.e.f', state)).toBeUndefined();
+  });
 });
 
 describe('resolveValue', () => {

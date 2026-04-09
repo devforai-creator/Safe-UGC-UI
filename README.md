@@ -20,7 +20,7 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 
 | Package | Purpose |
 |---------|---------|
-| `@safe-ugc-ui/types` | Zod schemas, inferred TypeScript types, constants, helpers |
+| `@safe-ugc-ui/types` | Zod schemas, inferred TypeScript types, constants, and shared ref-path helpers |
 | `@safe-ugc-ui/schema` | JSON Schema generation and the built `ugc-card.schema.json` artifact |
 | `@safe-ugc-ui/validator` | Structural, style, security, limit validation, and safe card loading |
 | `@safe-ugc-ui/react` | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers |

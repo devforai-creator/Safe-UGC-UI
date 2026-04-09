@@ -17,8 +17,8 @@ import {
   MAX_NESTED_LOOPS,
   MAX_OVERFLOW_AUTO_COUNT,
   MAX_STACK_NESTING,
-  PROTOTYPE_POLLUTION_SEGMENTS,
   isRef,
+  resolveRefPath,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -94,7 +94,7 @@ function countResolvedTemplatedStringBytes(
       .map((part) => {
         if (isRef(part)) {
           return stringifyTextScalar(
-            state ? resolveRefFromState(part.$ref, state) : undefined,
+            state ? resolveRefPath(part.$ref, state) : undefined,
           );
         }
         return stringifyTextScalar(part);
@@ -106,7 +106,7 @@ function countResolvedTemplatedStringBytes(
   if (isRef(value)) {
     return utf8ByteLength(
       stringifyTextScalar(
-        state ? resolveRefFromState(value.$ref, state) : undefined,
+        state ? resolveRefPath(value.$ref, state) : undefined,
       ),
     );
   }
@@ -186,7 +186,7 @@ function resolveSerializableStyleValue(
       return undefined;
     }
 
-    const resolved = resolveRefFromState(value.$ref, state);
+    const resolved = resolveRefPath(value.$ref, state);
     if (
       resolved === null ||
       typeof resolved === 'string' ||
@@ -275,65 +275,6 @@ function countTextSpanStyleBytes(
       state,
     );
   }, 0);
-}
-
-// ---------------------------------------------------------------------------
-// Helper: resolveRefFromState — resolve dotted $ref paths against state
-// ---------------------------------------------------------------------------
-
-/**
- * Resolve a $ref path against a state object. Supports dotted paths and
- * bracket notation (e.g. "$data.items[0].name").
- *
- * @returns The resolved value, or `undefined` if resolution fails.
- */
-function resolveRefFromState(
-  refPath: string,
-  state: Record<string, unknown>,
-): unknown {
-  // Strip leading $
-  const path = refPath.startsWith('$') ? refPath.slice(1) : refPath;
-  const dotSegments = path.split('.');
-
-  // Flatten dot-segments into individual traversal keys,
-  // expanding bracket notation (e.g. "items[0][1]" -> ["items", "0", "1"])
-  const keys: string[] = [];
-  for (const dotSeg of dotSegments) {
-    const bracketPattern = /\[(\d+)\]/g;
-    const firstBracket = dotSeg.indexOf('[');
-    const baseName = firstBracket === -1 ? dotSeg : dotSeg.slice(0, firstBracket);
-    if (baseName) {
-      keys.push(baseName);
-    }
-    let match: RegExpExecArray | null;
-    while ((match = bracketPattern.exec(dotSeg)) !== null) {
-      keys.push(match[1]);
-    }
-  }
-
-  // Block prototype pollution
-  for (const key of keys) {
-    if (
-      (PROTOTYPE_POLLUTION_SEGMENTS as readonly string[]).includes(key)
-    ) {
-      return undefined;
-    }
-  }
-
-  // Traverse state
-  let current: unknown = state;
-  for (const key of keys) {
-    if (current == null || typeof current !== 'object') return undefined;
-
-    if (Array.isArray(current)) {
-      const index = Number(key);
-      if (!Number.isInteger(index) || index < 0) return undefined;
-      current = current[index];
-    } else {
-      current = (current as Record<string, unknown>)[key];
-    }
-  }
-  return current;
 }
 
 // ---------------------------------------------------------------------------
@@ -539,7 +480,7 @@ export function validateLimits(
         if (card.state == null) {
           // No state — loop source may be provided at runtime, skip validation
         } else {
-          const source = resolveRefFromState(inValue, card.state);
+          const source = resolveRefPath(inValue, card.state);
           if (source === undefined) {
             // Single-segment path (e.g. "$items") at top-level (loopDepth 0)
             // must be a state key. If missing, likely a typo → report error.

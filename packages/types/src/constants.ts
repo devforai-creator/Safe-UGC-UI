@@ -46,6 +46,9 @@ export const MAX_NESTED_LOOPS = 2;
 /** Maximum depth of nested `$if` conditions. */
 export const MAX_CONDITION_DEPTH = 5;
 
+/** Maximum number of path segments allowed in a `$ref`. */
+export const MAX_REF_PATH_SEGMENTS = 5;
+
 /** Maximum number of elements with `overflow: auto` per card. */
 export const MAX_OVERFLOW_AUTO_COUNT = 2;
 
