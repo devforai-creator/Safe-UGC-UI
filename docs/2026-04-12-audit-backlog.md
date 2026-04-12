@@ -151,6 +151,8 @@ as the historical audit ledger that tracks older items and prior closure state.
 
 - Priority: `P2`
 - Release Gate: `Strategic`
+- Execution plan:
+  - `docs/aab-004-plan.md`
 - Risk:
   - the same author-facing DSL semantics are still encoded in multiple high-risk
     files, so a future rule change will keep demanding parallel edits
