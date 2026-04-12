@@ -41,13 +41,16 @@ import {
   TRANSITION_DELAY_MAX,
   TRANSITION_MAX_COUNT,
   ALLOWED_TRANSITION_PROPERTIES,
+  COLOR_STYLE_PROPERTIES,
+  LENGTH_STYLE_PROPERTIES,
   LENGTH_AUTO_STYLE_PROPERTIES,
+  RANGE_LIMITED_LENGTH_STYLE_PROPERTIES,
   RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
+  TEXT_SPAN_STYLE_PROPERTIES,
   isRef,
   hoverStylePropsSchema,
   responsiveStylePropsSchema,
   stylePropsSchema,
-  textSpanStyleSchema,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -57,32 +60,9 @@ import { walkRenderableCard } from './renderable-walk.js';
 // Property sets
 // ---------------------------------------------------------------------------
 
-const COLOR_PROPERTIES = new Set(['backgroundColor', 'color']);
+const COLOR_PROPERTIES = new Set<string>(COLOR_STYLE_PROPERTIES);
 
-const LENGTH_PROPERTIES = new Set([
-  'width',
-  'height',
-  'minWidth',
-  'maxWidth',
-  'minHeight',
-  'maxHeight',
-  'padding',
-  'paddingTop',
-  'paddingRight',
-  'paddingBottom',
-  'paddingLeft',
-  'margin',
-  'marginTop',
-  'marginRight',
-  'marginBottom',
-  'marginLeft',
-  'top',
-  'right',
-  'bottom',
-  'left',
-  'gap',
-  'lineHeight',
-]);
+const LENGTH_PROPERTIES = new Set<string>(LENGTH_STYLE_PROPERTIES);
 
 const LENGTH_AUTO_ALLOWED = new Set<string>(LENGTH_AUTO_STYLE_PROPERTIES);
 
@@ -97,20 +77,13 @@ const RESPONSIVE_STYLE_ALLOWED_KEYS = new Set([
   ...RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
 ]);
 const TEXT_SPAN_STYLE_ALLOWED_KEYS = new Set([
-  ...Object.keys(textSpanStyleSchema.shape),
+  ...TEXT_SPAN_STYLE_PROPERTIES,
   ...RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
 ]);
 
 // Properties that have range limits AND accept string lengths
-const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> = {
-  fontSize: { min: FONT_SIZE_MIN, max: FONT_SIZE_MAX },
-  letterSpacing: { min: LETTER_SPACING_MIN, max: LETTER_SPACING_MAX },
-  borderRadius: { min: 0, max: BORDER_RADIUS_MAX },
-  borderRadiusTopLeft: { min: 0, max: BORDER_RADIUS_MAX },
-  borderRadiusTopRight: { min: 0, max: BORDER_RADIUS_MAX },
-  borderRadiusBottomLeft: { min: 0, max: BORDER_RADIUS_MAX },
-  borderRadiusBottomRight: { min: 0, max: BORDER_RADIUS_MAX },
-};
+const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> =
+  RANGE_LIMITED_LENGTH_STYLE_PROPERTIES;
 
 interface StyleValidationOptions {
   allowHoverStyle?: boolean;

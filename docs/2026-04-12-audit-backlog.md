@@ -159,6 +159,8 @@ as the historical audit ledger that tracks older items and prior closure state.
   - `AAB-004c` initial capability-registry slice is landed
   - shared enum/value-domain lists are now wired through schema, validator, and
     renderer-internal helpers
+  - shared text-span and validator property-category constants are now wired
+    through `types` and validator validation paths
   - broader `AAB-004c` registry work remains open
 - Risk:
   - the same author-facing DSL semantics are still encoded in multiple high-risk

@@ -307,10 +307,12 @@ The first `004c` slice is landed:
   the render-output mapper
 - `LENGTH_AUTO_STYLE_PROPERTIES` is now shared between validator and
   render-output normalization
+- `TEXT_SPAN_STYLE_PROPERTIES`, `COLOR_STYLE_PROPERTIES`,
+  `LENGTH_STYLE_PROPERTIES`, and `RANGE_LIMITED_LENGTH_STYLE_PROPERTIES` are
+  now shared between `types` constants and validator-side style validation
 
 Still open:
 
-- text-span capability metadata remains local to schema/validator code
 - the style validator still owns some property categorization sets that are not
   yet shared
 

@@ -189,6 +189,48 @@ export const LENGTH_AUTO_STYLE_PROPERTIES = [
   'marginLeft',
 ] as const;
 
+/** Style properties that are validated as colors. */
+export const COLOR_STYLE_PROPERTIES = ['backgroundColor', 'color'] as const;
+
+/** Style properties that are validated as generic lengths. */
+export const LENGTH_STYLE_PROPERTIES = [
+  'width',
+  'height',
+  'minWidth',
+  'maxWidth',
+  'minHeight',
+  'maxHeight',
+  'padding',
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'gap',
+  'lineHeight',
+] as const;
+
+/** Style properties allowed inside `Text.spans[*].style`. */
+export const TEXT_SPAN_STYLE_PROPERTIES = [
+  'backgroundColor',
+  'color',
+  'fontFamily',
+  'fontSize',
+  'fontWeight',
+  'fontStyle',
+  'textDecoration',
+  'letterSpacing',
+  'textShadow',
+] as const;
+
 /** Maximum number of text-shadow entries. */
 export const TEXT_SHADOW_MAX_COUNT = 5;
 
@@ -230,6 +272,17 @@ export const TRANSITION_DELAY_MAX = 1000;
 
 /** Maximum number of transition definitions per style. */
 export const TRANSITION_MAX_COUNT = 10;
+
+/** Range-limited style properties that also accept string length values. */
+export const RANGE_LIMITED_LENGTH_STYLE_PROPERTIES = {
+  fontSize: { min: FONT_SIZE_MIN, max: FONT_SIZE_MAX },
+  letterSpacing: { min: LETTER_SPACING_MIN, max: LETTER_SPACING_MAX },
+  borderRadius: { min: 0, max: BORDER_RADIUS_MAX },
+  borderRadiusTopLeft: { min: 0, max: BORDER_RADIUS_MAX },
+  borderRadiusTopRight: { min: 0, max: BORDER_RADIUS_MAX },
+  borderRadiusBottomLeft: { min: 0, max: BORDER_RADIUS_MAX },
+  borderRadiusBottomRight: { min: 0, max: BORDER_RADIUS_MAX },
+} as const;
 
 /**
  * Style properties that map directly to renderable CSS output.

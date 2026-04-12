@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isRef, isDynamic, isAssetPath, refSchema, assetPathSchema } from './values.js';
+import { textSpanStyleSchema } from './styles.js';
 import {
   CARD_JSON_MAX_BYTES,
   MAX_NODE_COUNT,
@@ -16,10 +17,14 @@ import {
   ALLOWED_POSITION_VALUES,
   ALLOWED_OVERFLOW_VALUES,
   ALLOWED_TRANSITION_PROPERTIES,
+  COLOR_STYLE_PROPERTIES,
   LENGTH_AUTO_STYLE_PROPERTIES,
+  LENGTH_STYLE_PROPERTIES,
+  RANGE_LIMITED_LENGTH_STYLE_PROPERTIES,
   DIRECT_RENDERABLE_STYLE_PROPERTIES,
   FORBIDDEN_STYLE_PROPERTIES,
   RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
+  TEXT_SPAN_STYLE_PROPERTIES,
 } from './constants.js';
 
 // ===========================================================================
@@ -412,6 +417,29 @@ describe('constants', () => {
       'marginRight',
       'marginBottom',
       'marginLeft',
+    ]);
+  });
+
+  it('TEXT_SPAN_STYLE_PROPERTIES stays aligned with the text span schema keys', () => {
+    expect(TEXT_SPAN_STYLE_PROPERTIES).toEqual(Object.keys(textSpanStyleSchema.shape));
+  });
+
+  it('COLOR_STYLE_PROPERTIES and LENGTH_STYLE_PROPERTIES expose shared validator categories', () => {
+    expect(COLOR_STYLE_PROPERTIES).toEqual(['backgroundColor', 'color']);
+    expect(LENGTH_STYLE_PROPERTIES).toContain('width');
+    expect(LENGTH_STYLE_PROPERTIES).toContain('lineHeight');
+    expect(LENGTH_STYLE_PROPERTIES).not.toContain('fontSize');
+  });
+
+  it('RANGE_LIMITED_LENGTH_STYLE_PROPERTIES tracks the capped length properties', () => {
+    expect(Object.keys(RANGE_LIMITED_LENGTH_STYLE_PROPERTIES)).toEqual([
+      'fontSize',
+      'letterSpacing',
+      'borderRadius',
+      'borderRadiusTopLeft',
+      'borderRadiusTopRight',
+      'borderRadiusBottomLeft',
+      'borderRadiusBottomRight',
     ]);
   });
 });
