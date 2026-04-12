@@ -20,6 +20,9 @@ This document defines the execution plan for `AAB-004` from
   - directly renderable style properties
   - responsive-forbidden style keys
   - transition easing keywords
+- Shared allowed-key registries now live in
+  `packages/types/src/internal/style-key-sets.ts` and feed validator-side
+  style, hover-style, responsive-style, and text-span key validation.
 - `AAB-004` remains open because the broader `004c` registry work is still
   pending.
 

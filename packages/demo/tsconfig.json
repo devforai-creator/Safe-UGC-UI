@@ -10,6 +10,7 @@
       "@safe-ugc-ui/types": ["../types/src/index.ts"],
       "@safe-ugc-ui/types/internal/style-semantics": ["../types/src/internal/style-semantics.ts"],
       "@safe-ugc-ui/types/internal/style-output": ["../types/src/internal/style-output.ts"],
+      "@safe-ugc-ui/types/internal/style-key-sets": ["../types/src/internal/style-key-sets.ts"],
       "@safe-ugc-ui/validator": ["../validator/src/index.ts"],
       "@safe-ugc-ui/react": ["../react/src/index.ts"]
     },

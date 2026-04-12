@@ -45,13 +45,14 @@ import {
   LENGTH_STYLE_PROPERTIES,
   LENGTH_AUTO_STYLE_PROPERTIES,
   RANGE_LIMITED_LENGTH_STYLE_PROPERTIES,
-  RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
-  TEXT_SPAN_STYLE_PROPERTIES,
   isRef,
-  hoverStylePropsSchema,
-  responsiveStylePropsSchema,
-  stylePropsSchema,
 } from '@safe-ugc-ui/types';
+import {
+  HOVER_STYLE_ALLOWED_STYLE_KEYS,
+  RESPONSIVE_STYLE_ALLOWED_STYLE_KEYS,
+  STYLE_ALLOWED_STYLE_KEYS,
+  TEXT_SPAN_ALLOWED_STYLE_KEYS,
+} from '@safe-ugc-ui/types/internal/style-key-sets';
 
 import { type ValidationError, createError } from './result.js';
 import { walkRenderableCard } from './renderable-walk.js';
@@ -67,19 +68,10 @@ const LENGTH_PROPERTIES = new Set<string>(LENGTH_STYLE_PROPERTIES);
 const LENGTH_AUTO_ALLOWED = new Set<string>(LENGTH_AUTO_STYLE_PROPERTIES);
 
 const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
-const STYLE_ALLOWED_KEYS = new Set(Object.keys(stylePropsSchema.shape));
-const HOVER_STYLE_ALLOWED_KEYS = new Set([
-  ...Object.keys(hoverStylePropsSchema.shape),
-  'hoverStyle',
-]);
-const RESPONSIVE_STYLE_ALLOWED_KEYS = new Set([
-  ...Object.keys(responsiveStylePropsSchema.shape),
-  ...RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
-]);
-const TEXT_SPAN_STYLE_ALLOWED_KEYS = new Set([
-  ...TEXT_SPAN_STYLE_PROPERTIES,
-  ...RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
-]);
+const STYLE_ALLOWED_KEYS = new Set(STYLE_ALLOWED_STYLE_KEYS);
+const HOVER_STYLE_ALLOWED_KEYS = new Set(HOVER_STYLE_ALLOWED_STYLE_KEYS);
+const RESPONSIVE_STYLE_ALLOWED_KEYS = new Set(RESPONSIVE_STYLE_ALLOWED_STYLE_KEYS);
+const TEXT_SPAN_STYLE_ALLOWED_KEYS = new Set(TEXT_SPAN_ALLOWED_STYLE_KEYS);
 
 // Properties that have range limits AND accept string lengths
 const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> =

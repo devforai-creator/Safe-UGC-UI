@@ -23,6 +23,10 @@
     "./internal/style-output": {
       "types": "./dist/internal/style-output.d.ts",
       "import": "./dist/internal/style-output.js"
+    },
+    "./internal/style-key-sets": {
+      "types": "./dist/internal/style-key-sets.d.ts",
+      "import": "./dist/internal/style-key-sets.js"
     }
   },
   "files": [

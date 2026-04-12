@@ -161,6 +161,8 @@ as the historical audit ledger that tracks older items and prior closure state.
     renderer-internal helpers
   - shared text-span and validator property-category constants are now wired
     through `types` and validator validation paths
+  - shared allowed-key registries are now wired through
+    `types/internal/style-key-sets` and validator key validation paths
   - broader `AAB-004c` registry work remains open
 - Risk:
   - the same author-facing DSL semantics are still encoded in multiple high-risk
