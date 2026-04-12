@@ -36,6 +36,7 @@ untrusted UI cards.
 - Tooling baseline for local development: Node.js `>= 20.19.0`, pnpm `>= 9`.
 - `pnpm build` — build all workspace packages.
 - `pnpm test` — run Vitest in workspace mode.
+- `pnpm test:clean-checkout` — verify the demo typechecks and builds from a clean workspace without prebuilt package `dist` outputs.
 - `pnpm test:contracts` — run the targeted contract-regression gate for validator/renderer boundary bugs.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.

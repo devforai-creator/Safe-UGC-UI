@@ -6,8 +6,8 @@ production gate with explicit evidence, scope, and acceptance criteria.
 
 ## Current Gate
 
-- Current gate status: pending re-review
-- Production rollout status: all current `P0` items are closed; rerun a targeted production-readiness review before approving rollout
+- Current gate status: ready for re-review
+- Production rollout status: all current `P0` and `P1` items are closed; rerun a targeted production-readiness review before approving rollout
 - Review source: 2026-04-12 production-readiness audit
 
 ## How To Use This Backlog
@@ -34,7 +34,7 @@ For each item:
 | PRB-003 | P0 | Before production | `Accordion` prop/state reconciliation | Closed |
 | PRB-004 | P1 | Next iteration | Closed DSL enforcement for style keys | Closed |
 | PRB-005 | P1 | Next iteration | Regression tests and CI gate for contract boundaries | Closed |
-| PRB-006 | P1 | Next iteration | Clean-checkout workspace reproducibility | Open |
+| PRB-006 | P1 | Next iteration | Clean-checkout workspace reproducibility | Closed |
 | PRB-007 | P2 | Strategic | Shared style/responsive semantics layer | Open |
 
 ## PRB-001 — Align Asset Validation Semantics Across Validator And Renderer
@@ -173,8 +173,7 @@ For each item:
 
 ## Suggested Execution Order
 
-1. Fix `PRB-006` next to remove clean-checkout workspace drift.
-2. Tackle `PRB-007` once the current validator/renderer contract is locked in tests.
+1. Tackle `PRB-007` once the current validator/renderer contract is locked in tests.
 
 ## Exit Criteria For Re-Review
 

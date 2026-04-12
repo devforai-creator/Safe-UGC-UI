@@ -1,9 +1,16 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "outDir": "dist",
+    "rootDir": "../..",
+    "paths": {
+      "@safe-ugc-ui/types": ["../types/src/index.ts"],
+      "@safe-ugc-ui/validator": ["../validator/src/index.ts"],
+      "@safe-ugc-ui/react": ["../react/src/index.ts"]
+    },
     "verbatimModuleSyntax": false
   },
   "include": ["src"]
