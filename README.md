@@ -50,6 +50,15 @@ pnpm add @safe-ugc-ui/types
 
 `@safe-ugc-ui/react` already depends on `@safe-ugc-ui/types` and `@safe-ugc-ui/validator`.
 
+## Workspace Commands
+
+- `pnpm build` — build all workspace packages
+- `pnpm test` — run Vitest in workspace mode
+- `pnpm test:contracts` — run the targeted contract-regression gate for validator/renderer boundary bugs
+- `pnpm test:run` — run the full workspace test suite once
+- `pnpm test:coverage` — run the workspace suite with coverage
+- `pnpm clean` — remove package `dist` directories
+
 ## Quick Start
 
 ### Load a card safely

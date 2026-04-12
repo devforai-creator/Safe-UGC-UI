@@ -36,6 +36,7 @@ pick up the same project context.
 - Tooling baseline for local development: Node.js `>= 20.19.0`, pnpm `>= 9`.
 - `pnpm build` — build all packages.
 - `pnpm test` — run workspace Vitest.
+- `pnpm test:contracts` — run the targeted contract-regression gate for validator/renderer boundary bugs.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
 - `pnpm clean` — remove `dist` folders.

@@ -4,6 +4,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "vitest",
+    "test:contracts": "pnpm --filter @safe-ugc-ui/validator test:contracts && pnpm --filter @safe-ugc-ui/react test:contracts",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "clean": "pnpm -r exec rm -rf dist"

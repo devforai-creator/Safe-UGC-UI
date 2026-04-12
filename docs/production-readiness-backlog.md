@@ -33,7 +33,7 @@ For each item:
 | PRB-002 | P0 | Before production | Runtime error signaling and no silent render drops | Closed |
 | PRB-003 | P0 | Before production | `Accordion` prop/state reconciliation | Closed |
 | PRB-004 | P1 | Next iteration | Closed DSL enforcement for style keys | Closed |
-| PRB-005 | P1 | Next iteration | Regression tests and CI gate for contract boundaries | Open |
+| PRB-005 | P1 | Next iteration | Regression tests and CI gate for contract boundaries | Closed |
 | PRB-006 | P1 | Next iteration | Clean-checkout workspace reproducibility | Open |
 | PRB-007 | P2 | Strategic | Shared style/responsive semantics layer | Open |
 
@@ -173,9 +173,8 @@ For each item:
 
 ## Suggested Execution Order
 
-1. Land `PRB-005` next so the recently fixed contract boundaries cannot reopen.
-2. Fix `PRB-006` after that to remove clean-checkout workspace drift.
-3. Tackle `PRB-007` once the current validator/renderer contract is locked in tests.
+1. Fix `PRB-006` next to remove clean-checkout workspace drift.
+2. Tackle `PRB-007` once the current validator/renderer contract is locked in tests.
 
 ## Exit Criteria For Re-Review
 

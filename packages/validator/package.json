@@ -22,6 +22,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "test:contracts": "vitest run src/contract-regressions.test.ts",
     "test": "vitest run"
   },
   "dependencies": {

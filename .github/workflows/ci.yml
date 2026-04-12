@@ -32,6 +32,9 @@ jobs:
       - name: Type check
         run: pnpm -r exec tsc --noEmit
 
+      - name: Contract regression gate
+        run: pnpm test:contracts
+
       - name: Audit
         run: pnpm audit
 
