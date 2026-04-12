@@ -11,11 +11,9 @@ as the historical audit ledger that tracks older items and prior closure state.
 - Audit score: `3.90 / 5.00`
 - Audit grade: `A`
 - Current ruling:
-  - limited production use is possible
-  - clean-checkout reproducibility is closed
-  - silent host-integration failures are closed
-  - keep tightening regression coverage for those contracts before treating the
-    repository as production-ready
+  - current production gate blockers are closed
+  - remaining open work is strategic duplication reduction, not an immediate
+    deployment blocker
 
 ## Priority Model
 
@@ -33,7 +31,7 @@ as the historical audit ledger that tracks older items and prior closure state.
 | ------- | -------- | ----------------- | ---------------------------------------------------- | ------ |
 | AAB-001 | P0       | Before production | Clean-checkout workspace verification loop           | Closed |
 | AAB-002 | P0       | Before production | Structured diagnostics for host integration failures | Closed |
-| AAB-003 | P1       | Next iteration    | Regression coverage for integration-failure paths    | Open   |
+| AAB-003 | P1       | Next iteration    | Regression coverage for integration-failure paths    | Closed |
 | AAB-004 | P2       | Strategic         | Shared style/responsive/limit semantics layer        | Open   |
 
 ## AAB-001 — Make The Workspace Verification Loop Reproducible From A Clean Checkout
@@ -129,24 +127,25 @@ as the historical audit ledger that tracks older items and prior closure state.
     missing runtime asset mapping
   - `packages/validator/src/contract-regressions.test.ts:23-104` already
     protects loop-local and fragment-expanded asset validation
-  - `packages/react/src/react.test.tsx:717-737` now protects invalid
-    `viewName` diagnostics in the main renderer suite
-  - `packages/react/src/react.test.tsx:2120-2131` now protects missing
-    `iconResolver` diagnostics in the main renderer suite
-  - the targeted contract gate still does not lock those host-integration cases,
-    and the clean-checkout loop is still exercised as a CI command rather than a
-    smaller dedicated regression check
+  - the targeted contract gate did not yet lock invalid `viewName`, missing
+    `iconResolver`, or a smaller clean-workspace reproducibility canary
 - Required change:
-  - decide which host-integration failures belong in the targeted
-    `test:contracts` gate rather than only the broad renderer suite
-  - add one smaller reproducibility guard, or an equivalent focused assertion,
-    around the clean-checkout verification contract
+  - promote host-integration failures into the targeted `test:contracts` gate
+  - add one smaller reproducibility guard around the clean-checkout contract
   - keep those checks in the default CI path
 - Acceptance:
   - host-integration failure coverage is intentionally placed and documented
-  - the clean-checkout verification contract remains directly exercised in the
-    default CI path
+  - the clean-checkout verification contract has a smaller clean-workspace canary
+    in the default CI path
   - CI fails if any of those regress
+- Closure:
+  - `packages/react/src/contract-regressions.test.tsx` now locks
+    `RUNTIME_VIEW_NOT_FOUND` and `RUNTIME_ICON_RESOLVER_MISSING` alongside the
+    existing renderer contract cases
+  - root `pnpm test:contracts` is now a clean-workspace contract gate:
+    `pnpm clean && pnpm test:contracts:packages && pnpm --filter @safe-ugc-ui/demo typecheck`
+  - CI runs that smaller contract canary before the broader
+    `pnpm test:clean-checkout` loop
 
 ## AAB-004 — Extract Shared Style, Responsive, And Limit Semantics
 

@@ -714,28 +714,6 @@ describe('UGCRenderer', () => {
     expect(screen.getByText('Second View')).toBeTruthy();
   });
 
-  it('reports invalid viewName through onError and renders null', async () => {
-    const onError = vi.fn();
-    const multiViewCard = {
-      meta: { name: 'test', version: '1.0.0' },
-      views: {
-        Main: { type: 'Text', content: 'Main View' },
-        Secondary: { type: 'Text', content: 'Second View' },
-      },
-    };
-    const { container } = render(
-      <UGCRenderer card={multiViewCard as any} viewName="Missing" onError={onError} />,
-    );
-
-    expect(container.innerHTML).toBe('');
-
-    await waitFor(() => {
-      expect(onError).toHaveBeenCalledWith([
-        expect.objectContaining({ code: 'RUNTIME_VIEW_NOT_FOUND', path: 'viewName' }),
-      ]);
-    });
-  });
-
   it('resolves $ref values from card state', () => {
     const cardWithState = {
       meta: { name: 'test', version: '1.0.0' },
@@ -2115,20 +2093,6 @@ describe('UGCRenderer with new fields', () => {
     render(<UGCRenderer card={card} iconResolver={iconResolver} />);
     expect(screen.getByTestId('ugc-icon')).not.toBeNull();
     expect(screen.getByTestId('ugc-icon').textContent).toBe('heart');
-  });
-
-  it('reports missing iconResolver and soft-skips Icon nodes', () => {
-    const onError = vi.fn();
-    const card = {
-      meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Icon' as const, name: 'heart' } },
-    };
-    const { container } = render(<UGCRenderer card={card} onError={onError} />);
-
-    expect(container.textContent).toBe('');
-    expect(onError).toHaveBeenCalledWith([
-      expect.objectContaining({ code: 'RUNTIME_ICON_RESOLVER_MISSING', path: 'root' }),
-    ]);
   });
 
   it('passes onAction prop through to renderer', () => {

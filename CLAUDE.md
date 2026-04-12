@@ -37,7 +37,8 @@ pick up the same project context.
 - `pnpm build` — build all packages.
 - `pnpm test` — run workspace Vitest.
 - `pnpm test:clean-checkout` — verify workspace tests plus demo typecheck and build from a clean workspace without prebuilt package `dist` outputs.
-- `pnpm test:contracts` — run the targeted contract-regression gate for validator/renderer boundary bugs.
+- `pnpm test:contracts` — run the targeted contract-regression gate for host-facing validator/renderer boundaries, including a clean-workspace canary.
+- `pnpm test:contracts:packages` — run only the validator/react contract-regression suites without the workspace canary.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
 - `pnpm clean` — remove `dist` folders.
