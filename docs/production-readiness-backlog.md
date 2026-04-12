@@ -1,13 +1,16 @@
 # Production Readiness Backlog
 
-This document turns the 2026-04-12 production-readiness audit into an execution backlog.
-It is not a feature roadmap. It tracks the hardening work required to close the current
-production gate with explicit evidence, scope, and acceptance criteria.
+This document turns the 2026-04-12 production-readiness audit into an execution
+backlog. It is not a feature roadmap. It tracks the hardening work required to
+close the current production gate with explicit evidence, scope, and acceptance
+criteria.
 
 ## Current Gate
 
-- Current gate status: ready for re-review
-- Production rollout status: all current `P0` and `P1` items are closed; rerun a targeted production-readiness review before approving rollout
+- Current gate status: closed backlog, ready for re-review
+- Production rollout status: all current `P0`, `P1`, and `P2` audit items are
+  closed; use `docs/2026-04-13-follow-up-backlog.md` for non-audit follow-up
+  work
 - Review source: 2026-04-12 production-readiness audit
 
 ## How To Use This Backlog
@@ -35,7 +38,7 @@ For each item:
 | PRB-004 | P1       | Next iteration    | Closed DSL enforcement for style keys                | Closed |
 | PRB-005 | P1       | Next iteration    | Regression tests and CI gate for contract boundaries | Closed |
 | PRB-006 | P1       | Next iteration    | Clean-checkout workspace reproducibility             | Closed |
-| PRB-007 | P2       | Strategic         | Shared style/responsive semantics layer              | Open   |
+| PRB-007 | P2       | Strategic         | Shared style/responsive semantics layer              | Closed |
 
 ## PRB-001 — Align Asset Validation Semantics Across Validator And Renderer
 
@@ -170,6 +173,18 @@ For each item:
 - Acceptance:
   - Shared semantics move behind reusable helpers or a dedicated internal package/module boundary.
   - A style or responsive rule change no longer requires parallel logic edits in multiple high-risk files unless strictly necessary.
+- Closure:
+  - shared `$style` and responsive merge semantics now live in
+    `packages/types/src/internal/style-semantics.ts`
+  - shared renderer-equivalent style output and byte-counting semantics now
+    live in `packages/types/src/internal/style-output.ts`
+  - shared capability/value-domain lists now live in
+    `packages/types/src/constants.ts`
+  - shared allowed-key registries now live in
+    `packages/types/src/internal/style-key-sets.ts`
+  - the remaining validator-local collections are intentionally treated as
+    validator-only lookup helpers rather than duplicated cross-package DSL
+    registries
 
 ## Suggested Execution Order
 

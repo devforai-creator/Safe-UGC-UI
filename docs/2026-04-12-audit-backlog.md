@@ -5,6 +5,8 @@ production-readiness audit.
 
 Use this file for current sequencing. Keep `docs/production-readiness-backlog.md`
 as the historical audit ledger that tracks older items and prior closure state.
+Use `docs/2026-04-13-follow-up-backlog.md` for post-audit work that is no
+longer part of the closed audit carryover.
 
 ## Current Gate
 
