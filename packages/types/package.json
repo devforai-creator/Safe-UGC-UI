@@ -1,6 +1,6 @@
 {
   "name": "@safe-ugc-ui/types",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Type definitions and Zod schemas for Safe UGC UI cards",
   "license": "MIT",
   "repository": {
