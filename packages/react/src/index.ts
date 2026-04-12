@@ -7,6 +7,8 @@
 // Top-level renderer
 export { UGCRenderer } from './UGCRenderer.js';
 export type { UGCRendererProps } from './UGCRenderer.js';
+export { createRendererError } from './errors.js';
+export type { RendererError, RendererErrorHandler } from './errors.js';
 
 // Security isolation container
 export { UGCContainer } from './UGCContainer.js';

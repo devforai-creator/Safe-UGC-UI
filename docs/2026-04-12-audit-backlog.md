@@ -13,8 +13,9 @@ as the historical audit ledger that tracks older items and prior closure state.
 - Current ruling:
   - limited production use is possible
   - clean-checkout reproducibility is closed
-  - fix silent host-integration failures before treating the repository as
-    production-ready
+  - silent host-integration failures are closed
+  - keep tightening regression coverage for those contracts before treating the
+    repository as production-ready
 
 ## Priority Model
 
@@ -31,7 +32,7 @@ as the historical audit ledger that tracks older items and prior closure state.
 | ID      | Priority | Release Gate      | Theme                                                | Status |
 | ------- | -------- | ----------------- | ---------------------------------------------------- | ------ |
 | AAB-001 | P0       | Before production | Clean-checkout workspace verification loop           | Closed |
-| AAB-002 | P0       | Before production | Structured diagnostics for host integration failures | Open   |
+| AAB-002 | P0       | Before production | Structured diagnostics for host integration failures | Closed |
 | AAB-003 | P1       | Next iteration    | Regression coverage for integration-failure paths    | Open   |
 | AAB-004 | P2       | Strategic         | Shared style/responsive/limit semantics layer        | Open   |
 
@@ -108,6 +109,12 @@ as the historical audit ledger that tracks older items and prior closure state.
   - invalid `viewName` produces a structured error instead of an empty error list
   - missing `iconResolver` no longer fails silently
   - renderer docs describe the host-facing contract for those cases
+- Closure:
+  - invalid `viewName` now reports `RUNTIME_VIEW_NOT_FOUND` through the normal
+    `onError` path and returns `null`
+  - missing `iconResolver` now soft-skips the `Icon` node and reports
+    `RUNTIME_ICON_RESOLVER_MISSING`
+  - renderer docs now describe both host-facing behaviors
 
 ## AAB-003 — Add Regression Coverage For The Remaining Integration-Failure Paths
 
@@ -122,18 +129,23 @@ as the historical audit ledger that tracks older items and prior closure state.
     missing runtime asset mapping
   - `packages/validator/src/contract-regressions.test.ts:23-104` already
     protects loop-local and fragment-expanded asset validation
-  - there is no equivalent regression guard for invalid `viewName`, missing
-    `iconResolver` diagnostics, or the clean-checkout full verification loop
+  - `packages/react/src/react.test.tsx:717-737` now protects invalid
+    `viewName` diagnostics in the main renderer suite
+  - `packages/react/src/react.test.tsx:2120-2131` now protects missing
+    `iconResolver` diagnostics in the main renderer suite
+  - the targeted contract gate still does not lock those host-integration cases,
+    and the clean-checkout loop is still exercised as a CI command rather than a
+    smaller dedicated regression check
 - Required change:
-  - add renderer regression tests for host integration failures
-  - add one reproducibility guard that exercises the real clean-checkout
-    verification contract
+  - decide which host-integration failures belong in the targeted
+    `test:contracts` gate rather than only the broad renderer suite
+  - add one smaller reproducibility guard, or an equivalent focused assertion,
+    around the clean-checkout verification contract
   - keep those checks in the default CI path
 - Acceptance:
-  - there are explicit tests for:
-    - invalid `viewName`
-    - missing `iconResolver`
-    - the intended clean-checkout verification loop
+  - host-integration failure coverage is intentionally placed and documented
+  - the clean-checkout verification contract remains directly exercised in the
+    default CI path
   - CI fails if any of those regress
 
 ## AAB-004 — Extract Shared Style, Responsive, And Limit Semantics

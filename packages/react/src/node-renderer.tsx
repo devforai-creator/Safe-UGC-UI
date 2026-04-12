@@ -47,6 +47,7 @@ import { Button } from './components/Button.js';
 import { Toggle } from './components/Toggle.js';
 import { Accordion } from './components/Accordion.js';
 import { Tabs } from './components/Tabs.js';
+import { createRendererError, type RendererError, type RendererErrorHandler } from './errors.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -123,18 +124,12 @@ export interface RenderContext {
   fragmentStack?: string[];
   iconResolver?: (name: string) => ReactNode;
   onAction?: (type: string, actionId: string, payload?: unknown) => void;
-  onError?: (errors: Array<{ code: string; message: string; path: string }>) => void;
+  onError?: RendererErrorHandler;
   limits: RuntimeLimits;
   responsive: {
     compact: boolean;
     medium: boolean;
   };
-}
-
-interface RuntimeRenderError {
-  code: string;
-  message: string;
-  path: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -422,7 +417,7 @@ function renderSwitchBranch(
   return null;
 }
 
-function reportRuntimeError(ctx: RenderContext, error: RuntimeRenderError): null {
+function reportRuntimeError(ctx: RenderContext, error: RendererError): null {
   ctx.onError?.([error]);
   return null;
 }
@@ -704,6 +699,17 @@ export function renderNode(node: unknown, ctx: RenderContext, key: string | numb
     case 'Icon': {
       const resolvedName = rv((n as Record<string, unknown>).name);
       const name = typeof resolvedName === 'string' ? resolvedName : '';
+      if (!ctx.iconResolver) {
+        const iconName = name.length > 0 ? `"${name}"` : 'the requested icon';
+        return reportRuntimeError(
+          ctx,
+          createRendererError(
+            'RUNTIME_ICON_RESOLVER_MISSING',
+            `Icon ${iconName} could not be rendered because no iconResolver was provided.`,
+            String(key),
+          ),
+        );
+      }
       const resolvedSize = rv((n as Record<string, unknown>).size);
       const size =
         typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
@@ -947,9 +953,9 @@ function renderForLoop(loop: ForLoopLike, ctx: RenderContext): ReactNode[] {
  * @param state - Card state for $ref resolution
  * @param assets - Asset map for @assets/ resolution
  * @param cardStyles - Optional card-level named styles
- * @param iconResolver - Optional icon resolver callback
+ * @param iconResolver - Optional icon resolver callback; required to render Icon nodes
  * @param onAction - Optional action callback for Button/Toggle
- * @param onError - Optional error callback
+ * @param onError - Optional structured error callback for runtime diagnostics
  * @returns A React element tree
  */
 export function renderTree(
@@ -959,7 +965,7 @@ export function renderTree(
   cardStyles?: Record<string, Record<string, unknown>>,
   iconResolver?: (name: string) => ReactNode,
   onAction?: (type: string, actionId: string, payload?: unknown) => void,
-  onError?: (errors: Array<{ code: string; message: string; path: string }>) => void,
+  onError?: RendererErrorHandler,
   responsive: { compact: boolean; medium?: boolean } = { compact: false, medium: false },
   fragments?: Record<string, unknown>,
 ): ReactNode {

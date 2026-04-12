@@ -32,6 +32,7 @@ import {
 import { UGCContainer } from './UGCContainer.js';
 import { renderTree } from './node-renderer.js';
 import type { AssetMap } from './asset-resolver.js';
+import { createRendererError, type RendererError, type RendererErrorHandler } from './errors.js';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -41,7 +42,7 @@ export interface UGCRendererProps {
   /** The UGC card to render --- either a parsed object or a raw JSON string. */
   card: UGCCard | string;
 
-  /** Name of the view to render. Defaults to the first view in the card. */
+  /** Name of the view to render. Invalid names report a runtime error and render nothing. */
   viewName?: string;
 
   /** Asset map: keys are asset identifiers, values are resolved URLs. */
@@ -53,10 +54,10 @@ export interface UGCRendererProps {
   /** Optional CSS style for the outer container. Protected isolation keys stay enforced. */
   containerStyle?: CSSProperties;
 
-  /** Optional callback invoked when validation fails or runtime limits are hit. */
-  onError?: (errors: Array<{ code: string; message: string; path: string }>) => void;
+  /** Optional callback invoked when validation or runtime rendering diagnostics occur. */
+  onError?: RendererErrorHandler;
 
-  /** Optional callback to resolve icon names to React elements. */
+  /** Optional callback to resolve icon names to React elements for Icon nodes. */
   iconResolver?: (name: string) => ReactNode;
 
   /** Optional callback for Button/Toggle interaction actions. */
@@ -66,6 +67,21 @@ export interface UGCRendererProps {
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
+
+interface InvalidRendererResult {
+  valid: false;
+  errors: RendererError[];
+}
+
+interface ValidRendererResult {
+  valid: true;
+  rootNode: unknown;
+  state: Record<string, unknown>;
+  cardStyles?: Record<string, Record<string, unknown>>;
+  fragments?: Record<string, unknown>;
+}
+
+type RendererResult = InvalidRendererResult | ValidRendererResult;
 
 /**
  * Top-level UGC card renderer.
@@ -89,7 +105,7 @@ export function UGCRenderer({
   );
   const lastReportedInvalidErrorKey = useRef<string | null>(null);
 
-  const result = useMemo(() => {
+  const result = useMemo<RendererResult>(() => {
     const loadResult = typeof card === 'string' ? loadCardRaw(card) : loadCard(card);
     if (!loadResult.valid) {
       return { valid: false as const, errors: loadResult.errors };
@@ -117,10 +133,35 @@ export function UGCRenderer({
     // Determine which view to render
     const views = cardObj.views;
     const viewKeys = Object.keys(views);
-    const selectedView = viewName && viewName in views ? viewName : viewKeys[0];
+    const selectedView = viewName ?? viewKeys[0];
 
-    if (!selectedView || !(selectedView in views)) {
-      return { valid: false as const, errors: [] };
+    if (!selectedView) {
+      return {
+        valid: false as const,
+        errors: [
+          createRendererError(
+            'RUNTIME_VIEW_NOT_FOUND',
+            'Card does not contain any renderable views.',
+            'views',
+          ),
+        ],
+      };
+    }
+
+    if (!(selectedView in views)) {
+      const availableViews = viewKeys.map((key) => `"${key}"`).join(', ');
+      return {
+        valid: false as const,
+        errors: [
+          createRendererError(
+            'RUNTIME_VIEW_NOT_FOUND',
+            `Requested view "${selectedView}" was not found.${
+              availableViews.length > 0 ? ` Available views: ${availableViews}.` : ''
+            }`,
+            'viewName',
+          ),
+        ],
+      };
     }
 
     const mergedState = cardObj.state ?? {};

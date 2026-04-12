@@ -83,5 +83,7 @@ pick up the same project context.
 - Card-authored `state` and any host-provided runtime `state` overrides are treated as untrusted inputs for validation and limits.
 - Low-level renderer exports such as `renderTree()` assume prior validation by the caller.
 - `UGCRenderer` revalidates the effective merged runtime state before rendering.
+- Invalid `viewName` values are reported via `onError` as `RUNTIME_VIEW_NOT_FOUND` and render `null`.
+- Missing `iconResolver` soft-skips `Icon` nodes and reports `RUNTIME_ICON_RESOLVER_MISSING`.
 - Text and style limits apply to resolved render output, not just authored literals.
 - `UGCContainer` supplies renderer-side layout isolation, and `containerStyle` cannot override the protected isolation keys.

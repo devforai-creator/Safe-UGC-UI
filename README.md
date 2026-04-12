@@ -136,12 +136,13 @@ export function CardPreview({ rawCard }: { rawCard: string }) {
 
 Key renderer props:
 
-- `viewName` to render a specific named view
+- `viewName` to render a specific named view; invalid names emit `RUNTIME_VIEW_NOT_FOUND` through `onError` and render nothing
 - `assets` to resolve `@assets/...` references to host-controlled URLs; the host owns final URL provenance and any origin allowlist policy
 - `state` to override or extend `card.state`; the merged state is revalidated before rendering
 - `containerStyle` to style the outer isolation container without replacing protected isolation properties
-- `iconResolver` to map icon names to React nodes
+- `iconResolver` to map icon names to React nodes; if omitted, `Icon` nodes soft-skip and emit `RUNTIME_ICON_RESOLVER_MISSING` through `onError`
 - `onAction` to receive Button and Toggle action events
+- `onError` receives structured `RendererError[]` diagnostics for validation failures and runtime renderer issues
 
 ### Generate JSON Schema
 
