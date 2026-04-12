@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validate, validateSchema, validateStyles } from './index.js';
+import { validate, validateLimits, validateSchema, validateStyles } from './index.js';
 
 function makeCard(
   views: Record<string, unknown>,
@@ -111,5 +111,54 @@ describe('contract regressions — validator', () => {
     expect(errors.some((error) => error.path === 'views.Main.responsive.compact.widthh')).toBe(
       true,
     );
+  });
+
+  it('rejects cards when compact-mode rendered CSS exceeds the style budget', () => {
+    const children = Array.from({ length: 1500 }, () => ({
+      type: 'Box',
+      responsive: {
+        compact: {
+          fontFamily: 'handwriting',
+        },
+      },
+    }));
+
+    const errors = validateLimits(
+      makeCard(
+        makeViews({
+          type: 'Column',
+          children,
+        }),
+      ) as any,
+    );
+
+    expect(codes(errors)).toContain('STYLE_SIZE_EXCEEDED');
+  });
+
+  it('does not double-count compact overrides on top of overwritten default output', () => {
+    const defaultCols = '1fr '.repeat(30).trim();
+    const compactCols = '2fr '.repeat(30).trim();
+    const children = Array.from({ length: 500 }, () => ({
+      type: 'Grid',
+      style: {
+        gridTemplateColumns: defaultCols,
+      },
+      responsive: {
+        compact: {
+          gridTemplateColumns: compactCols,
+        },
+      },
+    }));
+
+    const errors = validateLimits(
+      makeCard(
+        makeViews({
+          type: 'Column',
+          children,
+        }),
+      ) as any,
+    );
+
+    expect(codes(errors)).not.toContain('STYLE_SIZE_EXCEEDED');
   });
 });

@@ -13,6 +13,12 @@ export default defineConfig({
         ),
       },
       {
+        find: '@safe-ugc-ui/types/internal/style-output',
+        replacement: fileURLToPath(
+          new URL('../types/src/internal/style-output.ts', import.meta.url),
+        ),
+      },
+      {
         find: /^@safe-ugc-ui\/types$/,
         replacement: fileURLToPath(new URL('../types/src/index.ts', import.meta.url)),
       },

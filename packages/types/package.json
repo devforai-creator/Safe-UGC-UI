@@ -19,6 +19,10 @@
     "./internal/style-semantics": {
       "types": "./dist/internal/style-semantics.d.ts",
       "import": "./dist/internal/style-semantics.js"
+    },
+    "./internal/style-output": {
+      "types": "./dist/internal/style-output.d.ts",
+      "import": "./dist/internal/style-output.js"
     }
   },
   "files": [

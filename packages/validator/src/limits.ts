@@ -20,6 +20,10 @@ import {
   isRef,
   resolveRefPath,
 } from '@safe-ugc-ui/types';
+import {
+  countResolvedStyleOutputBytes,
+  utf8ByteLength,
+} from '@safe-ugc-ui/types/internal/style-output';
 
 import { type ValidationError, createError } from './result.js';
 import { type TraversableNode, type TraversalContext, traverseCard } from './traverse.js';
@@ -27,35 +31,8 @@ import {
   type ResponsiveMode,
   RESPONSIVE_MODES,
   getEffectiveStyleForMode,
-  getMergedResponsiveStyleOverride,
+  mergeStyleWithCardStyles,
 } from './responsive-utils.js';
-
-// ---------------------------------------------------------------------------
-// UTF-8 byte length — platform-agnostic (no DOM/Node dependency)
-// ---------------------------------------------------------------------------
-
-/**
- * Calculate UTF-8 byte length of a string without depending on
- * TextEncoder (DOM) or Buffer (Node).
- */
-function utf8ByteLength(str: string): number {
-  let bytes = 0;
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (code <= 0x7f) {
-      bytes += 1;
-    } else if (code <= 0x7ff) {
-      bytes += 2;
-    } else if (code >= 0xd800 && code <= 0xdbff) {
-      // Surrogate pair → 4 UTF-8 bytes
-      bytes += 4;
-      i++; // skip low surrogate
-    } else {
-      bytes += 3;
-    }
-  }
-  return bytes;
-}
 
 function isTemplateObject(value: unknown): value is { $template: unknown[] } {
   return (
@@ -151,67 +128,53 @@ function countNodeTextBytes(
   }
 }
 
-function resolveSerializableStyleValue(value: unknown, state?: Record<string, unknown>): unknown {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (isRef(value)) {
-    if (!state) {
-      return undefined;
-    }
-
-    const resolved = resolveRefPath(value.$ref, state);
-    if (
-      resolved === null ||
-      typeof resolved === 'string' ||
-      typeof resolved === 'number' ||
-      typeof resolved === 'boolean'
-    ) {
-      return resolved;
-    }
-    return undefined;
-  }
-
-  if (Array.isArray(value)) {
-    const resolvedItems = value
-      .map((item) => resolveSerializableStyleValue(item, state))
-      .filter((item) => item !== undefined);
-    return resolvedItems.length > 0 ? resolvedItems : undefined;
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    const resolvedEntries = Object.entries(value as Record<string, unknown>).reduce<
-      Record<string, unknown>
-    >((acc, [key, child]) => {
-      const resolvedChild = resolveSerializableStyleValue(child, state);
-      if (resolvedChild !== undefined) {
-        acc[key] = resolvedChild;
-      }
-      return acc;
-    }, {});
-
-    return Object.keys(resolvedEntries).length > 0 ? resolvedEntries : undefined;
-  }
-
-  return value;
+function createResponsiveCountRecord(): Record<ResponsiveMode, number> {
+  return {
+    default: 0,
+    medium: 0,
+    compact: 0,
+  };
 }
 
-function countResolvedStyleBytes(
-  style: Record<string, unknown> | undefined,
-  state?: Record<string, unknown>,
+function getEffectiveRenderableStyleForMode(
+  node: TraversableNode,
+  cardStyles: Record<string, Record<string, unknown>> | undefined,
+  mode: ResponsiveMode,
+): Record<string, unknown> | undefined {
+  return getEffectiveStyleForMode(
+    {
+      ...node,
+      style: mergeStyleWithCardStyles(node.style, cardStyles),
+    },
+    cardStyles,
+    mode,
+  );
+}
+
+function countNodeStyleBytesForMode(
+  node: TraversableNode,
+  state: Record<string, unknown> | undefined,
+  cardStyles: Record<string, Record<string, unknown>> | undefined,
+  mode: ResponsiveMode,
 ): number {
-  const resolvedStyle = resolveSerializableStyleValue(style, state);
-  if (resolvedStyle == null || typeof resolvedStyle !== 'object' || Array.isArray(resolvedStyle)) {
+  const effectiveStyle = getEffectiveRenderableStyleForMode(node, cardStyles, mode);
+  if (!effectiveStyle) {
     return 0;
   }
 
-  const serialized = JSON.stringify(resolvedStyle);
-  if (!serialized || serialized === '{}') {
-    return 0;
-  }
+  const resolvedState = state ?? {};
 
-  return utf8ByteLength(serialized);
+  const hoverStyle =
+    effectiveStyle.hoverStyle != null &&
+    typeof effectiveStyle.hoverStyle === 'object' &&
+    !Array.isArray(effectiveStyle.hoverStyle)
+      ? (effectiveStyle.hoverStyle as Record<string, unknown>)
+      : undefined;
+
+  return (
+    countResolvedStyleOutputBytes(effectiveStyle, resolvedState) +
+    countResolvedStyleOutputBytes(hoverStyle, resolvedState)
+  );
 }
 
 function countTextSpanStyleBytes(
@@ -232,7 +195,7 @@ function countTextSpanStyleBytes(
       return total;
     }
 
-    return total + countResolvedStyleBytes(style as Record<string, unknown>, state);
+    return total + countResolvedStyleOutputBytes(style as Record<string, unknown>, state ?? {});
   }, 0);
 }
 
@@ -243,7 +206,7 @@ function countTextSpanStyleBytes(
 interface TemplateMetrics {
   nodes: number;
   textBytes: number;
-  styleBytes: number;
+  styleBytes: Record<ResponsiveMode, number>;
   overflowAutoCount: Record<ResponsiveMode, number>;
 }
 
@@ -261,12 +224,8 @@ function countTemplateMetrics(
   const result: TemplateMetrics = {
     nodes: 0,
     textBytes: 0,
-    styleBytes: 0,
-    overflowAutoCount: {
-      default: 0,
-      medium: 0,
-      compact: 0,
-    },
+    styleBytes: createResponsiveCountRecord(),
+    overflowAutoCount: createResponsiveCountRecord(),
   };
 
   traverseCard(
@@ -279,19 +238,14 @@ function countTemplateMetrics(
       result.textBytes += countNodeTextBytes(node as Record<string, unknown>, state);
 
       if (node.type === 'Text') {
-        result.styleBytes += countTextSpanStyleBytes(node as Record<string, unknown>, state);
-      }
-
-      const baseStyleForBytes = getEffectiveStyleForMode(node, cardStyles, 'default');
-      if (baseStyleForBytes) {
-        result.styleBytes += countResolvedStyleBytes(baseStyleForBytes, state);
-      }
-
-      for (const mode of ['medium', 'compact'] as const) {
-        const responsiveStyleForBytes = getMergedResponsiveStyleOverride(node, cardStyles, mode);
-        if (responsiveStyleForBytes) {
-          result.styleBytes += countResolvedStyleBytes(responsiveStyleForBytes, state);
+        const spanStyleBytes = countTextSpanStyleBytes(node as Record<string, unknown>, state);
+        for (const mode of RESPONSIVE_MODES) {
+          result.styleBytes[mode] += spanStyleBytes;
         }
+      }
+
+      for (const mode of RESPONSIVE_MODES) {
+        result.styleBytes[mode] += countNodeStyleBytesForMode(node, state, cardStyles, mode);
       }
 
       for (const mode of RESPONSIVE_MODES) {
@@ -337,12 +291,8 @@ export function validateLimits(card: {
 
   let nodeCount = 0;
   let textContentBytes = 0;
-  let styleObjectsBytes = 0;
-  const overflowAutoCount: Record<ResponsiveMode, number> = {
-    default: 0,
-    medium: 0,
-    compact: 0,
-  };
+  const styleObjectsBytes = createResponsiveCountRecord();
+  const overflowAutoCount = createResponsiveCountRecord();
 
   traverseCard(
     card.views,
@@ -360,27 +310,23 @@ export function validateLimits(card: {
       textContentBytes += countNodeTextBytes(node as Record<string, unknown>, card.state);
 
       if (node.type === 'Text') {
-        styleObjectsBytes += countTextSpanStyleBytes(node as Record<string, unknown>, card.state);
+        const spanStyleBytes = countTextSpanStyleBytes(node as Record<string, unknown>, card.state);
+        for (const mode of RESPONSIVE_MODES) {
+          styleObjectsBytes[mode] += spanStyleBytes;
+        }
       }
 
       // -----------------------------------------------------------------------
       // 3. Style objects total bytes (use merged style if $style is present)
       // -----------------------------------------------------------------------
       {
-        const baseStyleForBytes = getEffectiveStyleForMode(node, card.cardStyles, 'default');
-        if (baseStyleForBytes) {
-          styleObjectsBytes += countResolvedStyleBytes(baseStyleForBytes, card.state);
-        }
-
-        for (const mode of ['medium', 'compact'] as const) {
-          const responsiveStyleForBytes = getMergedResponsiveStyleOverride(
+        for (const mode of RESPONSIVE_MODES) {
+          styleObjectsBytes[mode] += countNodeStyleBytesForMode(
             node,
+            card.state,
             card.cardStyles,
             mode,
           );
-          if (responsiveStyleForBytes) {
-            styleObjectsBytes += countResolvedStyleBytes(responsiveStyleForBytes, card.state);
-          }
         }
       }
 
@@ -447,8 +393,8 @@ export function validateLimits(card: {
               const multiplier = source.length - 1;
               nodeCount += tplMetrics.nodes * multiplier;
               textContentBytes += tplMetrics.textBytes * multiplier;
-              styleObjectsBytes += tplMetrics.styleBytes * multiplier;
               for (const mode of RESPONSIVE_MODES) {
+                styleObjectsBytes[mode] += tplMetrics.styleBytes[mode] * multiplier;
                 overflowAutoCount[mode] += tplMetrics.overflowAutoCount[mode] * multiplier;
               }
             }
@@ -520,11 +466,22 @@ export function validateLimits(card: {
     );
   }
 
-  if (styleObjectsBytes > STYLE_OBJECTS_TOTAL_MAX_BYTES) {
+  const maxStyleObjectsBytes = Math.max(
+    styleObjectsBytes.default,
+    styleObjectsBytes.medium,
+    styleObjectsBytes.compact,
+  );
+  const worstStyleModes = RESPONSIVE_MODES.filter(
+    (mode) => styleObjectsBytes[mode] === maxStyleObjectsBytes,
+  );
+
+  if (maxStyleObjectsBytes > STYLE_OBJECTS_TOTAL_MAX_BYTES) {
     errors.push(
       createError(
         'STYLE_SIZE_EXCEEDED',
-        `Total style objects size is ${styleObjectsBytes} bytes, max is ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`,
+        `Resolved style output is ${maxStyleObjectsBytes} bytes in ${worstStyleModes.join(
+          ', ',
+        )} mode, max is ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`,
         'views',
       ),
     );

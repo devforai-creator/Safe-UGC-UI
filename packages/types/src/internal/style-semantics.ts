@@ -38,6 +38,31 @@ export function mergeNamedStyleRef(
   return { ...baseStyle, ...inlineWithoutStyleRef };
 }
 
+export function mergeStyleWithCardStyles(
+  style: StyleRecord | undefined,
+  cardStyles: CardStyleMap | undefined,
+): StyleRecord | undefined {
+  const mergedStyle = mergeNamedStyleRef(style, cardStyles);
+  if (!mergedStyle) {
+    return undefined;
+  }
+
+  const rawHoverStyle = mergedStyle.hoverStyle;
+  if (typeof rawHoverStyle !== 'object' || rawHoverStyle === null || Array.isArray(rawHoverStyle)) {
+    return mergedStyle;
+  }
+
+  const mergedHoverStyle = mergeNamedStyleRef(rawHoverStyle as StyleRecord, cardStyles);
+  if (!mergedHoverStyle) {
+    return mergedStyle;
+  }
+
+  return {
+    ...mergedStyle,
+    hoverStyle: mergedHoverStyle,
+  };
+}
+
 export function getResponsiveStyleOverride(
   responsive: Record<string, unknown> | undefined,
   mode: Exclude<ResponsiveMode, 'default'>,

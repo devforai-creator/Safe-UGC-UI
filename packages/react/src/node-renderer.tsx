@@ -25,8 +25,13 @@ import {
 } from '@safe-ugc-ui/types';
 import {
   getEffectiveStyleForMode,
-  mergeNamedStyleRef,
+  mergeStyleWithCardStyles,
 } from '@safe-ugc-ui/types/internal/style-semantics';
+import {
+  countResolvedCssBytes,
+  type ResolvedCssStyle,
+  utf8ByteLength,
+} from '@safe-ugc-ui/types/internal/style-output';
 
 import { resolveRef, resolveTextValue, resolveValue } from './state-resolver.js';
 import { evaluateCondition } from './condition-resolver.js';
@@ -151,52 +156,6 @@ function isFragmentUse(obj: unknown): obj is FragmentUseLike {
   return typeof (obj as Record<string, unknown>).$use === 'string';
 }
 
-function utf8ByteLength(str: string): number {
-  let bytes = 0;
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (code <= 0x7f) {
-      bytes += 1;
-    } else if (code <= 0x7ff) {
-      bytes += 2;
-    } else if (code >= 0xd800 && code <= 0xdbff) {
-      // Surrogate pair → 4 UTF-8 bytes
-      bytes += 4;
-      i++; // skip low surrogate
-    } else {
-      bytes += 3;
-    }
-  }
-  return bytes;
-}
-
-/**
- * Merge node style and nested hoverStyle against cardStyles.
- */
-function mergeStyleWithCardStyles(
-  nodeStyle: Record<string, unknown> | undefined,
-  cardStyles: Record<string, Record<string, unknown>> | undefined,
-): Record<string, unknown> | undefined {
-  const mergedStyle = mergeNamedStyleRef(nodeStyle, cardStyles);
-  if (!mergedStyle) return undefined;
-
-  const rawHoverStyle = mergedStyle.hoverStyle;
-  if (typeof rawHoverStyle !== 'object' || rawHoverStyle === null || Array.isArray(rawHoverStyle)) {
-    return mergedStyle;
-  }
-
-  const mergedHoverStyle = mergeNamedStyleRef(rawHoverStyle as Record<string, unknown>, cardStyles);
-
-  if (!mergedHoverStyle) {
-    return mergedStyle;
-  }
-
-  return {
-    ...mergedStyle,
-    hoverStyle: mergedHoverStyle,
-  };
-}
-
 function mergeEffectiveNodeStyle(
   node: UGCNodeLike,
   ctx: RenderContext,
@@ -223,15 +182,14 @@ function resolveTextPayload(node: UGCNodeLike, ctx: RenderContext): ResolvedText
         rawSpan.style != null && typeof rawSpan.style === 'object' && !Array.isArray(rawSpan.style)
           ? (rawSpan.style as Record<string, unknown>)
           : undefined;
-      const resolvedStyle = spanStyle ? mapStyle(spanStyle, ctx.state, ctx.locals) : undefined;
+      const resolvedStyle = spanStyle
+        ? (mapStyle(spanStyle, ctx.state, ctx.locals) as ResolvedCssStyle)
+        : undefined;
 
       return {
         text: resolveTextValue(rawSpan.text, ctx.state, ctx.locals),
         style: resolvedStyle,
-        styleBytes:
-          resolvedStyle && Object.keys(resolvedStyle).length > 0
-            ? utf8ByteLength(JSON.stringify(resolvedStyle))
-            : 0,
+        styleBytes: countResolvedCssBytes(resolvedStyle),
       };
     });
 
@@ -249,14 +207,6 @@ function resolveTextPayload(node: UGCNodeLike, ctx: RenderContext): ResolvedText
     textBytes: utf8ByteLength(content),
     styleBytes: 0,
   };
-}
-
-function countResolvedCssBytes(style: CSSProperties | undefined): number {
-  if (!style || Object.keys(style).length === 0) {
-    return 0;
-  }
-
-  return utf8ByteLength(JSON.stringify(style));
 }
 
 function countResolvedItemLabelBytes(items: unknown, ctx: RenderContext): number {
@@ -498,7 +448,9 @@ export function renderNode(node: unknown, ctx: RenderContext, key: string | numb
   const rawHoverStyle = mergedRawStyle?.hoverStyle as Record<string, unknown> | undefined;
   const cssHoverStyle = rawHoverStyle ? mapStyle(rawHoverStyle, ctx.state, ctx.locals) : undefined;
 
-  let styleDelta = countResolvedCssBytes(cssStyle) + countResolvedCssBytes(cssHoverStyle);
+  let styleDelta =
+    countResolvedCssBytes(cssStyle as ResolvedCssStyle) +
+    countResolvedCssBytes(cssHoverStyle as ResolvedCssStyle | undefined);
   const overflowDelta = mergedRawStyle?.overflow === 'auto' ? 1 : 0;
 
   // Text payload: resolve once, reuse in render

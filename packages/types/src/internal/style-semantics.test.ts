@@ -3,6 +3,7 @@ import {
   getEffectiveStyleForMode,
   getMergedResponsiveStyleOverride,
   mergeNamedStyleRef,
+  mergeStyleWithCardStyles,
 } from './style-semantics.js';
 
 describe('style semantics', () => {
@@ -39,6 +40,38 @@ describe('style semantics', () => {
 
     expect(result).toEqual({
       color: '#000',
+    });
+  });
+
+  it('merges hoverStyle named refs without changing the base style precedence', () => {
+    const result = mergeStyleWithCardStyles(
+      {
+        $style: 'card',
+        padding: 20,
+        hoverStyle: {
+          $style: 'hover-card',
+          opacity: 0.8,
+        },
+      },
+      {
+        card: {
+          padding: 12,
+          color: '#fff',
+        },
+        'hover-card': {
+          opacity: 0.5,
+          backgroundColor: '#000',
+        },
+      },
+    );
+
+    expect(result).toEqual({
+      padding: 20,
+      color: '#fff',
+      hoverStyle: {
+        opacity: 0.8,
+        backgroundColor: '#000',
+      },
     });
   });
 

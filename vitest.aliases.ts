@@ -8,6 +8,12 @@ export const workspaceAliases = [
     ),
   },
   {
+    find: '@safe-ugc-ui/types/internal/style-output',
+    replacement: fileURLToPath(
+      new URL('./packages/types/src/internal/style-output.ts', import.meta.url),
+    ),
+  },
+  {
     find: /^@safe-ugc-ui\/types$/,
     replacement: fileURLToPath(new URL('./packages/types/src/index.ts', import.meta.url)),
   },

@@ -155,7 +155,8 @@ as the historical audit ledger that tracks older items and prior closure state.
   - `docs/aab-004-plan.md`
 - Current progress:
   - `AAB-004a` is landed
-  - `AAB-004b` and `AAB-004c` remain open
+  - `AAB-004b` is landed
+  - `AAB-004c` remains open
 - Risk:
   - the same author-facing DSL semantics are still encoded in multiple high-risk
     files, so a future rule change will keep demanding parallel edits

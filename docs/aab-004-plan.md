@@ -10,7 +10,12 @@ This document defines the execution plan for `AAB-004` from
   `packages/types/src/internal/style-semantics.ts`.
 - Shared semantic matrix tests now live in
   `packages/types/src/internal/style-semantics.test.ts`.
-- `AAB-004` remains open because `004b` and `004c` are still pending.
+- `AAB-004b` landed on `2026-04-13`.
+- Shared render-output style mapping and CSS byte counting now live in
+  `packages/types/src/internal/style-output.ts`.
+- Validator style budgets now measure renderer-equivalent CSS output per
+  responsive mode and compare the worst-case mode against the global limit.
+- `AAB-004` remains open because `004c` is still pending.
 
 ## Goal
 
@@ -199,14 +204,62 @@ Candidates:
 - shared text-value byte counting primitives
 - shared "effective style to count" policy
 
-### Required Decision
+### Locked Decision
 
-Decide what style-byte accounting is supposed to measure:
+`AAB-004b` will align validator-side style accounting to the renderer contract.
 
-- resolved DSL objects before CSS mapping
+The semantic target is:
+
 - mapped CSS output after renderer transformation
+- counted from the effective merged style for the active responsive mode
+- measured as UTF-8 bytes of the JSON-serialized resolved CSS object
 
-Until that decision is written down, do not extract style byte counting.
+This decision intentionally rejects the older validator behavior of counting:
+
+- unresolved-or-DSL-like style objects before CSS mapping
+- default style plus `medium` / `compact` override branches as separate totals
+
+### Detailed Rules
+
+1. Runtime renderer rule
+
+- count only the currently active mode: `default`, `medium`, or `compact`
+- count the effective merged node style for that mode once
+- count mapped `hoverStyle` for that effective base style in the same mode
+- count mapped `Text.spans[*].style` output using the same CSS-based metric
+
+2. Validator preflight rule
+
+- compute style totals independently for `default`, `medium`, and `compact`
+- for each mode, measure the resolved render output that the renderer would
+  produce for that mode
+- reject the card if any mode exceeds the global style-byte budget
+
+3. Aggregation rule
+
+- do not sum authored responsive branches on top of each other as separate
+  budget entries
+- do not count the same base style twice when evaluating a responsive mode
+- compare modes by worst-case final output, not by authored branch volume
+
+### Rationale
+
+- The spec and repo docs already say style budgets apply to resolved render
+  output, not authored literals.
+- The renderer already enforces limits against mapped CSS output for the active
+  mode.
+- A validator that sums authored branches can reject or accept cards for the
+  wrong reason because authored DSL volume is not the same thing as final CSS
+  payload.
+
+### Locked Test Coverage
+
+`004b` now has direct coverage for the following behaviors:
+
+- runtime limits use mapped CSS byte size, not raw DSL byte size
+- runtime limits count only the currently active responsive mode
+- runtime limits count the effective responsive style once, not base-plus-branch
+  as separate style entries
 
 ### Exit Criteria
 
