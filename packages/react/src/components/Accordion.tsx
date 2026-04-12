@@ -1,4 +1,4 @@
-import { useId, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from 'react';
 import { useHoverStyle } from '../hooks/useHoverStyle.js';
 
 interface AccordionItem {
@@ -16,16 +16,40 @@ interface AccordionProps {
   hoverStyle?: CSSProperties;
 }
 
+function getEnabledAccordionIds(items: AccordionItem[]): string[] {
+  return items
+    .filter((item) => item.disabled !== true)
+    .map((item) => item.id);
+}
+
 function getInitialExpandedIds(
   items: AccordionItem[],
   defaultExpanded: string[] | undefined,
   allowMultiple: boolean,
 ): string[] {
-  const enabledIds = new Set(
-    items.filter((item) => item.disabled !== true).map((item) => item.id),
-  );
+  const enabledIds = new Set(getEnabledAccordionIds(items));
   const initial = (defaultExpanded ?? []).filter((id) => enabledIds.has(id));
   return allowMultiple ? initial : initial.slice(0, 1);
+}
+
+function getReconciledExpandedIds(
+  currentExpandedIds: string[],
+  items: AccordionItem[],
+  defaultExpanded: string[] | undefined,
+  allowMultiple: boolean,
+): string[] {
+  const enabledIds = getEnabledAccordionIds(items);
+  if (enabledIds.length === 0) {
+    return [];
+  }
+
+  const enabledSet = new Set(enabledIds);
+  const currentValid = currentExpandedIds.filter((id) => enabledSet.has(id));
+  if (currentValid.length > 0) {
+    return allowMultiple ? currentValid : currentValid.slice(0, 1);
+  }
+
+  return getInitialExpandedIds(items, defaultExpanded, allowMultiple);
 }
 
 export function Accordion({
@@ -40,6 +64,26 @@ export function Accordion({
     () => getInitialExpandedIds(items, defaultExpanded, allowMultiple),
   );
   const baseId = useId();
+
+  useEffect(() => {
+    setExpandedIds((current) => {
+      const next = getReconciledExpandedIds(
+        current,
+        items,
+        defaultExpanded,
+        allowMultiple,
+      );
+
+      if (
+        current.length === next.length &&
+        current.every((id, index) => id === next[index])
+      ) {
+        return current;
+      }
+
+      return next;
+    });
+  }, [items, defaultExpanded, allowMultiple]);
 
   const expandedSet = new Set(expandedIds);
 

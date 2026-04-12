@@ -18,6 +18,7 @@ import { resolveAsset } from './asset-resolver.js';
 import { renderTree } from './node-renderer.js';
 import { UGCContainer } from './UGCContainer.js';
 import { UGCRenderer } from './UGCRenderer.js';
+import { Accordion } from './components/Accordion.js';
 import { Avatar } from './components/Avatar.js';
 import { Image } from './components/Image.js';
 
@@ -1575,6 +1576,114 @@ describe('New components rendering', () => {
     expect(button.disabled).toBe(true);
     fireEvent.click(button);
     expect(screen.queryByText('Hidden body')).toBeNull();
+  });
+
+  it('Accordion closes an expanded item when it becomes disabled on rerender', () => {
+    const makeItems = (profileDisabled = false) => [
+      {
+        id: 'profile',
+        label: 'Profile',
+        disabled: profileDisabled,
+        content: <span>Profile body</span>,
+      },
+      {
+        id: 'inventory',
+        label: 'Inventory',
+        content: <span>Inventory body</span>,
+      },
+    ];
+
+    const { rerender } = render(
+      <Accordion items={makeItems(false)} defaultExpanded={['profile']} />,
+    );
+
+    expect(screen.getByText('Profile body')).toBeTruthy();
+
+    rerender(
+      <Accordion items={makeItems(true)} defaultExpanded={['profile']} />,
+    );
+
+    expect(screen.queryByText('Profile body')).toBeNull();
+  });
+
+  it('Accordion falls back to updated defaultExpanded when current item disappears on rerender', () => {
+    const { rerender } = render(
+      <Accordion
+        items={[
+          {
+            id: 'profile',
+            label: 'Profile',
+            content: <span>Profile body</span>,
+          },
+          {
+            id: 'inventory',
+            label: 'Inventory',
+            content: <span>Inventory body</span>,
+          },
+        ]}
+        defaultExpanded={['profile']}
+      />,
+    );
+
+    expect(screen.getByText('Profile body')).toBeTruthy();
+
+    rerender(
+      <Accordion
+        items={[
+          {
+            id: 'inventory',
+            label: 'Inventory',
+            content: <span>Inventory body</span>,
+          },
+          {
+            id: 'logs',
+            label: 'Logs',
+            content: <span>Logs body</span>,
+          },
+        ]}
+        defaultExpanded={['inventory']}
+      />,
+    );
+
+    expect(screen.queryByText('Profile body')).toBeNull();
+    expect(screen.getByText('Inventory body')).toBeTruthy();
+  });
+
+  it('Accordion trims expanded state when allowMultiple changes to false', () => {
+    const items = [
+      {
+        id: 'profile',
+        label: 'Profile',
+        content: <span>Profile body</span>,
+      },
+      {
+        id: 'inventory',
+        label: 'Inventory',
+        content: <span>Inventory body</span>,
+      },
+    ];
+
+    const { rerender } = render(
+      <Accordion
+        items={items}
+        allowMultiple
+        defaultExpanded={['profile', 'inventory']}
+      />,
+    );
+
+    expect(screen.getByText('Profile body')).toBeTruthy();
+    expect(screen.getByText('Inventory body')).toBeTruthy();
+
+    rerender(
+      <Accordion
+        items={items}
+        allowMultiple={false}
+        defaultExpanded={['profile', 'inventory']}
+      />,
+    );
+
+    expect(screen.getByText('Profile body')).toBeTruthy();
+    expect(screen.queryByText('Inventory body')).toBeNull();
   });
 
   it('Accordion reserves runtime budget for hidden item content', () => {
