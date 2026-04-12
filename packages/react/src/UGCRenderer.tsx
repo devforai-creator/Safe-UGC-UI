@@ -20,7 +20,7 @@
  *   - onAction:       Optional callback for Button/Toggle actions
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { loadCard, loadCardRaw, validate } from '@safe-ugc-ui/validator';
 import {
@@ -87,6 +87,7 @@ export function UGCRenderer({
   const [containerWidth, setContainerWidth] = useState<number | null>(
     typeof window === 'undefined' ? null : window.innerWidth,
   );
+  const lastReportedInvalidErrorKey = useRef<string | null>(null);
 
   const result = useMemo(() => {
     const loadResult = typeof card === 'string'
@@ -182,11 +183,28 @@ export function UGCRenderer({
     [containerWidth],
   );
 
+  useEffect(() => {
+    if (result.valid || !onError || result.errors.length === 0) {
+      if (result.valid) {
+        lastReportedInvalidErrorKey.current = null;
+      }
+      return;
+    }
+
+    const errorKey = result.errors
+      .map((error) => `${error.code}|${error.path}|${error.message}`)
+      .join('\n');
+
+    if (lastReportedInvalidErrorKey.current === errorKey) {
+      return;
+    }
+
+    lastReportedInvalidErrorKey.current = errorKey;
+    onError(result.errors);
+  }, [onError, result]);
+
   // Handle invalid cards
   if (!result.valid) {
-    if (onError && result.errors.length > 0) {
-      onError(result.errors);
-    }
     return null;
   }
 

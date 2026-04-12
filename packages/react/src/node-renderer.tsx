@@ -131,6 +131,12 @@ export interface RenderContext {
   };
 }
 
+interface RuntimeRenderError {
+  code: string;
+  message: string;
+  path: string;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -470,6 +476,66 @@ function renderSwitchBranch(
   return null;
 }
 
+function reportRuntimeError(
+  ctx: RenderContext,
+  error: RuntimeRenderError,
+): null {
+  ctx.onError?.([error]);
+  return null;
+}
+
+function resolveRuntimeAsset(
+  nodeType: 'Image' | 'Avatar',
+  key: string | number,
+  rawSrc: unknown,
+  ctx: RenderContext,
+): string | null {
+  const path = `${String(key)}.src`;
+
+  if (typeof rawSrc !== 'string' || rawSrc.length === 0) {
+    return reportRuntimeError(ctx, {
+      code: 'RUNTIME_ASSET_SRC_INVALID',
+      message: `${nodeType}.src must resolve to a non-empty string`,
+      path,
+    });
+  }
+
+  if (!rawSrc.startsWith('@assets/')) {
+    return reportRuntimeError(ctx, {
+      code: 'INVALID_ASSET_PATH',
+      message: `Asset path must start with "@assets/". Got "${rawSrc}".`,
+      path,
+    });
+  }
+
+  if (rawSrc.includes('../')) {
+    return reportRuntimeError(ctx, {
+      code: 'ASSET_PATH_TRAVERSAL',
+      message: `Asset path contains path traversal ("../"). Got "${rawSrc}".`,
+      path,
+    });
+  }
+
+  const resolved = resolveAsset(rawSrc, ctx.assets);
+  if (!resolved) {
+    return reportRuntimeError(ctx, {
+      code: 'RUNTIME_ASSET_NOT_FOUND',
+      message: `No asset mapping was found for "${rawSrc}".`,
+      path,
+    });
+  }
+
+  if (!isSafeResolvedAssetUrl(resolved)) {
+    return reportRuntimeError(ctx, {
+      code: 'RUNTIME_ASSET_URL_UNSAFE',
+      message: `Resolved asset URL is unsafe for ${nodeType}.src. Got "${resolved}".`,
+      path,
+    });
+  }
+
+  return resolved;
+}
+
 // ---------------------------------------------------------------------------
 // renderNode --- recursive node renderer
 // ---------------------------------------------------------------------------
@@ -624,26 +690,18 @@ export function renderNode(
     }
 
     case 'Image': {
-      let src = rv((n as Record<string, unknown>).src);
-      if (typeof src !== 'string' || !src) return null;
-      if (!src.startsWith('@assets/')) return null;
-      if (src.includes('../')) return null;
-      const resolved = resolveAsset(src, ctx.assets);
+      const src = rv((n as Record<string, unknown>).src);
+      const resolved = resolveRuntimeAsset('Image', key, src, ctx);
       if (!resolved) return null;
-      if (!isSafeResolvedAssetUrl(resolved)) return null;
       const resolvedAlt = rv((n as Record<string, unknown>).alt);
       const alt = typeof resolvedAlt === 'string' ? resolvedAlt : undefined;
       return <Image key={key} src={resolved} alt={alt} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
     case 'Avatar': {
-      let src = rv((n as Record<string, unknown>).src);
-      if (typeof src !== 'string' || !src) return null;
-      if (!src.startsWith('@assets/')) return null;
-      if (src.includes('../')) return null;
-      const resolved = resolveAsset(src, ctx.assets);
+      const src = rv((n as Record<string, unknown>).src);
+      const resolved = resolveRuntimeAsset('Avatar', key, src, ctx);
       if (!resolved) return null;
-      if (!isSafeResolvedAssetUrl(resolved)) return null;
       const resolvedSize = rv((n as Record<string, unknown>).size);
       const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
         ? resolvedSize : undefined;

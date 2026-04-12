@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import {
   BACKDROP_BLUR_MAX,
   FONT_SIZE_MAX,
@@ -712,6 +712,22 @@ describe('UGCRenderer', () => {
     expect(onError).toHaveBeenCalled();
   });
 
+  it('does not call onError again when rerendering the same invalid card', async () => {
+    const onError = vi.fn();
+    const invalidCard = { notValid: true };
+    const { rerender } = render(<UGCRenderer card={invalidCard as any} onError={onError} />);
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledTimes(1);
+    });
+
+    rerender(<UGCRenderer card={invalidCard as any} onError={onError} />);
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('renders from raw JSON string', () => {
     const json = JSON.stringify(validCard);
     const { container } = render(<UGCRenderer card={json} />);
@@ -1225,6 +1241,51 @@ describe('renderTree', () => {
     const assets = { '@assets/../secret.png': 'https://cdn.example.com/secret.png' };
     const { container } = render(<>{renderTree(node, state, assets)}</>);
     expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('calls onError when Image asset mapping is missing at runtime', () => {
+    const onError = vi.fn();
+    const node = {
+      type: 'Image',
+      src: '@assets/missing.png',
+    };
+    const { container } = render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>);
+    expect(container.querySelector('img')).toBeNull();
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_ASSET_NOT_FOUND' }),
+    ]);
+  });
+
+  it('calls onError when resolved Image asset URL is unsafe at runtime', () => {
+    const onError = vi.fn();
+    const node = {
+      type: 'Image',
+      src: '@assets/avatar.png',
+    };
+    const assets = {
+      '@assets/avatar.png': 'javascript:alert(1)',
+    };
+    const { container } = render(<>{renderTree(node, {}, assets, undefined, undefined, undefined, onError)}</>);
+    expect(container.querySelector('img')).toBeNull();
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_ASSET_URL_UNSAFE' }),
+    ]);
+  });
+
+  it('calls onError when Avatar src resolves to an invalid asset path at runtime', () => {
+    const onError = vi.fn();
+    const node = {
+      type: 'Avatar',
+      src: { $ref: '$avatar' },
+    };
+    const state = {
+      avatar: 'logo.png',
+    };
+    const { container } = render(<>{renderTree(node, state, {}, undefined, undefined, undefined, onError)}</>);
+    expect(container.querySelector('img')).toBeNull();
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'INVALID_ASSET_PATH' }),
+    ]);
   });
 
   // --- Fix 2: $ref with array index in renderTree ---
