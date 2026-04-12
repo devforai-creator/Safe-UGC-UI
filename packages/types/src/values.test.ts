@@ -8,9 +8,18 @@ import {
   ZINDEX_MIN,
   ZINDEX_MAX,
   ALL_COMPONENT_TYPES,
+  ALLOWED_BORDER_STYLE_VALUES,
+  ALLOWED_DISPLAY_VALUES,
+  ALLOWED_TRANSITION_EASINGS,
   ALLOWED_FONT_FAMILIES,
+  ALLOWED_OBJECT_FIT_VALUES,
+  ALLOWED_POSITION_VALUES,
+  ALLOWED_OVERFLOW_VALUES,
   ALLOWED_TRANSITION_PROPERTIES,
+  LENGTH_AUTO_STYLE_PROPERTIES,
+  DIRECT_RENDERABLE_STYLE_PROPERTIES,
   FORBIDDEN_STYLE_PROPERTIES,
+  RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
 } from './constants.js';
 
 // ===========================================================================
@@ -359,5 +368,50 @@ describe('constants', () => {
 
   it('ALLOWED_TRANSITION_PROPERTIES includes textShadow', () => {
     expect(ALLOWED_TRANSITION_PROPERTIES).toContain('textShadow');
+  });
+
+  it('ALLOWED_TRANSITION_PROPERTIES is derived from direct renderable properties', () => {
+    expect(ALLOWED_TRANSITION_PROPERTIES).toEqual([
+      ...DIRECT_RENDERABLE_STYLE_PROPERTIES,
+      'textShadow',
+    ]);
+  });
+
+  it('RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES captures the responsive-only exclusions', () => {
+    expect(RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES).toEqual(['hoverStyle', 'transition']);
+  });
+
+  it('ALLOWED_TRANSITION_EASINGS matches the schema and renderer contract', () => {
+    expect(ALLOWED_TRANSITION_EASINGS).toEqual([
+      'ease',
+      'linear',
+      'ease-in',
+      'ease-out',
+      'ease-in-out',
+    ]);
+  });
+
+  it('shared enum value lists cover the renderer-facing scalar domains', () => {
+    expect(ALLOWED_POSITION_VALUES).toEqual(['static', 'relative', 'absolute']);
+    expect(ALLOWED_OVERFLOW_VALUES).toEqual(['visible', 'hidden', 'auto']);
+    expect(ALLOWED_DISPLAY_VALUES).toEqual(['flex', 'block', 'none']);
+    expect(ALLOWED_OBJECT_FIT_VALUES).toEqual(['cover', 'contain', 'fill', 'none', 'scale-down']);
+    expect(ALLOWED_BORDER_STYLE_VALUES).toEqual(['solid', 'dashed', 'dotted', 'none']);
+  });
+
+  it('LENGTH_AUTO_STYLE_PROPERTIES captures the shared auto-capable size properties', () => {
+    expect(LENGTH_AUTO_STYLE_PROPERTIES).toEqual([
+      'width',
+      'height',
+      'minWidth',
+      'maxWidth',
+      'minHeight',
+      'maxHeight',
+      'margin',
+      'marginTop',
+      'marginRight',
+      'marginBottom',
+      'marginLeft',
+    ]);
   });
 });

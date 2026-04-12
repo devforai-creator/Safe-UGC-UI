@@ -156,7 +156,10 @@ as the historical audit ledger that tracks older items and prior closure state.
 - Current progress:
   - `AAB-004a` is landed
   - `AAB-004b` is landed
-  - `AAB-004c` remains open
+  - `AAB-004c` initial capability-registry slice is landed
+  - shared enum/value-domain lists are now wired through schema, validator, and
+    renderer-internal helpers
+  - broader `AAB-004c` registry work remains open
 - Risk:
   - the same author-facing DSL semantics are still encoded in multiple high-risk
     files, so a future rule change will keep demanding parallel edits

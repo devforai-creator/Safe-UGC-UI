@@ -41,6 +41,8 @@ import {
   TRANSITION_DELAY_MAX,
   TRANSITION_MAX_COUNT,
   ALLOWED_TRANSITION_PROPERTIES,
+  LENGTH_AUTO_STYLE_PROPERTIES,
+  RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
   isRef,
   hoverStylePropsSchema,
   responsiveStylePropsSchema,
@@ -82,19 +84,7 @@ const LENGTH_PROPERTIES = new Set([
   'lineHeight',
 ]);
 
-const LENGTH_AUTO_ALLOWED = new Set([
-  'width',
-  'height',
-  'minWidth',
-  'maxWidth',
-  'minHeight',
-  'maxHeight',
-  'margin',
-  'marginTop',
-  'marginRight',
-  'marginBottom',
-  'marginLeft',
-]);
+const LENGTH_AUTO_ALLOWED = new Set<string>(LENGTH_AUTO_STYLE_PROPERTIES);
 
 const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
 const STYLE_ALLOWED_KEYS = new Set(Object.keys(stylePropsSchema.shape));
@@ -104,13 +94,11 @@ const HOVER_STYLE_ALLOWED_KEYS = new Set([
 ]);
 const RESPONSIVE_STYLE_ALLOWED_KEYS = new Set([
   ...Object.keys(responsiveStylePropsSchema.shape),
-  'hoverStyle',
-  'transition',
+  ...RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
 ]);
 const TEXT_SPAN_STYLE_ALLOWED_KEYS = new Set([
   ...Object.keys(textSpanStyleSchema.shape),
-  'hoverStyle',
-  'transition',
+  ...RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES,
 ]);
 
 // Properties that have range limits AND accept string lengths

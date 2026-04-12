@@ -15,7 +15,13 @@ This document defines the execution plan for `AAB-004` from
   `packages/types/src/internal/style-output.ts`.
 - Validator style budgets now measure renderer-equivalent CSS output per
   responsive mode and compare the worst-case mode against the global limit.
-- `AAB-004` remains open because `004c` is still pending.
+- `AAB-004c` initial capability-registry slice landed on `2026-04-13`.
+- Shared capability lists now live in `packages/types/src/constants.ts` for:
+  - directly renderable style properties
+  - responsive-forbidden style keys
+  - transition easing keywords
+- `AAB-004` remains open because the broader `004c` registry work is still
+  pending.
 
 ## Goal
 
@@ -285,6 +291,28 @@ Likely candidates:
 
 This slice should be incremental. If the implementation starts looking like a
 schema rewrite, the scope is too large.
+
+### Current Progress
+
+The first `004c` slice is landed:
+
+- `DIRECT_RENDERABLE_STYLE_PROPERTIES` is now shared by constants and the
+  render-output mapper
+- `ALLOWED_TRANSITION_PROPERTIES` is now derived from that shared property list
+- `ALLOWED_TRANSITION_EASINGS` is now shared by the schema and renderer mapping
+- `RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES` is now shared by responsive
+  normalization and validator-side responsive validation
+- enum/value-domain lists for display, flex alignment, overflow, position,
+  object-fit, and border-style are now shared between schema definitions and
+  the render-output mapper
+- `LENGTH_AUTO_STYLE_PROPERTIES` is now shared between validator and
+  render-output normalization
+
+Still open:
+
+- text-span capability metadata remains local to schema/validator code
+- the style validator still owns some property categorization sets that are not
+  yet shared
 
 ### Exit Criteria
 

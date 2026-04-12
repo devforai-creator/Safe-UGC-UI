@@ -102,6 +102,93 @@ export const ALLOWED_FONT_FAMILIES = [
 /** Regex for supported string `aspectRatio` literals like "16 / 9". */
 export const ASPECT_RATIO_PATTERN = /^\s*[0-9]+(\.[0-9]+)?\s*\/\s*[0-9]+(\.[0-9]+)?\s*$/;
 
+/** Allowed position values. */
+export const ALLOWED_POSITION_VALUES = ['static', 'relative', 'absolute'] as const;
+
+/** Allowed display values. */
+export const ALLOWED_DISPLAY_VALUES = ['flex', 'block', 'none'] as const;
+
+/** Allowed flex-direction values. */
+export const ALLOWED_FLEX_DIRECTION_VALUES = [
+  'row',
+  'column',
+  'row-reverse',
+  'column-reverse',
+] as const;
+
+/** Allowed justify-content values. */
+export const ALLOWED_JUSTIFY_CONTENT_VALUES = [
+  'start',
+  'flex-start',
+  'center',
+  'end',
+  'flex-end',
+  'space-between',
+  'space-around',
+  'space-evenly',
+] as const;
+
+/** Allowed align-items values. */
+export const ALLOWED_ALIGN_ITEMS_VALUES = [
+  'start',
+  'flex-start',
+  'center',
+  'end',
+  'flex-end',
+  'stretch',
+  'baseline',
+] as const;
+
+/** Allowed align-self values. */
+export const ALLOWED_ALIGN_SELF_VALUES = [
+  'auto',
+  'start',
+  'flex-start',
+  'center',
+  'end',
+  'flex-end',
+  'stretch',
+] as const;
+
+/** Allowed flex-wrap values. */
+export const ALLOWED_FLEX_WRAP_VALUES = ['nowrap', 'wrap', 'wrap-reverse'] as const;
+
+/** Allowed text-align values. */
+export const ALLOWED_TEXT_ALIGN_VALUES = ['left', 'center', 'right', 'justify'] as const;
+
+/** Allowed text-decoration values. */
+export const ALLOWED_TEXT_DECORATION_VALUES = ['none', 'underline', 'line-through'] as const;
+
+/** Allowed font-style values. */
+export const ALLOWED_FONT_STYLE_VALUES = ['normal', 'italic'] as const;
+
+/** Allowed object-fit values. */
+export const ALLOWED_OBJECT_FIT_VALUES = [
+  'cover',
+  'contain',
+  'fill',
+  'none',
+  'scale-down',
+] as const;
+
+/** Allowed border-style values for structured border objects. */
+export const ALLOWED_BORDER_STYLE_VALUES = ['solid', 'dashed', 'dotted', 'none'] as const;
+
+/** Properties that allow the special string length value `auto`. */
+export const LENGTH_AUTO_STYLE_PROPERTIES = [
+  'width',
+  'height',
+  'minWidth',
+  'maxWidth',
+  'minHeight',
+  'maxHeight',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
+] as const;
+
 /** Maximum number of text-shadow entries. */
 export const TEXT_SHADOW_MAX_COUNT = 5;
 
@@ -145,10 +232,12 @@ export const TRANSITION_DELAY_MAX = 1000;
 export const TRANSITION_MAX_COUNT = 10;
 
 /**
- * CSS properties allowed in transition.property (spec 3.9).
- * Matches the DIRECT_MAP_PROPS whitelist from style-mapper.
+ * Style properties that map directly to renderable CSS output.
+ *
+ * This is the source of truth for the flat property whitelist used by the
+ * shared style-output mapper.
  */
-export const ALLOWED_TRANSITION_PROPERTIES = [
+export const DIRECT_RENDERABLE_STYLE_PROPERTIES = [
   'display',
   'flexDirection',
   'justifyContent',
@@ -159,6 +248,7 @@ export const ALLOWED_TRANSITION_PROPERTIES = [
   'gap',
   'width',
   'height',
+  'aspectRatio',
   'minWidth',
   'maxWidth',
   'minHeight',
@@ -201,8 +291,30 @@ export const ALLOWED_TRANSITION_PROPERTIES = [
   'gridRow',
   'objectFit',
   'objectPosition',
+] as const;
+
+/** Easing keywords allowed by the transition schema and renderer. */
+export const ALLOWED_TRANSITION_EASINGS = [
+  'ease',
+  'linear',
+  'ease-in',
+  'ease-out',
+  'ease-in-out',
+] as const;
+
+/**
+ * CSS properties allowed in transition.property (spec 3.9).
+ *
+ * This intentionally tracks the directly renderable property list plus
+ * `textShadow`, which is renderer-supported but not a direct scalar map.
+ */
+export const ALLOWED_TRANSITION_PROPERTIES = [
+  ...DIRECT_RENDERABLE_STYLE_PROPERTIES,
   'textShadow',
 ] as const;
+
+/** Style keys that are forbidden inside responsive override objects. */
+export const RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES = ['hoverStyle', 'transition'] as const;
 
 // ---------------------------------------------------------------------------
 // Component type lists

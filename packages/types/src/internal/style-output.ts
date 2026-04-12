@@ -7,12 +7,30 @@
  */
 
 import {
+  ALLOWED_ALIGN_ITEMS_VALUES,
+  ALLOWED_ALIGN_SELF_VALUES,
+  ALLOWED_BORDER_STYLE_VALUES,
+  ALLOWED_DISPLAY_VALUES,
+  ALLOWED_FLEX_DIRECTION_VALUES,
+  ALLOWED_FLEX_WRAP_VALUES,
+  ALLOWED_FONT_STYLE_VALUES,
+  ALLOWED_JUSTIFY_CONTENT_VALUES,
+  ALLOWED_OBJECT_FIT_VALUES,
+  ALLOWED_OVERFLOW_VALUES,
+  ALLOWED_POSITION_VALUES,
+  ALLOWED_TEXT_ALIGN_VALUES,
+  ALLOWED_TEXT_DECORATION_VALUES,
+  LENGTH_AUTO_STYLE_PROPERTIES,
+} from '../constants.js';
+import {
   ALLOWED_TRANSITION_PROPERTIES,
+  ALLOWED_TRANSITION_EASINGS,
   BACKDROP_BLUR_MAX,
   BORDER_RADIUS_MAX,
   BOX_SHADOW_BLUR_MAX,
   BOX_SHADOW_SPREAD_MAX,
   CSS_NAMED_COLORS,
+  DIRECT_RENDERABLE_STYLE_PROPERTIES,
   FONT_SIZE_MAX,
   FONT_SIZE_MIN,
   LETTER_SPACING_MAX,
@@ -90,61 +108,7 @@ export function countResolvedCssBytes(style: ResolvedCssStyle | undefined): numb
 // Whitelist of style properties that map directly to CSS
 // ---------------------------------------------------------------------------
 
-const DIRECT_MAP_PROPS = [
-  'display',
-  'flexDirection',
-  'justifyContent',
-  'alignItems',
-  'alignSelf',
-  'flexWrap',
-  'flex',
-  'gap',
-  'width',
-  'height',
-  'aspectRatio',
-  'minWidth',
-  'maxWidth',
-  'minHeight',
-  'maxHeight',
-  'padding',
-  'paddingTop',
-  'paddingRight',
-  'paddingBottom',
-  'paddingLeft',
-  'margin',
-  'marginTop',
-  'marginRight',
-  'marginBottom',
-  'marginLeft',
-  'backgroundColor',
-  'color',
-  'borderRadius',
-  'borderRadiusTopLeft',
-  'borderRadiusTopRight',
-  'borderRadiusBottomLeft',
-  'borderRadiusBottomRight',
-  'fontSize',
-  'fontWeight',
-  'fontStyle',
-  'textAlign',
-  'textDecoration',
-  'lineHeight',
-  'letterSpacing',
-  'opacity',
-  'overflow',
-  'position',
-  'top',
-  'right',
-  'bottom',
-  'left',
-  'zIndex',
-  'gridTemplateColumns',
-  'gridTemplateRows',
-  'gridColumn',
-  'gridRow',
-  'objectFit',
-  'objectPosition',
-] as const;
+const DIRECT_MAP_PROPS = DIRECT_RENDERABLE_STYLE_PROPERTIES;
 
 const FONT_FAMILY_STACKS: Record<string, string> = {
   sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
@@ -156,43 +120,18 @@ const FONT_FAMILY_STACKS: Record<string, string> = {
   handwriting: '"Bradley Hand", "Segoe Print", "Comic Sans MS", "Marker Felt", cursive',
 };
 
-const DISPLAY_VALUES = new Set(['flex', 'block', 'none']);
-const FLEX_DIRECTION_VALUES = new Set(['row', 'column', 'row-reverse', 'column-reverse']);
-const JUSTIFY_CONTENT_VALUES = new Set([
-  'start',
-  'flex-start',
-  'center',
-  'end',
-  'flex-end',
-  'space-between',
-  'space-around',
-  'space-evenly',
-]);
-const ALIGN_ITEMS_VALUES = new Set([
-  'start',
-  'flex-start',
-  'center',
-  'end',
-  'flex-end',
-  'stretch',
-  'baseline',
-]);
-const ALIGN_SELF_VALUES = new Set([
-  'auto',
-  'start',
-  'flex-start',
-  'center',
-  'end',
-  'flex-end',
-  'stretch',
-]);
-const FLEX_WRAP_VALUES = new Set(['nowrap', 'wrap', 'wrap-reverse']);
-const TEXT_ALIGN_VALUES = new Set(['left', 'center', 'right', 'justify']);
-const TEXT_DECORATION_VALUES = new Set(['none', 'underline', 'line-through']);
-const FONT_STYLE_VALUES = new Set(['normal', 'italic']);
-const OBJECT_FIT_VALUES = new Set(['cover', 'contain', 'fill', 'none', 'scale-down']);
-const OVERFLOW_VALUES = new Set(['visible', 'hidden', 'auto']);
-const POSITION_VALUES = new Set(['static', 'relative', 'absolute']);
+const DISPLAY_VALUES = new Set(ALLOWED_DISPLAY_VALUES);
+const FLEX_DIRECTION_VALUES = new Set(ALLOWED_FLEX_DIRECTION_VALUES);
+const JUSTIFY_CONTENT_VALUES = new Set(ALLOWED_JUSTIFY_CONTENT_VALUES);
+const ALIGN_ITEMS_VALUES = new Set(ALLOWED_ALIGN_ITEMS_VALUES);
+const ALIGN_SELF_VALUES = new Set(ALLOWED_ALIGN_SELF_VALUES);
+const FLEX_WRAP_VALUES = new Set(ALLOWED_FLEX_WRAP_VALUES);
+const TEXT_ALIGN_VALUES = new Set(ALLOWED_TEXT_ALIGN_VALUES);
+const TEXT_DECORATION_VALUES = new Set(ALLOWED_TEXT_DECORATION_VALUES);
+const FONT_STYLE_VALUES = new Set(ALLOWED_FONT_STYLE_VALUES);
+const OBJECT_FIT_VALUES = new Set(ALLOWED_OBJECT_FIT_VALUES);
+const OVERFLOW_VALUES = new Set(ALLOWED_OVERFLOW_VALUES);
+const POSITION_VALUES = new Set(ALLOWED_POSITION_VALUES);
 const FONT_WEIGHT_STRING_VALUES = new Set([
   'normal',
   'bold',
@@ -207,19 +146,7 @@ const FONT_WEIGHT_STRING_VALUES = new Set([
   '900',
 ]);
 const FONT_WEIGHT_NUMBER_VALUES = new Set([100, 200, 300, 400, 500, 600, 700, 800, 900]);
-const LENGTH_AUTO_ALLOWED = new Set([
-  'width',
-  'height',
-  'minWidth',
-  'maxWidth',
-  'minHeight',
-  'maxHeight',
-  'margin',
-  'marginTop',
-  'marginRight',
-  'marginBottom',
-  'marginLeft',
-]);
+const LENGTH_AUTO_ALLOWED = new Set<string>(LENGTH_AUTO_STYLE_PROPERTIES);
 const LENGTH_PATTERN = /^-?[0-9]+(\.[0-9]+)?(px|%|em|rem)?$/;
 
 // ---------------------------------------------------------------------------
@@ -840,7 +767,7 @@ function borderToCss(border: Record<string, unknown>): string {
   return `${String(width)}px ${String(style)} ${String(color)}`;
 }
 
-const BORDER_STYLE_VALUES = new Set(['solid', 'dashed', 'dotted', 'none']);
+const BORDER_STYLE_VALUES = new Set<string>(ALLOWED_BORDER_STYLE_VALUES);
 
 function resolveBorderObject(
   border: unknown,
@@ -1145,7 +1072,7 @@ export function mapTransition(transition: unknown): string | undefined {
     }
 
     // Defense-in-depth: reject easing values that aren't in the allowed set
-    const ALLOWED_EASINGS = new Set(['ease', 'linear', 'ease-in', 'ease-out', 'ease-in-out']);
+    const ALLOWED_EASINGS = new Set<string>(ALLOWED_TRANSITION_EASINGS);
 
     // Convert SUU property name to valid CSS property name
     const cssProperty = toCssPropertyName(property);

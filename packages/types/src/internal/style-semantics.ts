@@ -1,3 +1,5 @@
+import { RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES } from '../constants.js';
+
 export type StyleRecord = Record<string, unknown>;
 export type CardStyleMap = Record<string, StyleRecord>;
 export type ResponsiveMode = 'default' | 'medium' | 'compact';
@@ -86,8 +88,12 @@ export function stripResponsiveUnsupportedFields(
     return undefined;
   }
 
-  const { hoverStyle: _hoverStyle, transition: _transition, ...rest } = style;
-  return rest;
+  const strippedStyle = { ...style };
+  for (const key of RESPONSIVE_FORBIDDEN_STYLE_PROPERTIES) {
+    delete strippedStyle[key];
+  }
+
+  return strippedStyle;
 }
 
 export function getMergedResponsiveStyleOverride(

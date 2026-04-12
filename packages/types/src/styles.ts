@@ -13,7 +13,24 @@
  */
 
 import { z } from 'zod';
-import { ALLOWED_FONT_FAMILIES, ASPECT_RATIO_PATTERN } from './constants.js';
+import {
+  ALLOWED_ALIGN_ITEMS_VALUES,
+  ALLOWED_ALIGN_SELF_VALUES,
+  ALLOWED_BORDER_STYLE_VALUES,
+  ALLOWED_DISPLAY_VALUES,
+  ALLOWED_FLEX_DIRECTION_VALUES,
+  ALLOWED_FONT_FAMILIES,
+  ALLOWED_FONT_STYLE_VALUES,
+  ALLOWED_FLEX_WRAP_VALUES,
+  ALLOWED_JUSTIFY_CONTENT_VALUES,
+  ALLOWED_OBJECT_FIT_VALUES,
+  ALLOWED_POSITION_VALUES,
+  ALLOWED_OVERFLOW_VALUES,
+  ALLOWED_TEXT_ALIGN_VALUES,
+  ALLOWED_TEXT_DECORATION_VALUES,
+  ALLOWED_TRANSITION_EASINGS,
+  ASPECT_RATIO_PATTERN,
+} from './constants.js';
 import { refSchema, dynamicSchema, colorSchema, lengthSchema, percentageSchema } from './values.js';
 
 // ===========================================================================
@@ -109,7 +126,7 @@ export type TextShadowObject = z.infer<typeof textShadowObjectSchema>;
 // 1.8 BorderObject
 // ---------------------------------------------------------------------------
 
-export const borderStyleValueSchema = z.enum(['solid', 'dashed', 'dotted', 'none']);
+export const borderStyleValueSchema = z.enum(ALLOWED_BORDER_STYLE_VALUES);
 
 export const borderObjectSchema = z.object({
   width: dynamicSchema(z.number()),
@@ -178,102 +195,77 @@ export type ClipPathObject = z.infer<typeof clipPathObjectSchema>;
 // 2.1 PositionValue
 // ---------------------------------------------------------------------------
 
-export const positionValueSchema = z.enum(['static', 'relative', 'absolute']);
+export const positionValueSchema = z.enum(ALLOWED_POSITION_VALUES);
 export type PositionValue = z.infer<typeof positionValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.2 OverflowValue
 // ---------------------------------------------------------------------------
 
-export const overflowValueSchema = z.enum(['visible', 'hidden', 'auto']);
+export const overflowValueSchema = z.enum(ALLOWED_OVERFLOW_VALUES);
 export type OverflowValue = z.infer<typeof overflowValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.3 DisplayValue
 // ---------------------------------------------------------------------------
 
-export const displayValueSchema = z.enum(['flex', 'block', 'none']);
+export const displayValueSchema = z.enum(ALLOWED_DISPLAY_VALUES);
 export type DisplayValue = z.infer<typeof displayValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.4 FlexDirectionValue
 // ---------------------------------------------------------------------------
 
-export const flexDirectionValueSchema = z.enum(['row', 'column', 'row-reverse', 'column-reverse']);
+export const flexDirectionValueSchema = z.enum(ALLOWED_FLEX_DIRECTION_VALUES);
 export type FlexDirectionValue = z.infer<typeof flexDirectionValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.5 JustifyContentValue
 // ---------------------------------------------------------------------------
 
-export const justifyContentValueSchema = z.enum([
-  'start',
-  'flex-start',
-  'center',
-  'end',
-  'flex-end',
-  'space-between',
-  'space-around',
-  'space-evenly',
-]);
+export const justifyContentValueSchema = z.enum(ALLOWED_JUSTIFY_CONTENT_VALUES);
 export type JustifyContentValue = z.infer<typeof justifyContentValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.6 AlignItemsValue
 // ---------------------------------------------------------------------------
 
-export const alignItemsValueSchema = z.enum([
-  'start',
-  'flex-start',
-  'center',
-  'end',
-  'flex-end',
-  'stretch',
-  'baseline',
-]);
+export const alignItemsValueSchema = z.enum(ALLOWED_ALIGN_ITEMS_VALUES);
 export type AlignItemsValue = z.infer<typeof alignItemsValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.7 AlignSelfValue
 // ---------------------------------------------------------------------------
 
-export const alignSelfValueSchema = z.enum([
-  'auto',
-  'start',
-  'flex-start',
-  'center',
-  'end',
-  'flex-end',
-  'stretch',
-]);
+export const alignSelfValueSchema = z.enum(ALLOWED_ALIGN_SELF_VALUES);
 export type AlignSelfValue = z.infer<typeof alignSelfValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.8 FlexWrapValue
 // ---------------------------------------------------------------------------
 
-export const flexWrapValueSchema = z.enum(['nowrap', 'wrap', 'wrap-reverse']);
+export const flexWrapValueSchema = z.enum(ALLOWED_FLEX_WRAP_VALUES);
 export type FlexWrapValue = z.infer<typeof flexWrapValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.9 TextAlignValue
 // ---------------------------------------------------------------------------
 
-export const textAlignValueSchema = z.enum(['left', 'center', 'right', 'justify']);
+export const textAlignValueSchema = z.enum(ALLOWED_TEXT_ALIGN_VALUES);
 export type TextAlignValue = z.infer<typeof textAlignValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.10 TextDecorationValue
 // ---------------------------------------------------------------------------
 
-export const textDecorationValueSchema = z.enum(['none', 'underline', 'line-through']);
+export const textDecorationValueSchema = z.enum(ALLOWED_TEXT_DECORATION_VALUES);
 export type TextDecorationValue = z.infer<typeof textDecorationValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.11 FontStyleValue
 // ---------------------------------------------------------------------------
 
-export const fontStyleValueSchema = z.enum(['normal', 'italic']);
+export const fontStyleValueSchema = z.enum(ALLOWED_FONT_STYLE_VALUES);
 export type FontStyleValue = z.infer<typeof fontStyleValueSchema>;
 
 // ---------------------------------------------------------------------------
@@ -314,7 +306,7 @@ export type FontWeightValue = z.infer<typeof fontWeightValueSchema>;
 // 3. TransitionDef — constrained CSS transition declaration (spec 3.9)
 // ===========================================================================
 
-export const easingValueSchema = z.enum(['ease', 'linear', 'ease-in', 'ease-out', 'ease-in-out']);
+export const easingValueSchema = z.enum(ALLOWED_TRANSITION_EASINGS);
 
 export type EasingValue = z.infer<typeof easingValueSchema>;
 
@@ -493,7 +485,7 @@ const coreStyleShape = {
   // -----------------------------------------------------------------------
   // Object-fit — Dynamic (for Image nodes)
   // -----------------------------------------------------------------------
-  objectFit: dynamicSchema(z.enum(['cover', 'contain', 'fill', 'none', 'scale-down'])).optional(),
+  objectFit: dynamicSchema(z.enum(ALLOWED_OBJECT_FIT_VALUES)).optional(),
   objectPosition: dynamicSchema(z.string()).optional(),
 
   // -----------------------------------------------------------------------
