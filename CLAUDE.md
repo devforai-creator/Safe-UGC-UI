@@ -47,6 +47,7 @@ pick up the same project context.
 - `pnpm format` — format the workspace with Prettier.
 - `pnpm format:check` — check whether the workspace is Prettier-formatted.
 - The main CI workflow and the tag-based publish workflow both use `pnpm release:check` as the shared release baseline.
+- CI runs that baseline on Node `20.19.0`; `publish.yml` intentionally runs it on Node `24` because npm trusted publishing requires a newer runner runtime.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app.
 - `pnpm --filter @safe-ugc-ui/validator test` — validator-only tests.
@@ -74,6 +75,7 @@ pick up the same project context.
 - `@safe-ugc-ui/types/internal/*`는 workspace 조정과 고급 도구 사용을 위해 export를 유지하지만, semver 안정성 보장은 하지 않는다. 외부 소비자는 가능하면 피하거나 exact version을 고정한다.
 - 릴리스는 GitHub Actions의 `publish.yml`이 npm trusted publishing으로 처리한다.
 - 실제 publish 명령은 워크플로 안에서 `pnpm -r publish --access public --no-git-checks`로 실행한다. `npm publish`를 쓰면 `workspace:*` 의존성이 실제 버전으로 치환되지 않는다.
+- `publish.yml`은 npm trusted publishing 요구사항 때문에 Node `24`를 사용하고, 로컬 개발과 CI는 문서화된 Node `20.19.0` baseline을 유지한다.
 - 절차: 버전 bump → 깨끗한 checkout에서 `pnpm release:check` 실행 → 릴리스 커밋 push → `vX.Y.Z` 태그 push.
 - `pnpm release:pack-check`는 publish 전에 tarball 내용과 export 경계를 검증한다.
 - 로컬 `.npmrc`에 npm write 토큰을 지속적으로 저장하지 않는다.

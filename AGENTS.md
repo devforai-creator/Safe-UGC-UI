@@ -47,6 +47,7 @@ untrusted UI cards.
 - `pnpm format` — format the workspace with Prettier.
 - `pnpm format:check` — check whether the workspace is Prettier-formatted.
 - The main CI workflow and the tag-based publish workflow both use `pnpm release:check` as the shared release baseline.
+- CI runs that baseline on Node `20.19.0`; `publish.yml` intentionally runs it on Node `24` because npm trusted publishing requires a newer runner runtime.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app locally.
 - `pnpm --filter @safe-ugc-ui/validator test` — run validator tests only.
@@ -82,6 +83,7 @@ untrusted UI cards.
 - `@safe-ugc-ui/types/internal/*` remains exported for workspace coordination and advanced tooling, but it is not covered by semver stability promises; external consumers should avoid it or pin exact versions.
 - Releases are published by GitHub Actions via npm trusted publishing from `v*` tags.
 - Typical release flow: bump versions, run `pnpm release:check` from a clean checkout, commit and push the release commit, then push a matching `vX.Y.Z` tag.
+- `publish.yml` intentionally uses Node `24` for the tag publish even though the documented local/CI baseline is Node `20.19.0`; keep that exception explicit because npm trusted publishing depends on it.
 - `pnpm release:pack-check` verifies tarball contents and exported entrypoints before npm publish.
 - The `publish.yml` workflow performs the actual publish by running `pnpm -r publish --access public --no-git-checks` on GitHub-hosted runners; maintainers normally do not publish from local machines.
 

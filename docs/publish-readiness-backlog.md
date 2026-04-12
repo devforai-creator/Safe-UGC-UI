@@ -73,7 +73,10 @@ More concretely:
   - release docs no longer describe a lighter path than the one actually trusted for publish
 - Completion note (2026-04-13):
   - `.github/workflows/ci.yml` and `.github/workflows/publish.yml` now both call the same
-    `pnpm release:check` baseline on Node `20.19.0`
+    `pnpm release:check` baseline
+  - `.github/workflows/ci.yml` keeps the documented Node `20.19.0` baseline, while
+    `.github/workflows/publish.yml` intentionally stays on Node `24` because npm trusted publishing
+    requires a newer runner runtime
   - the release baseline now lives in `package.json` instead of being duplicated across workflows
 
 ## PRB-002 — Add A Clean-Checkout Release Rehearsal Path

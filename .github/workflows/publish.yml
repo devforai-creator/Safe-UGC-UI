@@ -24,7 +24,9 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20.19.0'
+          # Keep the publish runner on Node 24 for npm trusted publishing.
+          # Local development and CI validation remain on the documented 20.19.0 baseline.
+          node-version: '24'
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
