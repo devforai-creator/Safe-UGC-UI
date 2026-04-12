@@ -8,10 +8,13 @@
     "test:contracts": "pnpm --filter @safe-ugc-ui/validator test:contracts && pnpm --filter @safe-ugc-ui/react test:contracts",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "clean": "pnpm -r exec rm -rf dist"
+    "clean": "pnpm -r exec rm -rf dist",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.3",
+    "prettier": "^3.8.2",
     "tsup": "^8.0.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.3"

@@ -44,14 +44,9 @@ function getInitialSelectedTab(
   return enabledIds[0];
 }
 
-function getNextEnabledIndex(
-  tabs: TabsItem[],
-  startIndex: number,
-  direction: 1 | -1,
-): number {
+function getNextEnabledIndex(tabs: TabsItem[], startIndex: number, direction: 1 | -1): number {
   for (let offset = 1; offset <= tabs.length; offset++) {
-    const nextIndex =
-      (startIndex + direction * offset + tabs.length) % tabs.length;
+    const nextIndex = (startIndex + direction * offset + tabs.length) % tabs.length;
     if (tabs[nextIndex]?.disabled !== true) {
       return nextIndex;
     }
@@ -67,15 +62,10 @@ function focusTab(
   buttonRefs.current[index]?.focus();
 }
 
-export function Tabs({
-  tabs,
-  defaultTab,
-  style,
-  hoverStyle,
-}: TabsProps) {
+export function Tabs({ tabs, defaultTab, style, hoverStyle }: TabsProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  const [selectedTab, setSelectedTab] = useState<string | undefined>(
-    () => getInitialSelectedTab(tabs, defaultTab),
+  const [selectedTab, setSelectedTab] = useState<string | undefined>(() =>
+    getInitialSelectedTab(tabs, defaultTab),
   );
   const baseId = useId();
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -115,10 +105,7 @@ export function Tabs({
     }
   };
 
-  const onTabKeyDown = (
-    event: KeyboardEvent<HTMLButtonElement>,
-    index: number,
-  ) => {
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     switch (event.key) {
       case 'ArrowRight':
       case 'ArrowDown': {

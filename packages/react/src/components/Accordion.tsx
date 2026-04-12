@@ -17,9 +17,7 @@ interface AccordionProps {
 }
 
 function getEnabledAccordionIds(items: AccordionItem[]): string[] {
-  return items
-    .filter((item) => item.disabled !== true)
-    .map((item) => item.id);
+  return items.filter((item) => item.disabled !== true).map((item) => item.id);
 }
 
 function getInitialExpandedIds(
@@ -60,24 +58,16 @@ export function Accordion({
   hoverStyle,
 }: AccordionProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  const [expandedIds, setExpandedIds] = useState<string[]>(
-    () => getInitialExpandedIds(items, defaultExpanded, allowMultiple),
+  const [expandedIds, setExpandedIds] = useState<string[]>(() =>
+    getInitialExpandedIds(items, defaultExpanded, allowMultiple),
   );
   const baseId = useId();
 
   useEffect(() => {
     setExpandedIds((current) => {
-      const next = getReconciledExpandedIds(
-        current,
-        items,
-        defaultExpanded,
-        allowMultiple,
-      );
+      const next = getReconciledExpandedIds(current, items, defaultExpanded, allowMultiple);
 
-      if (
-        current.length === next.length &&
-        current.every((id, index) => id === next[index])
-      ) {
+      if (current.length === next.length && current.every((id, index) => id === next[index])) {
         return current;
       }
 

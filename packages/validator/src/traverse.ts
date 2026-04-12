@@ -84,22 +84,15 @@ interface ForLoopLike {
  * A visitor function called for every node in the tree.
  * Return `false` to skip traversing into this node's children.
  */
-export type NodeVisitor = (
-  node: TraversableNode,
-  context: TraversalContext,
-) => void | false;
+export type NodeVisitor = (node: TraversableNode, context: TraversalContext) => void | false;
 
-export type StyleResolver = (
-  node: TraversableNode,
-) => Record<string, unknown> | undefined;
+export type StyleResolver = (node: TraversableNode) => Record<string, unknown> | undefined;
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function isForLoop(
-  children: unknown,
-): children is ForLoopLike {
+function isForLoop(children: unknown): children is ForLoopLike {
   return (
     typeof children === 'object' &&
     children !== null &&
@@ -127,18 +120,12 @@ export function isFragmentUseLike(value: unknown): value is FragmentUseLike {
   );
 }
 
-export function getEmbeddedRenderables(
-  node: TraversableNode,
-): EmbeddedRenderableEntry[] {
+export function getEmbeddedRenderables(node: TraversableNode): EmbeddedRenderableEntry[] {
   const entries: EmbeddedRenderableEntry[] = [];
 
   if (node.type === 'Switch') {
     const rawCases = node.cases;
-    if (
-      rawCases != null &&
-      typeof rawCases === 'object' &&
-      !Array.isArray(rawCases)
-    ) {
+    if (rawCases != null && typeof rawCases === 'object' && !Array.isArray(rawCases)) {
       for (const [caseName, renderable] of Object.entries(rawCases)) {
         if (isTraversableNode(renderable) || isFragmentUseLike(renderable)) {
           entries.push({
@@ -150,10 +137,7 @@ export function getEmbeddedRenderables(
     }
 
     const defaultRenderable = node.default;
-    if (
-      isTraversableNode(defaultRenderable) ||
-      isFragmentUseLike(defaultRenderable)
-    ) {
+    if (isTraversableNode(defaultRenderable) || isFragmentUseLike(defaultRenderable)) {
       entries.push({
         pathSuffix: 'default',
         renderable: defaultRenderable,
@@ -164,11 +148,7 @@ export function getEmbeddedRenderables(
   }
 
   const interactiveField =
-    node.type === 'Accordion'
-      ? 'items'
-      : node.type === 'Tabs'
-        ? 'tabs'
-        : null;
+    node.type === 'Accordion' ? 'items' : node.type === 'Tabs' ? 'tabs' : null;
 
   if (interactiveField) {
     const items = (node as Record<string, unknown>)[interactiveField];
@@ -178,11 +158,7 @@ export function getEmbeddedRenderables(
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (
-        item == null ||
-        typeof item !== 'object' ||
-        Array.isArray(item)
-      ) {
+      if (item == null || typeof item !== 'object' || Array.isArray(item)) {
         continue;
       }
 
@@ -246,8 +222,7 @@ export function traverseNode(
     return;
   }
 
-  const nextFragmentStack =
-    isFragmentUseLike(node) ? [...fragmentStack, node.$use] : fragmentStack;
+  const nextFragmentStack = isFragmentUseLike(node) ? [...fragmentStack, node.$use] : fragmentStack;
 
   const result = visitor(resolvedNode, context);
 
@@ -259,7 +234,8 @@ export function traverseNode(
   const nextStackDepth =
     resolvedNode.type === 'Stack' ? context.stackDepth + 1 : context.stackDepth;
   const nextOverflowAuto =
-    context.overflowAutoAncestor || hasOverflowAuto(styleResolver ? styleResolver(resolvedNode) : resolvedNode.style);
+    context.overflowAutoAncestor ||
+    hasOverflowAuto(styleResolver ? styleResolver(resolvedNode) : resolvedNode.style);
 
   const children = resolvedNode.children;
   if (children != null) {
@@ -273,7 +249,14 @@ export function traverseNode(
         overflowAutoAncestor: nextOverflowAuto,
         stackDepth: nextStackDepth,
       };
-      traverseNode(children.template, childCtx, visitor, styleResolver, fragments, nextFragmentStack);
+      traverseNode(
+        children.template,
+        childCtx,
+        visitor,
+        styleResolver,
+        fragments,
+        nextFragmentStack,
+      );
     } else if (Array.isArray(children)) {
       // Array of child nodes
       for (let i = 0; i < children.length; i++) {

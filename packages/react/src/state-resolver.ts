@@ -7,10 +7,7 @@
  * - Literal values pass through unchanged
  */
 
-import {
-  parseRefPathSegments,
-  resolveRefPathSegments,
-} from '@safe-ugc-ui/types';
+import { parseRefPathSegments, resolveRefPathSegments } from '@safe-ugc-ui/types';
 
 /**
  * Resolves a $ref path (e.g. "$hp", "$items[0].name") from card state.
@@ -30,10 +27,7 @@ export function resolveRef(
 
   // Choose starting object: locals first, then state
   const firstSeg = segments[0];
-  const root =
-    locals && firstSeg && firstSeg in locals
-      ? locals
-      : state;
+  const root = locals && firstSeg && firstSeg in locals ? locals : state;
 
   return resolveRefPathSegments(segments, root);
 }
@@ -60,19 +54,13 @@ export function resolveValue(
 function stringifyTextScalar(value: unknown): string {
   if (value === undefined) return '';
   if (value === null) return 'null';
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
   return '';
 }
 
-function isTemplateObject(
-  value: unknown,
-): value is { $template: unknown[] } {
+function isTemplateObject(value: unknown): value is { $template: unknown[] } {
   return (
     typeof value === 'object' &&
     value !== null &&

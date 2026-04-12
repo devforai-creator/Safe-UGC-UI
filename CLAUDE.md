@@ -41,6 +41,9 @@ pick up the same project context.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
 - `pnpm clean` — remove `dist` folders.
+- `pnpm format` — format the workspace with Prettier.
+- `pnpm format:check` — check whether the workspace is Prettier-formatted.
+- The main CI workflow also runs `pnpm format:check`.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app.
 - `pnpm --filter @safe-ugc-ui/validator test` — validator-only tests.
@@ -51,6 +54,7 @@ pick up the same project context.
 - TypeScript ESM with `strict` enabled.
 - Use explicit `.js` extensions in local imports.
 - Match existing 2-space indentation and formatting.
+- Prettier is the workspace formatter; use `pnpm format` for formatting changes.
 - Use kebab-case for files and PascalCase for React component names.
 - Use `SCREAMING_SNAKE_CASE` for constants and camelCase for functions/variables.
 

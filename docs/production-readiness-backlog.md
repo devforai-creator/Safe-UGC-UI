@@ -27,15 +27,15 @@ For each item:
 
 ## Backlog Summary
 
-| ID | Priority | Release Gate | Theme | Status |
-| --- | --- | --- | --- | --- |
-| PRB-001 | P0 | Before production | Validator/renderer asset contract alignment | Closed |
-| PRB-002 | P0 | Before production | Runtime error signaling and no silent render drops | Closed |
-| PRB-003 | P0 | Before production | `Accordion` prop/state reconciliation | Closed |
-| PRB-004 | P1 | Next iteration | Closed DSL enforcement for style keys | Closed |
-| PRB-005 | P1 | Next iteration | Regression tests and CI gate for contract boundaries | Closed |
-| PRB-006 | P1 | Next iteration | Clean-checkout workspace reproducibility | Closed |
-| PRB-007 | P2 | Strategic | Shared style/responsive semantics layer | Open |
+| ID      | Priority | Release Gate      | Theme                                                | Status |
+| ------- | -------- | ----------------- | ---------------------------------------------------- | ------ |
+| PRB-001 | P0       | Before production | Validator/renderer asset contract alignment          | Closed |
+| PRB-002 | P0       | Before production | Runtime error signaling and no silent render drops   | Closed |
+| PRB-003 | P0       | Before production | `Accordion` prop/state reconciliation                | Closed |
+| PRB-004 | P1       | Next iteration    | Closed DSL enforcement for style keys                | Closed |
+| PRB-005 | P1       | Next iteration    | Regression tests and CI gate for contract boundaries | Closed |
+| PRB-006 | P1       | Next iteration    | Clean-checkout workspace reproducibility             | Closed |
+| PRB-007 | P2       | Strategic         | Shared style/responsive semantics layer              | Open   |
 
 ## PRB-001 — Align Asset Validation Semantics Across Validator And Renderer
 

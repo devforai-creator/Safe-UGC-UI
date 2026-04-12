@@ -58,7 +58,8 @@ describe('generateCardSchema', () => {
     expect(styleProps?.textShadow?.anyOf?.[0]?.properties?.color?.anyOf).toHaveLength(2);
     expect(styleProps?.fontFamily?.anyOf).toHaveLength(2);
     expect(
-      styleProps?.backgroundGradient?.anyOf?.[0]?.properties?.stops?.items?.properties?.color?.anyOf,
+      styleProps?.backgroundGradient?.anyOf?.[0]?.properties?.stops?.items?.properties?.color
+        ?.anyOf,
     ).toHaveLength(2);
   });
 

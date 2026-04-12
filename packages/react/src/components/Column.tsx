@@ -14,5 +14,13 @@ const columnBase: CSSProperties = {
 
 export function Column({ style, hoverStyle, children }: ColumnProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  return <div style={{ ...columnBase, ...resolvedStyle }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>{children}</div>;
+  return (
+    <div
+      style={{ ...columnBase, ...resolvedStyle }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </div>
+  );
 }

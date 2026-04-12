@@ -66,20 +66,13 @@ function looksLikeForLoop(value: unknown): boolean {
 /**
  * Validate the structural integrity of a ForLoop children object.
  */
-function validateForLoop(
-  children: Record<string, unknown>,
-  path: string,
-): ValidationError[] {
+function validateForLoop(children: Record<string, unknown>, path: string): ValidationError[] {
   const errors: ValidationError[] = [];
 
   // `for` must be a string
   if (typeof children['for'] !== 'string') {
     errors.push(
-      createError(
-        'INVALID_VALUE',
-        'ForLoop "for" must be a string.',
-        `${path}.children.for`,
-      ),
+      createError('INVALID_VALUE', 'ForLoop "for" must be a string.', `${path}.children.for`),
     );
   }
 
@@ -124,11 +117,7 @@ function collectUniqueInteractiveItemIds(
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    if (
-      item == null ||
-      typeof item !== 'object' ||
-      Array.isArray(item)
-    ) {
+    if (item == null || typeof item !== 'object' || Array.isArray(item)) {
       continue;
     }
 
@@ -161,22 +150,13 @@ function collectUniqueInteractiveItemIds(
 /**
  * Validate a single node's type and required fields.
  */
-function validateNode(
-  node: TraversableNode,
-  context: TraversalContext,
-): ValidationError[] {
+function validateNode(node: TraversableNode, context: TraversalContext): ValidationError[] {
   const errors: ValidationError[] = [];
   const { path } = context;
 
   // 1. Unknown node type
   if (!KNOWN_TYPES.has(node.type)) {
-    errors.push(
-      createError(
-        'UNKNOWN_NODE_TYPE',
-        `Unknown node type "${node.type}".`,
-        path,
-      ),
-    );
+    errors.push(createError('UNKNOWN_NODE_TYPE', `Unknown node type "${node.type}".`, path));
     // Cannot validate fields for an unknown type; return early.
     return errors;
   }
@@ -198,11 +178,7 @@ function validateNode(
 
     if (hasContent && hasSpans) {
       errors.push(
-        createError(
-          'INVALID_VALUE',
-          '"Text" node cannot define both "content" and "spans".',
-          path,
-        ),
+        createError('INVALID_VALUE', '"Text" node cannot define both "content" and "spans".', path),
       );
     }
   }
@@ -225,12 +201,7 @@ function validateNode(
 
   // 4. ForLoop structure validation
   if (node.children != null && looksLikeForLoop(node.children)) {
-    errors.push(
-      ...validateForLoop(
-        node.children as unknown as Record<string, unknown>,
-        path,
-      ),
-    );
+    errors.push(...validateForLoop(node.children as unknown as Record<string, unknown>, path));
   }
 
   if (node.type === 'Accordion') {
@@ -246,12 +217,7 @@ function validateNode(
         );
       }
 
-      const itemIds = collectUniqueInteractiveItemIds(
-        items,
-        'Accordion',
-        `${path}.items`,
-        errors,
-      );
+      const itemIds = collectUniqueInteractiveItemIds(items, 'Accordion', `${path}.items`, errors);
 
       if (Array.isArray(node.defaultExpanded)) {
         if (node.allowMultiple !== true && node.defaultExpanded.length > 1) {
@@ -293,12 +259,7 @@ function validateNode(
         );
       }
 
-      const tabIds = collectUniqueInteractiveItemIds(
-        tabs,
-        'Tabs',
-        `${path}.tabs`,
-        errors,
-      );
+      const tabIds = collectUniqueInteractiveItemIds(tabs, 'Tabs', `${path}.tabs`, errors);
 
       if ('defaultTab' in node) {
         const defaultTab = (node as Record<string, unknown>).defaultTab;
@@ -363,17 +324,14 @@ export function validateNodes(
     }
 
     errors.push(
-      ...validateNode(
-        node as TraversableNode,
-        {
-          path: context.path,
-          depth: 0,
-          parentType: null,
-          loopDepth: 0,
-          overflowAutoAncestor: false,
-          stackDepth: 0,
-        } satisfies TraversalContext,
-      ),
+      ...validateNode(node as TraversableNode, {
+        path: context.path,
+        depth: 0,
+        parentType: null,
+        loopDepth: 0,
+        overflowAutoAncestor: false,
+        stackDepth: 0,
+      } satisfies TraversalContext),
     );
   });
 

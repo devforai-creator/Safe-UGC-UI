@@ -18,13 +18,13 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 
 ## Packages
 
-| Package | Purpose |
-|---------|---------|
-| `@safe-ugc-ui/types` | Zod schemas, inferred TypeScript types, constants, and shared ref-path helpers |
-| `@safe-ugc-ui/schema` | JSON Schema generation and the built `ugc-card.schema.json` artifact |
-| `@safe-ugc-ui/validator` | Structural, style, security, limit validation, and safe card loading |
-| `@safe-ugc-ui/react` | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers |
-| `@safe-ugc-ui/demo` | Vite-based playground for editing card JSON and previewing output |
+| Package                  | Purpose                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `@safe-ugc-ui/types`     | Zod schemas, inferred TypeScript types, constants, and shared ref-path helpers |
+| `@safe-ugc-ui/schema`    | JSON Schema generation and the built `ugc-card.schema.json` artifact           |
+| `@safe-ugc-ui/validator` | Structural, style, security, limit validation, and safe card loading           |
+| `@safe-ugc-ui/react`     | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers         |
+| `@safe-ugc-ui/demo`      | Vite-based playground for editing card JSON and previewing output              |
 
 ### Dependency graph
 
@@ -59,6 +59,10 @@ pnpm add @safe-ugc-ui/types
 - `pnpm test:run` — run the full workspace test suite once
 - `pnpm test:coverage` — run the workspace suite with coverage
 - `pnpm clean` — remove package `dist` directories
+- `pnpm format` — format the workspace with Prettier
+- `pnpm format:check` — check whether the workspace is Prettier-formatted
+
+The main CI workflow also runs `pnpm format:check`.
 
 ## Quick Start
 

@@ -1,7 +1,4 @@
-import {
-  MAX_REF_PATH_SEGMENTS,
-  PROTOTYPE_POLLUTION_SEGMENTS,
-} from './constants.js';
+import { MAX_REF_PATH_SEGMENTS, PROTOTYPE_POLLUTION_SEGMENTS } from './constants.js';
 
 export function parseRefPathSegments(refPath: string): string[] {
   const path = refPath.startsWith('$') ? refPath.slice(1) : refPath;
@@ -31,9 +28,7 @@ export function parseRefPathSegments(refPath: string): string[] {
   return segments;
 }
 
-export function hasForbiddenRefPathSegments(
-  segments: readonly string[],
-): boolean {
+export function hasForbiddenRefPathSegments(segments: readonly string[]): boolean {
   return segments.some((segment) =>
     (PROTOTYPE_POLLUTION_SEGMENTS as readonly string[]).includes(segment),
   );

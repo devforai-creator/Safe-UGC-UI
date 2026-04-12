@@ -13,5 +13,13 @@ const gridBase: CSSProperties = {
 
 export function Grid({ style, hoverStyle, children }: GridProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  return <div style={{ ...gridBase, ...resolvedStyle }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>{children}</div>;
+  return (
+    <div
+      style={{ ...gridBase, ...resolvedStyle }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </div>
+  );
 }

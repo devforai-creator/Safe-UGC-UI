@@ -90,9 +90,7 @@ export function UGCRenderer({
   const lastReportedInvalidErrorKey = useRef<string | null>(null);
 
   const result = useMemo(() => {
-    const loadResult = typeof card === 'string'
-      ? loadCardRaw(card)
-      : loadCard(card);
+    const loadResult = typeof card === 'string' ? loadCardRaw(card) : loadCard(card);
     if (!loadResult.valid) {
       return { valid: false as const, errors: loadResult.errors };
     }
@@ -119,9 +117,7 @@ export function UGCRenderer({
     // Determine which view to render
     const views = cardObj.views;
     const viewKeys = Object.keys(views);
-    const selectedView = viewName && viewName in views
-      ? viewName
-      : viewKeys[0];
+    const selectedView = viewName && viewName in views ? viewName : viewKeys[0];
 
     if (!selectedView || !(selectedView in views)) {
       return { valid: false as const, errors: [] };
@@ -173,12 +169,8 @@ export function UGCRenderer({
 
   const responsive = useMemo(
     () => ({
-      medium:
-        containerWidth != null &&
-        containerWidth <= MEDIUM_BREAKPOINT_MAX_WIDTH,
-      compact:
-        containerWidth != null &&
-        containerWidth <= COMPACT_BREAKPOINT_MAX_WIDTH,
+      medium: containerWidth != null && containerWidth <= MEDIUM_BREAKPOINT_MAX_WIDTH,
+      compact: containerWidth != null && containerWidth <= COMPACT_BREAKPOINT_MAX_WIDTH,
     }),
     [containerWidth],
   );

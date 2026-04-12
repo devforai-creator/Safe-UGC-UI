@@ -13,10 +13,24 @@ export { UGCContainer } from './UGCContainer.js';
 
 // Individual components
 export {
-  Box, Row, Column, Text, Image,
-  Stack, Grid, Spacer, Divider, Icon,
-  ProgressBar, Avatar, Badge, Chip,
-  Button, Toggle, Accordion, Tabs,
+  Box,
+  Row,
+  Column,
+  Text,
+  Image,
+  Stack,
+  Grid,
+  Spacer,
+  Divider,
+  Icon,
+  ProgressBar,
+  Avatar,
+  Badge,
+  Chip,
+  Button,
+  Toggle,
+  Accordion,
+  Tabs,
 } from './components/index.js';
 
 // Node renderer (advanced usage only; caller must validate card input first)

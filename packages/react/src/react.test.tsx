@@ -1,17 +1,8 @@
 import { afterEach, describe, it, expect, vi } from 'vitest';
 import React from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import {
-  BACKDROP_BLUR_MAX,
-  FONT_SIZE_MAX,
-  TEXT_CONTENT_TOTAL_MAX_BYTES,
-} from '@safe-ugc-ui/types';
-import {
-  resolveRef,
-  resolveTemplate,
-  resolveTextValue,
-  resolveValue,
-} from './state-resolver.js';
+import { BACKDROP_BLUR_MAX, FONT_SIZE_MAX, TEXT_CONTENT_TOTAL_MAX_BYTES } from '@safe-ugc-ui/types';
+import { resolveRef, resolveTemplate, resolveTextValue, resolveValue } from './state-resolver.js';
 import { evaluateCondition } from './condition-resolver.js';
 import { mapStyle, mapTransition } from './style-mapper.js';
 import { resolveAsset } from './asset-resolver.js';
@@ -80,7 +71,14 @@ describe('resolveRef', () => {
   });
 
   it('resolves nested array indices', () => {
-    expect(resolveRef('$data[1][0]', { data: [['a', 'b'], ['c', 'd']] })).toBe('c');
+    expect(
+      resolveRef('$data[1][0]', {
+        data: [
+          ['a', 'b'],
+          ['c', 'd'],
+        ],
+      }),
+    ).toBe('c');
   });
 
   it('returns undefined for out-of-bounds array index', () => {
@@ -89,9 +87,7 @@ describe('resolveRef', () => {
 
   it('resolves deep nested path with arrays', () => {
     const state = {
-      users: [
-        { posts: [{ title: 'Hello' }, { title: 'World' }] },
-      ],
+      users: [{ posts: [{ title: 'Hello' }, { title: 'World' }] }],
     };
     expect(resolveRef('$users[0].posts[1].title', state)).toBe('World');
   });
@@ -168,12 +164,9 @@ describe('resolveTemplate', () => {
   });
 
   it('treats unresolved parts as empty strings', () => {
-    expect(
-      resolveTemplate(
-        { $template: ['HP ', { $ref: '$missing' }, '/100'] },
-        {},
-      ),
-    ).toBe('HP /100');
+    expect(resolveTemplate({ $template: ['HP ', { $ref: '$missing' }, '/100'] }, {})).toBe(
+      'HP /100',
+    );
   });
 });
 
@@ -181,12 +174,9 @@ describe('resolveTextValue', () => {
   it('resolves literal, ref, and template values into strings', () => {
     expect(resolveTextValue('plain', {})).toBe('plain');
     expect(resolveTextValue({ $ref: '$label' }, { label: 'from ref' })).toBe('from ref');
-    expect(
-      resolveTextValue(
-        { $template: ['[', { $ref: '$status' }, ']'] },
-        { status: 'ok' },
-      ),
-    ).toBe('[ok]');
+    expect(resolveTextValue({ $template: ['[', { $ref: '$status' }, ']'] }, { status: 'ok' })).toBe(
+      '[ok]',
+    );
   });
 });
 
@@ -213,12 +203,9 @@ describe('evaluateCondition', () => {
   });
 
   it('returns false for missing comparison refs', () => {
-    expect(
-      evaluateCondition(
-        { op: 'eq', left: { $ref: '$missing' }, right: true },
-        {},
-      ),
-    ).toBe(false);
+    expect(evaluateCondition({ op: 'eq', left: { $ref: '$missing' }, right: true }, {})).toBe(
+      false,
+    );
   });
 });
 
@@ -253,38 +240,38 @@ describe('mapStyle', () => {
 
   it('drops out-of-range backdropBlur resolved from state', () => {
     expect(
-      mapStyle(
-        { backdropBlur: { $ref: '$blur' } },
-        { blur: BACKDROP_BLUR_MAX + 1 },
-      ).backdropFilter,
+      mapStyle({ backdropBlur: { $ref: '$blur' } }, { blur: BACKDROP_BLUR_MAX + 1 }).backdropFilter,
     ).toBeUndefined();
   });
 
   it('drops out-of-range fontSize resolved from state', () => {
     expect(
-      mapStyle(
-        { fontSize: { $ref: '$size' } },
-        { size: `${FONT_SIZE_MAX + 1}px` },
-      ).fontSize,
+      mapStyle({ fontSize: { $ref: '$size' } }, { size: `${FONT_SIZE_MAX + 1}px` }).fontSize,
     ).toBeUndefined();
   });
 
   it('maps structured clipPath objects to CSS strings', () => {
     expect(
-      (mapStyle({ clipPath: { type: 'circle', radius: '50%' } }, {}) as Record<string, unknown>).clipPath,
+      (mapStyle({ clipPath: { type: 'circle', radius: '50%' } }, {}) as Record<string, unknown>)
+        .clipPath,
     ).toBe('circle(50%)');
 
     expect(
-      (mapStyle({
-        clipPath: {
-          type: 'inset',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          round: 20,
-        },
-      }, {}) as Record<string, unknown>).clipPath,
+      (
+        mapStyle(
+          {
+            clipPath: {
+              type: 'inset',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              round: 20,
+            },
+          },
+          {},
+        ) as Record<string, unknown>
+      ).clipPath,
     ).toBe('inset(0px 0px 0px 0px round 20px)');
   });
 
@@ -295,10 +282,7 @@ describe('mapStyle', () => {
   });
 
   it('converts boxShadow to CSS string', () => {
-    const result = mapStyle(
-      { boxShadow: { offsetX: 2, offsetY: 4, blur: 6, color: '#000' } },
-      {},
-    );
+    const result = mapStyle({ boxShadow: { offsetX: 2, offsetY: 4, blur: 6, color: '#000' } }, {});
     expect(result.boxShadow).toContain('2px 4px 6px');
   });
 
@@ -343,10 +327,7 @@ describe('mapStyle', () => {
   });
 
   it('maps padding and margin properties', () => {
-    const result = mapStyle(
-      { padding: 10, paddingTop: 5, margin: 20, marginLeft: 15 },
-      {},
-    );
+    const result = mapStyle({ padding: 10, paddingTop: 5, margin: 20, marginLeft: 15 }, {});
     expect(result.padding).toBe(10);
     expect(result.paddingTop).toBe(5);
     expect(result.margin).toBe(20);
@@ -354,10 +335,7 @@ describe('mapStyle', () => {
   });
 
   it('converts border object to CSS shorthand', () => {
-    const result = mapStyle(
-      { border: { width: 1, style: 'solid', color: '#ccc' } },
-      {},
-    );
+    const result = mapStyle({ border: { width: 1, style: 'solid', color: '#ccc' } }, {});
     expect(result.border).toBe('1px solid #ccc');
   });
 
@@ -378,10 +356,7 @@ describe('mapStyle', () => {
   });
 
   it('converts border side objects to CSS shorthand', () => {
-    const result = mapStyle(
-      { borderTop: { width: 2, style: 'dashed', color: 'blue' } },
-      {},
-    );
+    const result = mapStyle({ borderTop: { width: 2, style: 'dashed', color: 'blue' } }, {});
     expect((result as Record<string, unknown>).borderTop).toBe('2px dashed blue');
   });
 
@@ -540,10 +515,7 @@ describe('mapStyle', () => {
   });
 
   it('converts textShadow to CSS string', () => {
-    const result = mapStyle(
-      { textShadow: { offsetX: 1, offsetY: 2, blur: 4, color: '#000' } },
-      {},
-    );
+    const result = mapStyle({ textShadow: { offsetX: 1, offsetY: 2, blur: 4, color: '#000' } }, {});
     expect(result.textShadow).toBe('1px 2px 4px #000');
   });
 
@@ -576,10 +548,7 @@ describe('mapStyle', () => {
   });
 
   it('resolves $ref values in style properties', () => {
-    const result = mapStyle(
-      { fontSize: { $ref: '$size' } },
-      { size: 24 },
-    );
+    const result = mapStyle({ fontSize: { $ref: '$size' } }, { size: 24 });
     expect(result.fontSize).toBe(24);
   });
 });
@@ -595,9 +564,7 @@ describe('resolveAsset', () => {
   };
 
   it('resolves full path', () => {
-    expect(resolveAsset('@assets/logo.png', assets)).toBe(
-      'https://cdn.example.com/logo.png',
-    );
+    expect(resolveAsset('@assets/logo.png', assets)).toBe('https://cdn.example.com/logo.png');
   });
 
   it('resolves key-only path', () => {
@@ -690,7 +657,7 @@ describe('UGCRenderer', () => {
     views: {
       Main: {
         type: 'Box',
-        children: [{ type: 'Text',  content: 'Hello World'  }],
+        children: [{ type: 'Text', content: 'Hello World' }],
       },
     },
   };
@@ -739,8 +706,8 @@ describe('UGCRenderer', () => {
     const multiViewCard = {
       meta: { name: 'test', version: '1.0.0' },
       views: {
-        Main: { type: 'Text',  content: 'Main View'  },
-        Secondary: { type: 'Text',  content: 'Second View'  },
+        Main: { type: 'Text', content: 'Main View' },
+        Secondary: { type: 'Text', content: 'Second View' },
       },
     };
     render(<UGCRenderer card={multiViewCard as any} viewName="Secondary" />);
@@ -754,7 +721,7 @@ describe('UGCRenderer', () => {
       views: {
         Main: {
           type: 'Text',
-           content: { $ref: '$greeting' } ,
+          content: { $ref: '$greeting' },
         },
       },
     };
@@ -767,12 +734,10 @@ describe('UGCRenderer', () => {
       meta: { name: 'test', version: '1.0.0' },
       state: { msg: 'original' },
       views: {
-        Main: { type: 'Text',  content: { $ref: '$msg' }  },
+        Main: { type: 'Text', content: { $ref: '$msg' } },
       },
     };
-    render(
-      <UGCRenderer card={cardWithState as any} state={{ msg: 'overridden' }} />,
-    );
+    render(<UGCRenderer card={cardWithState as any} state={{ msg: 'overridden' }} />);
     expect(screen.getByText('overridden')).toBeTruthy();
   });
 
@@ -780,8 +745,8 @@ describe('UGCRenderer', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
       views: {
-        First: { type: 'Text',  content: 'First View'  },
-        Second: { type: 'Text',  content: 'Second View'  },
+        First: { type: 'Text', content: 'First View' },
+        Second: { type: 'Text', content: 'Second View' },
       },
     };
     render(<UGCRenderer card={card as any} />);
@@ -807,10 +772,7 @@ describe('UGCRenderer', () => {
 
   it('renders with containerStyle', () => {
     const { container } = render(
-      <UGCRenderer
-        card={validCard as any}
-        containerStyle={{ width: '500px' }}
-      />,
+      <UGCRenderer card={validCard as any} containerStyle={{ width: '500px' }} />,
     );
     const outerDiv = container.firstElementChild as HTMLElement;
     expect(outerDiv.style.width).toBe('500px');
@@ -857,18 +819,12 @@ describe('UGCRenderer', () => {
     };
 
     const { container } = render(
-      <UGCRenderer
-        card={card as any}
-        state={{ items: 'not-an-array' }}
-        onError={onError}
-      />,
+      <UGCRenderer card={card as any} state={{ items: 'not-an-array' }} onError={onError} />,
     );
 
     expect(container.innerHTML).toBe('');
     expect(onError).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ code: 'LOOP_SOURCE_NOT_ARRAY' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ code: 'LOOP_SOURCE_NOT_ARRAY' })]),
     );
   });
 
@@ -888,18 +844,12 @@ describe('UGCRenderer', () => {
     const hugeCols = '1fr '.repeat(30_000);
 
     const { container } = render(
-      <UGCRenderer
-        card={card}
-        state={{ cols: hugeCols }}
-        onError={onError}
-      />,
+      <UGCRenderer card={card} state={{ cols: hugeCols }} onError={onError} />,
     );
 
     expect(container.innerHTML).toBe('');
     expect(onError).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ code: 'STYLE_SIZE_EXCEEDED' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ code: 'STYLE_SIZE_EXCEEDED' })]),
     );
   });
 
@@ -918,9 +868,7 @@ describe('UGCRenderer', () => {
 
   it('renders nothing for invalid JSON string', () => {
     const onError = vi.fn();
-    const { container } = render(
-      <UGCRenderer card="not valid json {{{" onError={onError} />,
-    );
+    const { container } = render(<UGCRenderer card="not valid json {{{" onError={onError} />);
     expect(container.innerHTML).toBe('');
     expect(onError).toHaveBeenCalled();
   });
@@ -940,7 +888,7 @@ describe('React security', () => {
             views: {
               Main: {
                 type: 'Text',
-                 content: '<script>alert(1)</script>' ,
+                content: '<script>alert(1)</script>',
               },
             },
           } as any
@@ -961,7 +909,7 @@ describe('React security', () => {
             views: {
               Main: {
                 type: 'Image',
-                 src: '@assets/missing.png' ,
+                src: '@assets/missing.png',
               },
             },
           } as any
@@ -978,13 +926,11 @@ describe('React security', () => {
       views: {
         Main: {
           type: 'Text',
-           content: { $ref: '$__proto__.polluted' } ,
+          content: { $ref: '$__proto__.polluted' },
         },
       },
     };
-    const { container } = render(
-      <UGCRenderer card={cardWithPollution as any} />,
-    );
+    const { container } = render(<UGCRenderer card={cardWithPollution as any} />);
     // The $ref should resolve to undefined, and the Text component
     // renders empty string for non-string content
     const span = container.querySelector('span');
@@ -999,7 +945,7 @@ describe('React security', () => {
       views: {
         Main: {
           type: 'Text',
-           content: '<img src=x onerror=alert(1)>' ,
+          content: '<img src=x onerror=alert(1)>',
         },
       },
     };
@@ -1026,7 +972,7 @@ describe('React security', () => {
 
 describe('renderTree', () => {
   it('renders a Text node', () => {
-    const node = { type: 'Text',  content: 'tree text'  };
+    const node = { type: 'Text', content: 'tree text' };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toBe('tree text');
   });
@@ -1042,7 +988,21 @@ describe('renderTree', () => {
         content: 'fragment child',
       },
     };
-    const { container } = render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: false }, fragments)}</>);
+    const { container } = render(
+      <>
+        {renderTree(
+          node,
+          {},
+          {},
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { compact: false },
+          fragments,
+        )}
+      </>,
+    );
     expect(container.textContent).toBe('fragment child');
   });
 
@@ -1054,7 +1014,21 @@ describe('renderTree', () => {
         content: 'fragment child',
       },
     };
-    const { container } = render(<>{renderTree(node, { show: false }, {}, undefined, undefined, undefined, undefined, { compact: false }, fragments)}</>);
+    const { container } = render(
+      <>
+        {renderTree(
+          node,
+          { show: false },
+          {},
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { compact: false },
+          fragments,
+        )}
+      </>,
+    );
     expect(container.innerHTML).toBe('');
   });
 
@@ -1084,8 +1058,8 @@ describe('renderTree', () => {
     const node = {
       type: 'Box',
       children: [
-        { type: 'Text',  content: 'child 1'  },
-        { type: 'Text',  content: 'child 2'  },
+        { type: 'Text', content: 'child 1' },
+        { type: 'Text', content: 'child 2' },
       ],
     };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
@@ -1094,7 +1068,7 @@ describe('renderTree', () => {
   });
 
   it('renders null for unsupported node types', () => {
-    const node = { type: 'UnknownWidget',  };
+    const node = { type: 'UnknownWidget' };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.innerHTML).toBe('');
   });
@@ -1105,7 +1079,7 @@ describe('renderTree', () => {
   });
 
   it('renders an Image node with resolved asset', () => {
-    const node = { type: 'Image',  src: '@assets/pic.png', alt: 'a picture'  };
+    const node = { type: 'Image', src: '@assets/pic.png', alt: 'a picture' };
     const assets = { '@assets/pic.png': 'https://cdn.example.com/pic.png' };
     const { container } = render(<>{renderTree(node, {}, assets)}</>);
     const img = container.querySelector('img');
@@ -1117,7 +1091,7 @@ describe('renderTree', () => {
   it('renders a Row node', () => {
     const node = {
       type: 'Row',
-      children: [{ type: 'Text',  content: 'in row'  }],
+      children: [{ type: 'Text', content: 'in row' }],
     };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('in row');
@@ -1126,7 +1100,7 @@ describe('renderTree', () => {
   it('renders a Column node', () => {
     const node = {
       type: 'Column',
-      children: [{ type: 'Text',  content: 'in column'  }],
+      children: [{ type: 'Text', content: 'in column' }],
     };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('in column');
@@ -1135,7 +1109,7 @@ describe('renderTree', () => {
   it('resolves $ref in Text content via state', () => {
     const node = {
       type: 'Text',
-       content: { $ref: '$name' } ,
+      content: { $ref: '$name' },
     };
     const { container } = render(<>{renderTree(node, { name: 'Dynamic' }, {})}</>);
     expect(container.textContent).toBe('Dynamic');
@@ -1213,7 +1187,7 @@ describe('renderTree', () => {
   it('blocks Image with $ref src resolving to external URL', () => {
     const node = {
       type: 'Image',
-       src: { $ref: '$img' } ,
+      src: { $ref: '$img' },
     };
     const state = { img: 'https://evil.com/img.png' };
     const { container } = render(<>{renderTree(node, state, {})}</>);
@@ -1223,7 +1197,8 @@ describe('renderTree', () => {
   it('renders Image with $ref src resolving to valid @assets/ path', () => {
     const node = {
       type: 'Image',
-       src: { $ref: '$img' }, alt: 'test image' ,
+      src: { $ref: '$img' },
+      alt: 'test image',
     };
     const state = { img: '@assets/logo.png' };
     const assets = { '@assets/logo.png': 'https://cdn.example.com/logo.png' };
@@ -1236,7 +1211,7 @@ describe('renderTree', () => {
   it('blocks Image with $ref src resolving to path traversal', () => {
     const node = {
       type: 'Image',
-       src: { $ref: '$img' } ,
+      src: { $ref: '$img' },
     };
     const state = { img: '@assets/../secret.png' };
     const assets = { '@assets/../secret.png': 'https://cdn.example.com/secret.png' };
@@ -1250,7 +1225,9 @@ describe('renderTree', () => {
       type: 'Image',
       src: '@assets/missing.png',
     };
-    const { container } = render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>);
+    const { container } = render(
+      <>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>,
+    );
     expect(container.querySelector('img')).toBeNull();
     expect(onError).toHaveBeenCalledWith([
       expect.objectContaining({ code: 'RUNTIME_ASSET_NOT_FOUND' }),
@@ -1266,7 +1243,9 @@ describe('renderTree', () => {
     const assets = {
       '@assets/avatar.png': 'javascript:alert(1)',
     };
-    const { container } = render(<>{renderTree(node, {}, assets, undefined, undefined, undefined, onError)}</>);
+    const { container } = render(
+      <>{renderTree(node, {}, assets, undefined, undefined, undefined, onError)}</>,
+    );
     expect(container.querySelector('img')).toBeNull();
     expect(onError).toHaveBeenCalledWith([
       expect.objectContaining({ code: 'RUNTIME_ASSET_URL_UNSAFE' }),
@@ -1282,11 +1261,11 @@ describe('renderTree', () => {
     const state = {
       avatar: 'logo.png',
     };
-    const { container } = render(<>{renderTree(node, state, {}, undefined, undefined, undefined, onError)}</>);
+    const { container } = render(
+      <>{renderTree(node, state, {}, undefined, undefined, undefined, onError)}</>,
+    );
     expect(container.querySelector('img')).toBeNull();
-    expect(onError).toHaveBeenCalledWith([
-      expect.objectContaining({ code: 'INVALID_ASSET_PATH' }),
-    ]);
+    expect(onError).toHaveBeenCalledWith([expect.objectContaining({ code: 'INVALID_ASSET_PATH' })]);
   });
 
   // --- Fix 2: $ref with array index in renderTree ---
@@ -1294,7 +1273,7 @@ describe('renderTree', () => {
   it('resolves $ref with array index in Text content', () => {
     const node = {
       type: 'Text',
-       content: { $ref: '$items[0].name' } ,
+      content: { $ref: '$items[0].name' },
     };
     const state = { items: [{ name: 'hi' }] };
     const { container } = render(<>{renderTree(node, state, {})}</>);
@@ -1330,11 +1309,7 @@ describe('State resolver with locals', () => {
 
 describe('Style mapper with locals', () => {
   it('resolves color from locals via $ref', () => {
-    const result = mapStyle(
-      { color: { $ref: '$item.color' } },
-      {},
-      { item: { color: '#ff0000' } },
-    );
+    const result = mapStyle({ color: { $ref: '$item.color' } }, {}, { item: { color: '#ff0000' } });
     expect(result.color).toBe('#ff0000');
   });
 
@@ -1348,10 +1323,7 @@ describe('Style mapper with locals', () => {
   });
 
   it('allows safe color value in backgroundColor', () => {
-    const result = mapStyle(
-      { backgroundColor: { $ref: '$bg' } },
-      { bg: '#ff0000' },
-    );
+    const result = mapStyle({ backgroundColor: { $ref: '$bg' } }, { bg: '#ff0000' });
     expect(result.backgroundColor).toBe('#ff0000');
   });
 
@@ -1371,10 +1343,7 @@ describe('Style mapper with locals', () => {
   });
 
   it('blocks CSS function var() in gridTemplateColumns', () => {
-    const result = mapStyle(
-      { gridTemplateColumns: { $ref: '$cols' } },
-      { cols: 'var(--x)' },
-    );
+    const result = mapStyle({ gridTemplateColumns: { $ref: '$cols' } }, { cols: 'var(--x)' });
     expect(result).not.toHaveProperty('gridTemplateColumns');
   });
 });
@@ -1388,7 +1357,7 @@ describe('For-loop rendering', () => {
         in: '$messages',
         template: {
           type: 'Text',
-           content: { $ref: '$msg' } ,
+          content: { $ref: '$msg' },
         },
       },
     };
@@ -1409,7 +1378,7 @@ describe('For-loop rendering', () => {
         in: '$messages',
         template: {
           type: 'Text',
-           content: { $ref: '$msg' } ,
+          content: { $ref: '$msg' },
         },
       },
     };
@@ -1429,7 +1398,7 @@ describe('For-loop rendering', () => {
         in: '$items',
         template: {
           type: 'Text',
-           content: { $ref: '$item' } ,
+          content: { $ref: '$item' },
         },
       },
     };
@@ -1457,7 +1426,7 @@ describe('New components rendering', () => {
   });
 
   it('Spacer renders with size prop', () => {
-    const node = { type: 'Spacer',  size: 16  };
+    const node = { type: 'Spacer', size: 16 };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     const el = container.firstElementChild;
     expect(el).not.toBeNull();
@@ -1474,11 +1443,10 @@ describe('New components rendering', () => {
     const onAction = vi.fn();
     const node = {
       type: 'Button',
-       label: 'Click Me', action: 'submit' ,
+      label: 'Click Me',
+      action: 'submit',
     };
-    const { container } = render(
-      <>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>,
-    );
+    const { container } = render(<>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>);
     const btn = screen.getByRole('button');
     expect(btn.textContent).toBe('Click Me');
     fireEvent.click(btn);
@@ -1507,11 +1475,10 @@ describe('New components rendering', () => {
     const onAction = vi.fn();
     const node = {
       type: 'Toggle',
-       value: false, onToggle: 'toggle-dark' ,
+      value: false,
+      onToggle: 'toggle-dark',
     };
-    const { container } = render(
-      <>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>,
-    );
+    const { container } = render(<>{renderTree(node, {}, {}, undefined, undefined, onAction)}</>);
     const btn = container.querySelector('button');
     expect(btn).not.toBeNull();
     fireEvent.click(btn!);
@@ -1599,9 +1566,7 @@ describe('New components rendering', () => {
 
     expect(screen.getByText('Profile body')).toBeTruthy();
 
-    rerender(
-      <Accordion items={makeItems(true)} defaultExpanded={['profile']} />,
-    );
+    rerender(<Accordion items={makeItems(true)} defaultExpanded={['profile']} />);
 
     expect(screen.queryByText('Profile body')).toBeNull();
   });
@@ -1664,22 +1629,14 @@ describe('New components rendering', () => {
     ];
 
     const { rerender } = render(
-      <Accordion
-        items={items}
-        allowMultiple
-        defaultExpanded={['profile', 'inventory']}
-      />,
+      <Accordion items={items} allowMultiple defaultExpanded={['profile', 'inventory']} />,
     );
 
     expect(screen.getByText('Profile body')).toBeTruthy();
     expect(screen.getByText('Inventory body')).toBeTruthy();
 
     rerender(
-      <Accordion
-        items={items}
-        allowMultiple={false}
-        defaultExpanded={['profile', 'inventory']}
-      />,
+      <Accordion items={items} allowMultiple={false} defaultExpanded={['profile', 'inventory']} />,
     );
 
     expect(screen.getByText('Profile body')).toBeTruthy();
@@ -1707,9 +1664,7 @@ describe('New components rendering', () => {
 
     render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>);
 
-    expect(onError).toHaveBeenCalledWith([
-      expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' }),
-    ]);
+    expect(onError).toHaveBeenCalledWith([expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' })]);
   });
 
   it('Tabs switches visible panel content locally', () => {
@@ -1820,9 +1775,7 @@ describe('New components rendering', () => {
 
     render(<>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>);
 
-    expect(onError).toHaveBeenCalledWith([
-      expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' }),
-    ]);
+    expect(onError).toHaveBeenCalledWith([expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' })]);
   });
 
   it('Switch renders the matching case from state', () => {
@@ -1873,20 +1826,20 @@ describe('New components rendering', () => {
   });
 
   it('ProgressBar renders with value and max', () => {
-    const node = { type: 'ProgressBar',  value: 50, max: 100  };
+    const node = { type: 'ProgressBar', value: 50, max: 100 };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     const el = container.firstElementChild;
     expect(el).not.toBeNull();
   });
 
   it('Badge renders with label', () => {
-    const node = { type: 'Badge',  label: 'New'  };
+    const node = { type: 'Badge', label: 'New' };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('New');
   });
 
   it('Chip renders with label', () => {
-    const node = { type: 'Chip',  label: 'Tag'  };
+    const node = { type: 'Chip', label: 'Tag' };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.textContent).toContain('Tag');
   });
@@ -1914,7 +1867,7 @@ describe('New components rendering', () => {
   it('Avatar renders with @assets/ src resolved from asset map', () => {
     const node = {
       type: 'Avatar',
-       src: '@assets/avatar.png' ,
+      src: '@assets/avatar.png',
     };
     const assets = { 'avatar.png': 'https://cdn.example.com/avatar.png' };
     const { container } = render(<>{renderTree(node, {}, assets)}</>);
@@ -1955,10 +1908,8 @@ describe('New components rendering', () => {
 
   it('Icon renders when iconResolver is provided', () => {
     const iconResolver = (name: string) => <span data-testid="icon">{name}</span>;
-    const node = { type: 'Icon',  name: 'star'  };
-    const { container } = render(
-      <>{renderTree(node, {}, {}, undefined, iconResolver)}</>,
-    );
+    const node = { type: 'Icon', name: 'star' };
+    const { container } = render(<>{renderTree(node, {}, {}, undefined, iconResolver)}</>);
     expect(screen.getByTestId('icon')).not.toBeNull();
     expect(screen.getByTestId('icon').textContent).toBe('star');
   });
@@ -1973,7 +1924,7 @@ describe('New components rendering', () => {
   });
 
   it('Icon returns null when iconResolver is not provided', () => {
-    const node = { type: 'Icon',  name: 'star'  };
+    const node = { type: 'Icon', name: 'star' };
     const { container } = render(<>{renderTree(node, {}, {})}</>);
     expect(container.innerHTML).toBe('');
   });
@@ -1987,9 +1938,7 @@ describe('$style rendering', () => {
       children: [],
     };
     const cardStyles = { myStyle: { backgroundColor: '#fff' } };
-    const { container } = render(
-      <>{renderTree(node, {}, {}, cardStyles)}</>,
-    );
+    const { container } = render(<>{renderTree(node, {}, {}, cardStyles)}</>);
     const div = container.querySelector('div');
     expect(div).not.toBeNull();
     expect(div!.style.backgroundColor).toBe('rgb(255, 255, 255)');
@@ -2003,9 +1952,7 @@ describe('$style rendering', () => {
       children: [],
     };
     const cardStyles = {};
-    const { container } = render(
-      <>{renderTree(node, {}, {}, cardStyles)}</>,
-    );
+    const { container } = render(<>{renderTree(node, {}, {}, cardStyles)}</>);
     const div = container.querySelector('div');
     expect(div).not.toBeNull();
     expect(div!.style.color).toBe('rgb(0, 0, 0)');
@@ -2024,7 +1971,12 @@ describe('responsive rendering', () => {
       children: [],
     };
     const { container } = render(
-      <>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: false, medium: true })}</>,
+      <>
+        {renderTree(node, {}, {}, undefined, undefined, undefined, undefined, {
+          compact: false,
+          medium: true,
+        })}
+      </>,
     );
     const div = container.querySelector('div');
     expect(div?.style.width).toBe('100%');
@@ -2043,7 +1995,9 @@ describe('responsive rendering', () => {
       children: [],
     };
     const { container } = render(
-      <>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: true })}</>,
+      <>
+        {renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: true })}
+      </>,
     );
     const div = container.querySelector('div');
     expect(div?.style.width).toBe('100%');
@@ -2064,7 +2018,9 @@ describe('responsive rendering', () => {
       children: [],
     };
     const { container } = render(
-      <>{renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: true })}</>,
+      <>
+        {renderTree(node, {}, {}, undefined, undefined, undefined, undefined, { compact: true })}
+      </>,
     );
     const div = container.querySelector('div') as HTMLElement;
     expect(div.style.height).toBe('120px');
@@ -2078,7 +2034,7 @@ describe('Runtime limits', () => {
     // Create a tree with > 10001 nodes via deeply nested for-loop
     const children: any[] = [];
     for (let i = 0; i < 10002; i++) {
-      children.push({ type: 'Text',  content: `node-${i}`  });
+      children.push({ type: 'Text', content: `node-${i}` });
     }
     const node = { type: 'Box', children };
     const onError = vi.fn();
@@ -2101,7 +2057,7 @@ describe('Runtime limits', () => {
         in: '$items',
         template: {
           type: 'Text',
-           content: { $ref: '$item' } ,
+          content: { $ref: '$item' },
         },
       },
     };
@@ -2123,9 +2079,7 @@ describe('Runtime limits', () => {
       <>{renderTree(node, {}, {}, undefined, undefined, undefined, onError)}</>,
     );
     expect(container.innerHTML).toBe('');
-    expect(onError).toHaveBeenCalledWith([
-      expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' }),
-    ]);
+    expect(onError).toHaveBeenCalledWith([expect.objectContaining({ code: 'RUNTIME_TEXT_LIMIT' })]);
   });
 });
 
@@ -2134,7 +2088,7 @@ describe('UGCRenderer with new fields', () => {
     const iconResolver = (name: string) => <span data-testid="ugc-icon">{name}</span>;
     const card = {
       meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Icon' as const,  name: 'heart'  } },
+      views: { Main: { type: 'Icon' as const, name: 'heart' } },
     };
     render(<UGCRenderer card={card} iconResolver={iconResolver} />);
     expect(screen.getByTestId('ugc-icon')).not.toBeNull();
@@ -2145,7 +2099,7 @@ describe('UGCRenderer with new fields', () => {
     const onAction = vi.fn();
     const card = {
       meta: { name: 'test', version: '1.0.0' },
-      views: { Main: { type: 'Button' as const,  label: 'Act', action: 'click'  } },
+      views: { Main: { type: 'Button' as const, label: 'Act', action: 'click' } },
     };
     const { container } = render(<UGCRenderer card={card} onAction={onAction} />);
     const btn = container.querySelector('button');
@@ -2173,7 +2127,6 @@ describe('UGCRenderer with new fields', () => {
     const boxDiv = innerDivs[innerDivs.length - 1];
     expect(boxDiv).not.toBeNull();
   });
-
 });
 
 // ===========================================================================
@@ -2189,9 +2142,7 @@ describe('Review feedback fixes', () => {
     };
     const state = {};
     const cardStyles = { heading: { fontSize: 24 } };
-    const { container } = render(
-      <>{renderTree(root, state, {}, cardStyles)}</>,
-    );
+    const { container } = render(<>{renderTree(root, state, {}, cardStyles)}</>);
     const div = container.querySelector('div');
     // fontSize from cardStyles should be applied after trimming
     expect(div?.style.fontSize).toBe('24px');
@@ -2200,11 +2151,10 @@ describe('Review feedback fixes', () => {
   it('ProgressBar with max=0 renders 0% width (not NaN)', () => {
     const root = {
       type: 'ProgressBar',
-       value: 0, max: 0 ,
+      value: 0,
+      max: 0,
     };
-    const { container } = render(
-      <>{renderTree(root, {}, {})}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {})}</>);
     const inner = container.querySelector('div > div') as HTMLElement | null;
     // jsdom normalizes "0%" to "" for width, so check it's not NaN
     expect(inner?.style.width).not.toContain('NaN');
@@ -2213,11 +2163,10 @@ describe('Review feedback fixes', () => {
   it('ProgressBar with max=0 and value=5 renders 0% width', () => {
     const root = {
       type: 'ProgressBar',
-       value: 5, max: 0 ,
+      value: 5,
+      max: 0,
     };
-    const { container } = render(
-      <>{renderTree(root, {}, {})}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {})}</>);
     const inner = container.querySelector('div > div') as HTMLElement | null;
     // jsdom normalizes "0%" to "" for width, so check it's not NaN
     expect(inner?.style.width).not.toContain('NaN');
@@ -2226,11 +2175,9 @@ describe('Review feedback fixes', () => {
   it('Divider with thickness="2px" does not double-append px', () => {
     const root = {
       type: 'Divider',
-       thickness: '2px' ,
+      thickness: '2px',
     };
-    const { container } = render(
-      <>{renderTree(root, {}, {})}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {})}</>);
     const div = container.querySelector('div');
     expect(div?.style.borderTop).toContain('2px solid');
   });
@@ -2238,11 +2185,9 @@ describe('Review feedback fixes', () => {
   it('Divider with numeric string thickness="2" appends px', () => {
     const root = {
       type: 'Divider',
-       thickness: '2' ,
+      thickness: '2',
     };
-    const { container } = render(
-      <>{renderTree(root, {}, {})}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {})}</>);
     const div = container.querySelector('div');
     expect(div?.style.borderTop).toContain('2px solid');
   });
@@ -2254,17 +2199,13 @@ describe('Review feedback fixes', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     };
     const state = { items: 'not-an-array' };
-    render(
-      <>{renderTree(root, state, {}, undefined, undefined, undefined, onError)}</>,
-    );
+    render(<>{renderTree(root, state, {}, undefined, undefined, undefined, onError)}</>);
     expect(onError).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({ code: 'RUNTIME_LOOP_SOURCE_INVALID' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ code: 'RUNTIME_LOOP_SOURCE_INVALID' })]),
     );
   });
 
@@ -2275,12 +2216,10 @@ describe('Review feedback fixes', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     };
-    render(
-      <>{renderTree(root, {}, {}, undefined, undefined, undefined, onError)}</>,
-    );
+    render(<>{renderTree(root, {}, {}, undefined, undefined, undefined, onError)}</>);
     // resolveRef for "$items" returns undefined → soft skip, no error
     expect(onError).not.toHaveBeenCalled();
   });
@@ -2312,7 +2251,12 @@ describe('mapTransition', () => {
   });
 
   it('converts transition with delay', () => {
-    const result = mapTransition({ property: 'opacity', duration: 300, easing: 'linear', delay: 100 });
+    const result = mapTransition({
+      property: 'opacity',
+      duration: 300,
+      easing: 'linear',
+      delay: 100,
+    });
     expect(result).toBe('opacity 300ms linear 100ms');
   });
 
@@ -2345,10 +2289,7 @@ describe('mapStyle — transition integration', () => {
   });
 
   it('rejects non-whitelisted property in transition at render time', () => {
-    const result = mapStyle(
-      { transition: { property: 'all', duration: 300 } },
-      {},
-    );
+    const result = mapStyle({ transition: { property: 'all', duration: 300 } }, {});
     expect(result.transition).toBeUndefined();
   });
 
@@ -2379,9 +2320,7 @@ describe('Hover rendering', () => {
       children: [{ type: 'Text', content: 'hover me' }],
     };
 
-    const { container } = render(
-      <>{renderTree(root, {}, {})}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {})}</>);
 
     const box = container.firstChild as HTMLElement;
     expect(box).toBeTruthy();
@@ -2418,9 +2357,7 @@ describe('Hover rendering', () => {
       },
     };
 
-    const { container } = render(
-      <>{renderTree(root, {}, {}, cardStyles)}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {}, cardStyles)}</>);
 
     const box = container.firstChild as HTMLElement;
     expect(box).toBeTruthy();
@@ -2444,9 +2381,7 @@ describe('Hover rendering', () => {
       children: [{ type: 'Text', content: 'no hover' }],
     };
 
-    const { container } = render(
-      <>{renderTree(root, {}, {})}</>,
-    );
+    const { container } = render(<>{renderTree(root, {}, {})}</>);
 
     const box = container.firstChild as HTMLElement;
     expect(box.style.height).toBe('200px');

@@ -18,10 +18,7 @@ export type AssetMap = Record<string, string>;
  * @param assets - The asset map from the platform
  * @returns The resolved URL, or undefined if not found
  */
-export function resolveAsset(
-  path: string,
-  assets: AssetMap,
-): string | undefined {
+export function resolveAsset(path: string, assets: AssetMap): string | undefined {
   if (!path.startsWith('@assets/')) return undefined;
 
   // Try full path match first

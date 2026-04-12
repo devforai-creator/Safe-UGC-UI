@@ -491,29 +491,45 @@ describe('collectNestedIssues', () => {
       code: 'invalid_union',
       message: 'Invalid input',
       path: ['views', 'Main'],
-      errors: [[{
-        code: 'invalid_key',
-        message: 'Invalid key in record',
-        path: ['children', 0, 'cases'],
-        issues: [{
-          code: 'custom',
-          message: 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
-          path: ['bad key'],
-        }],
-      }], [{
-        code: 'invalid_union',
-        message: 'Invalid input',
-        path: ['content'],
-        errors: [[{
-          code: 'invalid_type',
-          message: 'Invalid input: expected string, received number',
-          path: [],
-        }], [{
-          code: 'invalid_type',
-          message: 'Invalid input: expected object, received number',
-          path: [],
-        }]],
-      }]],
+      errors: [
+        [
+          {
+            code: 'invalid_key',
+            message: 'Invalid key in record',
+            path: ['children', 0, 'cases'],
+            issues: [
+              {
+                code: 'custom',
+                message: 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+                path: ['bad key'],
+              },
+            ],
+          },
+        ],
+        [
+          {
+            code: 'invalid_union',
+            message: 'Invalid input',
+            path: ['content'],
+            errors: [
+              [
+                {
+                  code: 'invalid_type',
+                  message: 'Invalid input: expected string, received number',
+                  path: [],
+                },
+              ],
+              [
+                {
+                  code: 'invalid_type',
+                  message: 'Invalid input: expected object, received number',
+                  path: [],
+                },
+              ],
+            ],
+          },
+        ],
+      ],
     };
 
     expect(collectNestedIssues(issue)).toEqual([
@@ -537,16 +553,22 @@ describe('collectNestedIssues', () => {
       code: 'invalid_union',
       message: 'Invalid input',
       path: ['views', 'Main'],
-      errors: [[{
-        code: 'invalid_element',
-        message: 'Invalid element',
-        path: ['children', 1],
-        issues: [{
-          code: 'custom',
-          message: 'Color must be a valid CSS color.',
-          path: ['style', 'color'],
-        }],
-      }]],
+      errors: [
+        [
+          {
+            code: 'invalid_element',
+            message: 'Invalid element',
+            path: ['children', 1],
+            issues: [
+              {
+                code: 'custom',
+                message: 'Color must be a valid CSS color.',
+                path: ['style', 'color'],
+              },
+            ],
+          },
+        ],
+      ],
     };
 
     expect(collectNestedIssues(issue)).toEqual([
@@ -695,7 +717,7 @@ describe('validateNodes', () => {
   });
 
   it('accepts a valid Text node with content field', () => {
-    const views = makeViews({ type: 'Text',  content: 'Hello'  });
+    const views = makeViews({ type: 'Text', content: 'Hello' });
     const errors = validateNodes(views);
     expect(errors).toHaveLength(0);
   });
@@ -703,17 +725,14 @@ describe('validateNodes', () => {
   it('accepts a valid Text node with spans field', () => {
     const views = makeViews({
       type: 'Text',
-      spans: [
-        { text: 'HP ' },
-        { text: { $template: [{ $ref: '$hp' }, '/100'] } },
-      ],
+      spans: [{ text: 'HP ' }, { text: { $template: [{ $ref: '$hp' }, '/100'] } }],
     });
     const errors = validateNodes(views);
     expect(errors).toHaveLength(0);
   });
 
   it('accepts a valid Image node with src field', () => {
-    const views = makeViews({ type: 'Image',  src: '@assets/logo.png'  });
+    const views = makeViews({ type: 'Image', src: '@assets/logo.png' });
     const errors = validateNodes(views);
     expect(errors).toHaveLength(0);
   });
@@ -735,7 +754,7 @@ describe('validateNodes', () => {
   });
 
   it('rejects a Text node missing content even if other fields exist', () => {
-    const views = makeViews({ type: 'Text',  somethingElse: 'hi'  });
+    const views = makeViews({ type: 'Text', somethingElse: 'hi' });
     const errors = validateNodes(views);
     expect(errors.length).toBeGreaterThan(0);
     expect(codes(errors)).toContain('MISSING_FIELD');
@@ -765,7 +784,7 @@ describe('validateNodes', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const errors = validateNodes(views);
@@ -825,9 +844,7 @@ describe('validateNodes', () => {
     const views = makeViews({
       type: 'Accordion',
       defaultExpanded: ['missing'],
-      items: [
-        { id: 'one', label: 'One', content: { type: 'Text', content: 'a' } },
-      ],
+      items: [{ id: 'one', label: 'One', content: { type: 'Text', content: 'a' } }],
     });
     const errors = validateNodes(views);
     expect(codes(errors)).toContain('INVALID_VALUE');
@@ -873,9 +890,7 @@ describe('validateNodes', () => {
     const views = makeViews({
       type: 'Tabs',
       defaultTab: 'missing',
-      tabs: [
-        { id: 'stats', label: 'Stats', content: { type: 'Text', content: 'a' } },
-      ],
+      tabs: [{ id: 'stats', label: 'Stats', content: { type: 'Text', content: 'a' } }],
     });
     const errors = validateNodes(views);
     expect(codes(errors)).toContain('INVALID_VALUE');
@@ -911,7 +926,7 @@ describe('validateNodes', () => {
       children: {
         for: 'item',
         in: 'items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const errors = validateNodes(views);
@@ -926,7 +941,7 @@ describe('validateNodes', () => {
       children: {
         for: 123,
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const errors = validateNodes(views);
@@ -955,10 +970,7 @@ describe('validateConditions', () => {
       type: 'Text',
       $if: {
         op: 'and',
-        values: [
-          { $ref: '$show' },
-          { op: 'gt', left: { $ref: '$hp' }, right: 0 },
-        ],
+        values: [{ $ref: '$show' }, { op: 'gt', left: { $ref: '$hp' }, right: 0 }],
       },
       content: 'visible',
     });
@@ -1009,9 +1021,7 @@ describe('validateFragments', () => {
     const fragments = {
       chipRow: {
         type: 'Row',
-        children: [
-          { type: 'Text', content: 'ok' },
-        ],
+        children: [{ type: 'Text', content: 'ok' }],
       },
     };
     const errors = validateFragments(views, fragments);
@@ -1029,9 +1039,7 @@ describe('validateFragments', () => {
     const fragments = {
       outer: {
         type: 'Column',
-        children: [
-          { $use: 'inner' },
-        ],
+        children: [{ $use: 'inner' }],
       },
       inner: {
         type: 'Text',
@@ -1172,7 +1180,7 @@ describe('validateValueTypes', () => {
   it('allows $ref on Icon.name', () => {
     const views = makeViews({
       type: 'Icon',
-       name: { $ref: '$x' } ,
+      name: { $ref: '$x' },
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
@@ -1181,7 +1189,7 @@ describe('validateValueTypes', () => {
   it('allows $ref on Text.content', () => {
     const views = makeViews({
       type: 'Text',
-       content: { $ref: '$x' } ,
+      content: { $ref: '$x' },
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
@@ -1190,31 +1198,35 @@ describe('validateValueTypes', () => {
   it('allows $ref on Image.src', () => {
     const views = makeViews({
       type: 'Image',
-       src: { $ref: '$imgPath' } ,
+      src: { $ref: '$imgPath' },
     });
     const errors = validateValueTypes(views);
     expect(errors).toHaveLength(0);
   });
 
   it('accepts flex-start/flex-end alignment aliases at schema level', () => {
-    const card = makeCard(makeViews({
-      type: 'Box',
-      style: {
-        justifyContent: 'flex-end',
-        alignItems: 'flex-start',
-        alignSelf: 'flex-end',
-      },
-    }));
+    const card = makeCard(
+      makeViews({
+        type: 'Box',
+        style: {
+          justifyContent: 'flex-end',
+          alignItems: 'flex-start',
+          alignSelf: 'flex-end',
+        },
+      }),
+    );
     const result = validateSchema(card);
     expect(result.valid).toBe(true);
   });
 
   it('accepts numeric string fontWeight at schema level', () => {
-    const card = makeCard(makeViews({
-      type: 'Text',
-      content: 'Hello',
-      style: { fontWeight: '900' },
-    }));
+    const card = makeCard(
+      makeViews({
+        type: 'Text',
+        content: 'Hello',
+        style: { fontWeight: '900' },
+      }),
+    );
     const result = validateSchema(card);
     expect(result.valid).toBe(true);
   });
@@ -1679,7 +1691,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with https:// URL', () => {
     const views = makeViews({
       type: 'Image',
-       src: 'https://evil.com/img.png' ,
+      src: 'https://evil.com/img.png',
     });
     const errors = validateSecurity({ views });
     expect(errors.length).toBeGreaterThan(0);
@@ -1689,7 +1701,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with http:// URL', () => {
     const views = makeViews({
       type: 'Image',
-       src: 'http://evil.com/img.png' ,
+      src: 'http://evil.com/img.png',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -1698,7 +1710,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with javascript: protocol', () => {
     const views = makeViews({
       type: 'Image',
-       src: 'javascript:alert(1)' ,
+      src: 'javascript:alert(1)',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -1707,7 +1719,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with data: protocol', () => {
     const views = makeViews({
       type: 'Image',
-       src: 'data:image/png;base64,abc' ,
+      src: 'data:image/png;base64,abc',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -1716,7 +1728,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with protocol-relative URL', () => {
     const views = makeViews({
       type: 'Image',
-       src: '//evil.com/img.png' ,
+      src: '//evil.com/img.png',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -1725,7 +1737,7 @@ describe('validateSecurity', () => {
   it('rejects Image src with path traversal (no @assets/)', () => {
     const views = makeViews({
       type: 'Image',
-       src: '../../../etc/passwd' ,
+      src: '../../../etc/passwd',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('INVALID_ASSET_PATH');
@@ -1734,7 +1746,7 @@ describe('validateSecurity', () => {
   it('rejects Image src @assets/../secret (path traversal)', () => {
     const views = makeViews({
       type: 'Image',
-       src: '@assets/../secret' ,
+      src: '@assets/../secret',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('ASSET_PATH_TRAVERSAL');
@@ -1743,11 +1755,14 @@ describe('validateSecurity', () => {
   it('accepts Image src @assets/avatar.png', () => {
     const views = makeViews({
       type: 'Image',
-       src: '@assets/avatar.png' ,
+      src: '@assets/avatar.png',
     });
     const errors = validateSecurity({ views });
     const srcErrors = errors.filter(
-      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+      (e) =>
+        e.code === 'EXTERNAL_URL' ||
+        e.code === 'INVALID_ASSET_PATH' ||
+        e.code === 'ASSET_PATH_TRAVERSAL',
     );
     expect(srcErrors).toHaveLength(0);
   });
@@ -1816,7 +1831,7 @@ describe('validateSecurity', () => {
   it('rejects $ref with __proto__', () => {
     const views = makeViews({
       type: 'Text',
-       content: { $ref: '$state.__proto__' } ,
+      content: { $ref: '$state.__proto__' },
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -1825,7 +1840,7 @@ describe('validateSecurity', () => {
   it('rejects $ref with constructor', () => {
     const views = makeViews({
       type: 'Text',
-       content: { $ref: '$state.constructor' } ,
+      content: { $ref: '$state.constructor' },
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -1834,7 +1849,7 @@ describe('validateSecurity', () => {
   it('rejects $ref with prototype', () => {
     const views = makeViews({
       type: 'Text',
-       content: { $ref: '$state.prototype' } ,
+      content: { $ref: '$state.prototype' },
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
@@ -1843,7 +1858,7 @@ describe('validateSecurity', () => {
   it('accepts $ref without prototype pollution segments', () => {
     const views = makeViews({
       type: 'Text',
-       content: { $ref: '$state.name' } ,
+      content: { $ref: '$state.name' },
     });
     const errors = validateSecurity({ views });
     const pollutionErrors = errors.filter((e) => e.code === 'PROTOTYPE_POLLUTION');
@@ -1855,7 +1870,7 @@ describe('validateSecurity', () => {
   it('rejects Image src $ref resolving to external URL via state', () => {
     const views = makeViews({
       type: 'Image',
-       src: { $ref: '$img' } ,
+      src: { $ref: '$img' },
     });
     const state = { img: 'https://evil.com/payload.png' };
     const errors = validateSecurity({ views, state });
@@ -1865,12 +1880,15 @@ describe('validateSecurity', () => {
   it('accepts Image src $ref resolving to valid @assets/ path', () => {
     const views = makeViews({
       type: 'Image',
-       src: { $ref: '$img' } ,
+      src: { $ref: '$img' },
     });
     const state = { img: '@assets/logo.png' };
     const errors = validateSecurity({ views, state });
     const srcErrors = errors.filter(
-      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+      (e) =>
+        e.code === 'EXTERNAL_URL' ||
+        e.code === 'INVALID_ASSET_PATH' ||
+        e.code === 'ASSET_PATH_TRAVERSAL',
     );
     expect(srcErrors).toHaveLength(0);
   });
@@ -1878,7 +1896,7 @@ describe('validateSecurity', () => {
   it('rejects Image src $ref resolving to path traversal', () => {
     const views = makeViews({
       type: 'Image',
-       src: { $ref: '$img' } ,
+      src: { $ref: '$img' },
     });
     const state = { img: '@assets/../secret' };
     const errors = validateSecurity({ views, state });
@@ -1888,13 +1906,16 @@ describe('validateSecurity', () => {
   it('skips unresolved Image src $ref when no state or locals value is available', () => {
     const views = makeViews({
       type: 'Image',
-       src: { $ref: '$item.img' } ,
+      src: { $ref: '$item.img' },
     });
     const state = { unrelated: 'value' };
     const errors = validateSecurity({ views, state });
     // Should NOT produce any src-related errors — unresolvable $ref is skipped
     const srcErrors = errors.filter(
-      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+      (e) =>
+        e.code === 'EXTERNAL_URL' ||
+        e.code === 'INVALID_ASSET_PATH' ||
+        e.code === 'ASSET_PATH_TRAVERSAL',
     );
     expect(srcErrors).toHaveLength(0);
   });
@@ -1912,9 +1933,7 @@ describe('validateSecurity', () => {
       },
     });
     const state = {
-      items: [
-        { img: 'https://evil.com/payload.png' },
-      ],
+      items: [{ img: 'https://evil.com/payload.png' }],
     };
     const errors = validateSecurity({ views, state });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -1936,9 +1955,7 @@ describe('validateSecurity', () => {
       },
     };
     const state = {
-      items: [
-        { img: 'https://evil.com/payload.png' },
-      ],
+      items: [{ img: 'https://evil.com/payload.png' }],
     };
     const errors = validateSecurity({ views, state, fragments });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -1960,13 +1977,14 @@ describe('validateSecurity', () => {
       },
     };
     const state = {
-      items: [
-        { img: '@assets/avatar.png' },
-      ],
+      items: [{ img: '@assets/avatar.png' }],
     };
     const errors = validateSecurity({ views, state, fragments });
     const srcErrors = errors.filter(
-      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+      (e) =>
+        e.code === 'EXTERNAL_URL' ||
+        e.code === 'INVALID_ASSET_PATH' ||
+        e.code === 'ASSET_PATH_TRAVERSAL',
     );
     expect(srcErrors).toHaveLength(0);
   });
@@ -1974,7 +1992,7 @@ describe('validateSecurity', () => {
   it('rejects Image src literal "logo.png" without @assets/ prefix', () => {
     const views = makeViews({
       type: 'Image',
-       src: 'logo.png' ,
+      src: 'logo.png',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('INVALID_ASSET_PATH');
@@ -2011,7 +2029,7 @@ describe('validateSecurity', () => {
   it('rejects URL with leading whitespace', () => {
     const views = makeViews({
       type: 'Image',
-       src: '  https://evil.com/img.png' ,
+      src: '  https://evil.com/img.png',
     });
     const errors = validateSecurity({ views });
     expect(codes(errors)).toContain('EXTERNAL_URL');
@@ -2020,7 +2038,7 @@ describe('validateSecurity', () => {
   it('rejects $ref resolving to URL with leading whitespace', () => {
     const views = makeViews({
       type: 'Image',
-       src: { $ref: '$img' } ,
+      src: { $ref: '$img' },
     });
     const state = { img: '  https://evil.com/img.png' };
     const errors = validateSecurity({ views, state });
@@ -2037,8 +2055,8 @@ describe('validateLimits', () => {
     const views = makeViews({
       type: 'Box',
       children: [
-        { type: 'Text',  content: 'Hello'  },
-        { type: 'Text',  content: 'World'  },
+        { type: 'Text', content: 'Hello' },
+        { type: 'Text', content: 'World' },
       ],
     });
     const errors = validateLimits({ views });
@@ -2263,7 +2281,7 @@ describe('validateLimits', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     // No state at all — should skip, not error
@@ -2277,7 +2295,7 @@ describe('validateLimits', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const errors = validateLimits({ views, state: { items: 'not an array' } });
@@ -2290,12 +2308,15 @@ describe('validateLimits', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const errors = validateLimits({ views, state: { items: [1, 2, 3] } });
     const loopErrors = errors.filter(
-      (e) => e.code === 'LOOP_ITERATIONS_EXCEEDED' || e.code === 'LOOP_SOURCE_MISSING' || e.code === 'LOOP_SOURCE_NOT_ARRAY',
+      (e) =>
+        e.code === 'LOOP_ITERATIONS_EXCEEDED' ||
+        e.code === 'LOOP_SOURCE_MISSING' ||
+        e.code === 'LOOP_SOURCE_NOT_ARRAY',
     );
     expect(loopErrors).toHaveLength(0);
   });
@@ -2308,7 +2329,7 @@ describe('validateLimits', () => {
 describe('validate', () => {
   it('returns valid: true for a valid card', () => {
     const card = makeCard(
-      makeViews({ type: 'Box', children: [{ type: 'Text',  content: 'Hello'  }] }),
+      makeViews({ type: 'Box', children: [{ type: 'Text', content: 'Hello' }] }),
     );
     const result = validate(card);
     expect(result.valid).toBe(true);
@@ -2325,9 +2346,7 @@ describe('validate', () => {
   });
 
   it('returns valid: false for a card with forbidden style', () => {
-    const card = makeCard(
-      makeViews({ type: 'Box', style: { backgroundImage: 'something' } }),
-    );
+    const card = makeCard(makeViews({ type: 'Box', style: { backgroundImage: 'something' } }));
     const result = validate(card);
     expect(result.valid).toBe(false);
     expect(codes(result.errors)).toContain('SCHEMA_ERROR');
@@ -2357,7 +2376,7 @@ describe('validate', () => {
       views: {
         Main: {
           type: 'Image',
-           src: { $ref: '$img' } ,
+          src: { $ref: '$img' },
         },
       },
       state: { img: 'https://evil.com/payload.png' },
@@ -2387,9 +2406,7 @@ describe('validate', () => {
         },
       },
       state: {
-        items: [
-          { img: 'https://evil.com/payload.png' },
-        ],
+        items: [{ img: 'https://evil.com/payload.png' }],
       },
     };
     const result = validate(card);
@@ -2403,7 +2420,7 @@ describe('validate', () => {
       makeViews({
         type: 'Box',
         style: { backgroundColor: 'url(x)', zIndex: -5 },
-        children: [{ type: 'Text',  content: 'ok'  }],
+        children: [{ type: 'Text', content: 'ok' }],
       }),
     );
     const result = validate(card);
@@ -2415,9 +2432,7 @@ describe('validate', () => {
 
 describe('validateRaw', () => {
   it('returns valid: true for a valid JSON string', () => {
-    const card = makeCard(
-      makeViews({ type: 'Box', children: [{ type: 'Text',  content: 'Hi'  }] }),
-    );
+    const card = makeCard(makeViews({ type: 'Box', children: [{ type: 'Text', content: 'Hi' }] }));
     const result = validateRaw(JSON.stringify(card));
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
@@ -2493,9 +2508,7 @@ describe('loadCard', () => {
 
 describe('loadCardRaw', () => {
   it('returns the typed card for valid raw JSON input', () => {
-    const card = makeCard(
-      makeViews({ type: 'Text', content: 'Loaded safely' }),
-    );
+    const card = makeCard(makeViews({ type: 'Text', content: 'Loaded safely' }));
 
     const result = loadCardRaw(JSON.stringify(card));
 
@@ -2816,8 +2829,8 @@ describe('validateLimits — for-loop validation', () => {
         template: {
           type: 'Box',
           children: [
-            { type: 'Text',  content: 'a'  },
-            { type: 'Text',  content: 'b'  },
+            { type: 'Text', content: 'a' },
+            { type: 'Text', content: 'b' },
           ],
         },
       },
@@ -2834,15 +2847,13 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$data.items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const state = { data: { items: [1, 2, 3] } };
     const errors = validateLimits({ views, state });
     const loopErrors = errors.filter(
-      (e) =>
-        e.code === 'LOOP_SOURCE_MISSING' ||
-        e.code === 'LOOP_SOURCE_NOT_ARRAY',
+      (e) => e.code === 'LOOP_SOURCE_MISSING' || e.code === 'LOOP_SOURCE_NOT_ARRAY',
     );
     expect(loopErrors).toHaveLength(0);
   });
@@ -2853,7 +2864,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$item.subItems',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const state = { unrelated: 'value' };
@@ -2869,7 +2880,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     const errors = validateLimits({ views, state: { items: 'not an array' } });
@@ -2882,7 +2893,7 @@ describe('validateLimits — for-loop validation', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'hi'  },
+        template: { type: 'Text', content: 'hi' },
       },
     });
     // MAX_LOOP_ITERATIONS is 1000, so 1001 should exceed
@@ -2908,7 +2919,7 @@ describe('validateLimits — for-loop validation', () => {
               children: {
                 for: 'c',
                 in: '$items',
-                template: { type: 'Text',  content: 'deep'  },
+                template: { type: 'Text', content: 'deep' },
               },
             },
           },
@@ -2932,7 +2943,7 @@ describe('validateLimits — loop expansion multiplier', () => {
       children: {
         for: 'item',
         in: '$items',
-        template: { type: 'Text',  content: 'x'.repeat(100)  },
+        template: { type: 'Text', content: 'x'.repeat(100) },
       },
     });
     const items = Array.from({ length: 100 }, (_, i) => i);
@@ -2955,16 +2966,16 @@ describe('validateLimits — loop expansion multiplier', () => {
         template: {
           type: 'Box',
           children: [
-            { type: 'Text',  content: '1'  },
-            { type: 'Text',  content: '2'  },
-            { type: 'Text',  content: '3'  },
-            { type: 'Text',  content: '4'  },
-            { type: 'Text',  content: '5'  },
-            { type: 'Text',  content: '6'  },
-            { type: 'Text',  content: '7'  },
-            { type: 'Text',  content: '8'  },
-            { type: 'Text',  content: '9'  },
-            { type: 'Text',  content: '10'  },
+            { type: 'Text', content: '1' },
+            { type: 'Text', content: '2' },
+            { type: 'Text', content: '3' },
+            { type: 'Text', content: '4' },
+            { type: 'Text', content: '5' },
+            { type: 'Text', content: '6' },
+            { type: 'Text', content: '7' },
+            { type: 'Text', content: '8' },
+            { type: 'Text', content: '9' },
+            { type: 'Text', content: '10' },
           ],
         },
       },
@@ -3001,10 +3012,7 @@ describe('validateStyles — Grid $ref and literal gridTemplateColumns', () => {
       style: { gridTemplateColumns: 'repeat(3, 1fr)' },
     });
     const errors = validateStyles(views);
-    const gridErrors = errors.filter(
-      (e) =>
-        e.code === 'FORBIDDEN_STYLE_PROPERTY',
-    );
+    const gridErrors = errors.filter((e) => e.code === 'FORBIDDEN_STYLE_PROPERTY');
     expect(gridErrors).toHaveLength(0);
   });
 });
@@ -3024,7 +3032,7 @@ describe('validate — card.styles integration', () => {
         Main: {
           type: 'Box',
           style: { $style: 'myStyle' },
-          children: [{ type: 'Text',  content: 'Hello'  }],
+          children: [{ type: 'Text', content: 'Hello' }],
         },
       },
     };
@@ -3095,7 +3103,7 @@ describe('validate — card.styles integration', () => {
           children: {
             for: 'item',
             in: '$items',
-            template: { type: 'Text',  content: 'hi'  },
+            template: { type: 'Text', content: 'hi' },
           },
         },
       },
@@ -3121,7 +3129,7 @@ describe('validateLimits — loop source resolution policy', () => {
           children: {
             for: 'item',
             in: '$items',
-            template: { type: 'Text',  content: 'hi'  },
+            template: { type: 'Text', content: 'hi' },
           },
         },
       },
@@ -3140,7 +3148,7 @@ describe('validateLimits — loop source resolution policy', () => {
           children: {
             for: 'item',
             in: '$items',
-            template: { type: 'Text',  content: 'hi'  },
+            template: { type: 'Text', content: 'hi' },
           },
         },
       },
@@ -3160,7 +3168,7 @@ describe('validateLimits — loop source resolution policy', () => {
           children: {
             for: 'item',
             in: '$item.reactions',
-            template: { type: 'Text',  content: 'hi'  },
+            template: { type: 'Text', content: 'hi' },
           },
         },
       },
@@ -3185,7 +3193,7 @@ describe('validateLimits — loop source resolution policy', () => {
               children: {
                 for: 'reaction',
                 in: '$msg',
-                template: { type: 'Text',  content: 'r'  },
+                template: { type: 'Text', content: 'r' },
               },
             },
           },
@@ -3705,12 +3713,14 @@ describe('validateStyles — card.styles unknown keys', () => {
 
 describe('validateSecurity — responsive compact', () => {
   it('rejects position fixed inside responsive compact overrides', () => {
-    const card = makeCard(makeViews({
-      type: 'Box',
-      responsive: {
-        compact: { position: 'fixed' },
-      },
-    }));
+    const card = makeCard(
+      makeViews({
+        type: 'Box',
+        responsive: {
+          compact: { position: 'fixed' },
+        },
+      }),
+    );
     const errors = validateSecurity({
       views: card.views as Record<string, unknown>,
     });
@@ -3718,18 +3728,20 @@ describe('validateSecurity — responsive compact', () => {
   });
 
   it('rejects nested overflow:auto created only in compact mode', () => {
-    const card = makeCard(makeViews({
-      type: 'Box',
-      responsive: {
-        compact: { overflow: 'auto' },
-      },
-      children: [
-        {
-          type: 'Box',
-          style: { overflow: 'auto' },
+    const card = makeCard(
+      makeViews({
+        type: 'Box',
+        responsive: {
+          compact: { overflow: 'auto' },
         },
-      ],
-    }));
+        children: [
+          {
+            type: 'Box',
+            style: { overflow: 'auto' },
+          },
+        ],
+      }),
+    );
     const errors = validateSecurity({
       views: card.views as Record<string, unknown>,
     });
@@ -3739,12 +3751,14 @@ describe('validateSecurity — responsive compact', () => {
 
 describe('validateSecurity — responsive medium', () => {
   it('rejects position fixed inside responsive medium overrides', () => {
-    const card = makeCard(makeViews({
-      type: 'Box',
-      responsive: {
-        medium: { position: 'fixed' },
-      },
-    }));
+    const card = makeCard(
+      makeViews({
+        type: 'Box',
+        responsive: {
+          medium: { position: 'fixed' },
+        },
+      }),
+    );
     const errors = validateSecurity({
       views: card.views as Record<string, unknown>,
     });

@@ -58,15 +58,42 @@ import { walkRenderableCard } from './renderable-walk.js';
 const COLOR_PROPERTIES = new Set(['backgroundColor', 'color']);
 
 const LENGTH_PROPERTIES = new Set([
-  'width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
-  'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
-  'top', 'right', 'bottom', 'left', 'gap', 'lineHeight',
+  'width',
+  'height',
+  'minWidth',
+  'maxWidth',
+  'minHeight',
+  'maxHeight',
+  'padding',
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'gap',
+  'lineHeight',
 ]);
 
 const LENGTH_AUTO_ALLOWED = new Set([
-  'width', 'height', 'minWidth', 'maxWidth', 'minHeight', 'maxHeight',
-  'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+  'width',
+  'height',
+  'minWidth',
+  'maxWidth',
+  'minHeight',
+  'maxHeight',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
 ]);
 
 const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
@@ -225,11 +252,7 @@ function isValidAspectRatioLiteral(value: string | number): boolean {
  * object, or array) for dangerous CSS function patterns.
  * Skips $ref objects entirely.
  */
-function collectDangerousCssErrors(
-  value: unknown,
-  path: string,
-  errors: ValidationError[],
-): void {
+function collectDangerousCssErrors(value: unknown, path: string, errors: ValidationError[]): void {
   if (typeof value === 'string') {
     const lower = value.toLowerCase();
     for (const fn of DANGEROUS_CSS_FUNCTIONS) {
@@ -276,10 +299,7 @@ function validateShadowObject(
   path: string,
   errors: ValidationError[],
 ): void {
-  if (
-    isLiteralNumber(shadow.blur) &&
-    shadow.blur > BOX_SHADOW_BLUR_MAX
-  ) {
+  if (isLiteralNumber(shadow.blur) && shadow.blur > BOX_SHADOW_BLUR_MAX) {
     errors.push(
       createError(
         'STYLE_VALUE_OUT_OF_RANGE',
@@ -289,10 +309,7 @@ function validateShadowObject(
     );
   }
 
-  if (
-    isLiteralNumber(shadow.spread) &&
-    shadow.spread > BOX_SHADOW_SPREAD_MAX
-  ) {
+  if (isLiteralNumber(shadow.spread) && shadow.spread > BOX_SHADOW_SPREAD_MAX) {
     errors.push(
       createError(
         'STYLE_VALUE_OUT_OF_RANGE',
@@ -322,10 +339,7 @@ function validateTextShadowObject(
   path: string,
   errors: ValidationError[],
 ): void {
-  if (
-    isLiteralNumber(shadow.blur) &&
-    shadow.blur > TEXT_SHADOW_BLUR_MAX
-  ) {
+  if (isLiteralNumber(shadow.blur) && shadow.blur > TEXT_SHADOW_BLUR_MAX) {
     errors.push(
       createError(
         'STYLE_VALUE_OUT_OF_RANGE',
@@ -346,11 +360,7 @@ function validateTextShadowObject(
   }
 }
 
-function validateClipPathLength(
-  value: unknown,
-  path: string,
-  errors: ValidationError[],
-): void {
+function validateClipPathLength(value: unknown, path: string, errors: ValidationError[]): void {
   if (value == null || isDynamic(value)) {
     return;
   }
@@ -364,11 +374,7 @@ function validateClipPathLength(
   }
 
   errors.push(
-    createError(
-      'INVALID_LENGTH',
-      `Invalid length "${String(value)}" at "${path}"`,
-      path,
-    ),
+    createError('INVALID_LENGTH', `Invalid length "${String(value)}" at "${path}"`, path),
   );
 }
 
@@ -762,20 +768,12 @@ function validateSingleStyle(
       for (let i = 0; i < boxShadow.length; i++) {
         const shadow = boxShadow[i];
         if (typeof shadow === 'object' && shadow !== null) {
-          validateShadowObject(
-            shadow as Record<string, unknown>,
-            `${boxShadowPath}[${i}]`,
-            errors,
-          );
+          validateShadowObject(shadow as Record<string, unknown>, `${boxShadowPath}[${i}]`, errors);
         }
       }
     } else if (typeof boxShadow === 'object' && boxShadow !== null) {
       // Single shadow object
-      validateShadowObject(
-        boxShadow as Record<string, unknown>,
-        boxShadowPath,
-        errors,
-      );
+      validateShadowObject(boxShadow as Record<string, unknown>, boxShadowPath, errors);
     }
   }
 
@@ -808,11 +806,7 @@ function validateSingleStyle(
         }
       }
     } else if (typeof textShadow === 'object' && textShadow !== null) {
-      validateTextShadowObject(
-        textShadow as Record<string, unknown>,
-        textShadowPath,
-        errors,
-      );
+      validateTextShadowObject(textShadow as Record<string, unknown>, textShadowPath, errors);
     }
   }
 
@@ -840,11 +834,7 @@ function validateSingleStyle(
   // 8. Color format validation
   // ------------------------------------------------------------------
   for (const prop of COLOR_PROPERTIES) {
-    if (
-      prop in style &&
-      isLiteralString(style[prop]) &&
-      !isDynamic(style[prop])
-    ) {
+    if (prop in style && isLiteralString(style[prop]) && !isDynamic(style[prop])) {
       if (!isValidColor(style[prop] as string)) {
         errors.push(
           createError(
@@ -861,11 +851,7 @@ function validateSingleStyle(
   // 9. Length format validation
   // ------------------------------------------------------------------
   for (const prop of LENGTH_PROPERTIES) {
-    if (
-      prop in style &&
-      isLiteralString(style[prop]) &&
-      !isDynamic(style[prop])
-    ) {
+    if (prop in style && isLiteralString(style[prop]) && !isDynamic(style[prop])) {
       const val = style[prop] as string;
       if (val === 'auto') {
         if (!LENGTH_AUTO_ALLOWED.has(prop)) {
@@ -923,11 +909,7 @@ function validateSingleStyle(
   // 10. Range checks on string length values
   // ------------------------------------------------------------------
   for (const [prop, range] of Object.entries(RANGE_LENGTH_PROPERTIES)) {
-    if (
-      prop in style &&
-      isLiteralString(style[prop]) &&
-      !isDynamic(style[prop])
-    ) {
+    if (prop in style && isLiteralString(style[prop]) && !isDynamic(style[prop])) {
       const numericValue = parseLengthValue(style[prop] as string);
       if (numericValue !== null) {
         if (numericValue < range.min || numericValue > range.max) {
@@ -988,11 +970,7 @@ function validateSingleStyle(
     if (Array.isArray(gradient.stops)) {
       for (let i = 0; i < gradient.stops.length; i++) {
         const stop = gradient.stops[i];
-        if (
-          typeof stop === 'object' &&
-          stop !== null &&
-          !isDynamic(stop)
-        ) {
+        if (typeof stop === 'object' && stop !== null && !isDynamic(stop)) {
           const stopObj = stop as Record<string, unknown>;
           if (
             isLiteralString(stopObj.color) &&
@@ -1047,18 +1025,12 @@ function validateSingleStyle(
 
       if (mergedHoverStyle) {
         // Validate hoverStyle with the same rules (recursive call)
-        validateSingleStyle(
-          mergedHoverStyle,
-          hoverPath,
-          errors,
-          cardStyles,
-          {
-            allowHoverStyle,
-            allowTransition,
-            allowHoverStyleRefs,
-            allowedKeys: HOVER_STYLE_ALLOWED_KEYS,
-          },
-        );
+        validateSingleStyle(mergedHoverStyle, hoverPath, errors, cardStyles, {
+          allowHoverStyle,
+          allowTransition,
+          allowHoverStyleRefs,
+          allowedKeys: HOVER_STYLE_ALLOWED_KEYS,
+        });
       }
     }
   }
@@ -1230,10 +1202,8 @@ export function validateStyles(
     }
 
     const style =
-      node.style != null &&
-      typeof node.style === 'object' &&
-      !Array.isArray(node.style)
-        ? node.style as Record<string, unknown>
+      node.style != null && typeof node.style === 'object' && !Array.isArray(node.style)
+        ? (node.style as Record<string, unknown>)
         : undefined;
     if (style != null && typeof style === 'object') {
       const stylePath = `${ctx.path}.style`;
@@ -1246,18 +1216,10 @@ export function validateStyles(
     }
 
     const responsive = node.responsive;
-    if (
-      responsive != null &&
-      typeof responsive === 'object' &&
-      !Array.isArray(responsive)
-    ) {
+    if (responsive != null && typeof responsive === 'object' && !Array.isArray(responsive)) {
       for (const mode of RESPONSIVE_OVERRIDE_KEYS) {
         const override = (responsive as Record<string, unknown>)[mode];
-        if (
-          override != null &&
-          typeof override === 'object' &&
-          !Array.isArray(override)
-        ) {
+        if (override != null && typeof override === 'object' && !Array.isArray(override)) {
           const overridePath = `${ctx.path}.responsive.${mode}`;
           const mergedOverride = resolveStyleRef(
             override as Record<string, unknown>,
@@ -1282,20 +1244,12 @@ export function validateStyles(
     if (node.type === 'Text' && spans) {
       for (let i = 0; i < spans.length; i++) {
         const span = spans[i];
-        if (
-          span == null ||
-          typeof span !== 'object' ||
-          Array.isArray(span)
-        ) {
+        if (span == null || typeof span !== 'object' || Array.isArray(span)) {
           continue;
         }
 
         const spanStyle = (span as Record<string, unknown>).style;
-        if (
-          spanStyle == null ||
-          typeof spanStyle !== 'object' ||
-          Array.isArray(spanStyle)
-        ) {
+        if (spanStyle == null || typeof spanStyle !== 'object' || Array.isArray(spanStyle)) {
           continue;
         }
 

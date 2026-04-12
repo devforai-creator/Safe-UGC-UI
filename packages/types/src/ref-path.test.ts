@@ -39,9 +39,7 @@ describe('hasForbiddenRefPathSegments', () => {
 describe('resolveRefPath', () => {
   it('resolves nested data from objects and arrays', () => {
     const state = {
-      users: [
-        { posts: [{ title: 'Hello' }, { title: 'World' }] },
-      ],
+      users: [{ posts: [{ title: 'Hello' }, { title: 'World' }] }],
     };
 
     expect(resolveRefPath('$users[0].posts[1].title', state)).toBe('World');

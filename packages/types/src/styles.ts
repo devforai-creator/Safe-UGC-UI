@@ -14,13 +14,7 @@
 
 import { z } from 'zod';
 import { ALLOWED_FONT_FAMILIES, ASPECT_RATIO_PATTERN } from './constants.js';
-import {
-  refSchema,
-  dynamicSchema,
-  colorSchema,
-  lengthSchema,
-  percentageSchema,
-} from './values.js';
+import { refSchema, dynamicSchema, colorSchema, lengthSchema, percentageSchema } from './values.js';
 
 // ===========================================================================
 // 1. Structured objects (Static only — no dynamic wrappers)
@@ -130,8 +124,8 @@ export type BorderObject = z.infer<typeof borderObjectSchema>;
 // ---------------------------------------------------------------------------
 
 export const transformObjectSchema = z.object({
-  rotate: dynamicSchema(z.string()).optional(),    // e.g. "45deg"
-  scale: dynamicSchema(z.number()).optional(),     // 0.1 ~ 1.5
+  rotate: dynamicSchema(z.string()).optional(), // e.g. "45deg"
+  scale: dynamicSchema(z.number()).optional(), // 0.1 ~ 1.5
   translateX: dynamicSchema(z.number()).optional(), // -500 ~ 500
   translateY: dynamicSchema(z.number()).optional(), // -500 ~ 500
 });
@@ -142,25 +136,31 @@ export type TransformObject = z.infer<typeof transformObjectSchema>;
 // 1.10 ClipPathObject
 // ---------------------------------------------------------------------------
 
-export const clipPathCircleSchema = z.object({
-  type: z.literal('circle'),
-  radius: dynamicSchema(lengthSchema),
-}).strict();
+export const clipPathCircleSchema = z
+  .object({
+    type: z.literal('circle'),
+    radius: dynamicSchema(lengthSchema),
+  })
+  .strict();
 
-export const clipPathEllipseSchema = z.object({
-  type: z.literal('ellipse'),
-  rx: dynamicSchema(lengthSchema),
-  ry: dynamicSchema(lengthSchema),
-}).strict();
+export const clipPathEllipseSchema = z
+  .object({
+    type: z.literal('ellipse'),
+    rx: dynamicSchema(lengthSchema),
+    ry: dynamicSchema(lengthSchema),
+  })
+  .strict();
 
-export const clipPathInsetSchema = z.object({
-  type: z.literal('inset'),
-  top: dynamicSchema(lengthSchema),
-  right: dynamicSchema(lengthSchema),
-  bottom: dynamicSchema(lengthSchema),
-  left: dynamicSchema(lengthSchema),
-  round: dynamicSchema(lengthSchema).optional(),
-}).strict();
+export const clipPathInsetSchema = z
+  .object({
+    type: z.literal('inset'),
+    top: dynamicSchema(lengthSchema),
+    right: dynamicSchema(lengthSchema),
+    bottom: dynamicSchema(lengthSchema),
+    left: dynamicSchema(lengthSchema),
+    round: dynamicSchema(lengthSchema).optional(),
+  })
+  .strict();
 
 export const clipPathObjectSchema = z.union([
   clipPathCircleSchema,
@@ -199,12 +199,7 @@ export type DisplayValue = z.infer<typeof displayValueSchema>;
 // 2.4 FlexDirectionValue
 // ---------------------------------------------------------------------------
 
-export const flexDirectionValueSchema = z.enum([
-  'row',
-  'column',
-  'row-reverse',
-  'column-reverse',
-]);
+export const flexDirectionValueSchema = z.enum(['row', 'column', 'row-reverse', 'column-reverse']);
 export type FlexDirectionValue = z.infer<typeof flexDirectionValueSchema>;
 
 // ---------------------------------------------------------------------------
@@ -264,23 +259,14 @@ export type FlexWrapValue = z.infer<typeof flexWrapValueSchema>;
 // 2.9 TextAlignValue
 // ---------------------------------------------------------------------------
 
-export const textAlignValueSchema = z.enum([
-  'left',
-  'center',
-  'right',
-  'justify',
-]);
+export const textAlignValueSchema = z.enum(['left', 'center', 'right', 'justify']);
 export type TextAlignValue = z.infer<typeof textAlignValueSchema>;
 
 // ---------------------------------------------------------------------------
 // 2.10 TextDecorationValue
 // ---------------------------------------------------------------------------
 
-export const textDecorationValueSchema = z.enum([
-  'none',
-  'underline',
-  'line-through',
-]);
+export const textDecorationValueSchema = z.enum(['none', 'underline', 'line-through']);
 export type TextDecorationValue = z.infer<typeof textDecorationValueSchema>;
 
 // ---------------------------------------------------------------------------
@@ -328,13 +314,7 @@ export type FontWeightValue = z.infer<typeof fontWeightValueSchema>;
 // 3. TransitionDef — constrained CSS transition declaration (spec 3.9)
 // ===========================================================================
 
-export const easingValueSchema = z.enum([
-  'ease',
-  'linear',
-  'ease-in',
-  'ease-out',
-  'ease-in-out',
-]);
+export const easingValueSchema = z.enum(['ease', 'linear', 'ease-in', 'ease-out', 'ease-in-out']);
 
 export type EasingValue = z.infer<typeof easingValueSchema>;
 
@@ -355,19 +335,19 @@ const transitionFieldSchema = z
 // 3.1 TextSpanStyle — restricted inline text styling only
 // ===========================================================================
 
-export const textSpanStyleSchema = z.object({
-  backgroundColor: dynamicSchema(colorSchema).optional(),
-  color: dynamicSchema(colorSchema).optional(),
-  fontFamily: dynamicSchema(fontFamilyValueSchema).optional(),
-  fontSize: dynamicSchema(lengthSchema).optional(),
-  fontWeight: dynamicSchema(fontWeightValueSchema).optional(),
-  fontStyle: dynamicSchema(fontStyleValueSchema).optional(),
-  textDecoration: dynamicSchema(textDecorationValueSchema).optional(),
-  letterSpacing: dynamicSchema(lengthSchema).optional(),
-  textShadow: z
-    .union([textShadowObjectSchema, z.array(textShadowObjectSchema)])
-    .optional(),
-}).strict();
+export const textSpanStyleSchema = z
+  .object({
+    backgroundColor: dynamicSchema(colorSchema).optional(),
+    color: dynamicSchema(colorSchema).optional(),
+    fontFamily: dynamicSchema(fontFamilyValueSchema).optional(),
+    fontSize: dynamicSchema(lengthSchema).optional(),
+    fontWeight: dynamicSchema(fontWeightValueSchema).optional(),
+    fontStyle: dynamicSchema(fontStyleValueSchema).optional(),
+    textDecoration: dynamicSchema(textDecorationValueSchema).optional(),
+    letterSpacing: dynamicSchema(lengthSchema).optional(),
+    textShadow: z.union([textShadowObjectSchema, z.array(textShadowObjectSchema)]).optional(),
+  })
+  .strict();
 
 export type TextSpanStyle = z.infer<typeof textSpanStyleSchema>;
 
@@ -411,10 +391,9 @@ const coreStyleShape = {
   // -----------------------------------------------------------------------
   width: dynamicSchema(sizeValueSchema).optional(),
   height: dynamicSchema(sizeValueSchema).optional(),
-  aspectRatio: dynamicSchema(z.union([
-    z.number().positive(),
-    z.string().regex(ASPECT_RATIO_PATTERN),
-  ])).optional(),
+  aspectRatio: dynamicSchema(
+    z.union([z.number().positive(), z.string().regex(ASPECT_RATIO_PATTERN)]),
+  ).optional(),
   minWidth: dynamicSchema(z.union([lengthSchema, percentageSchema])).optional(),
   maxWidth: dynamicSchema(z.union([lengthSchema, percentageSchema])).optional(),
   minHeight: dynamicSchema(z.union([lengthSchema, percentageSchema])).optional(),
@@ -475,16 +454,12 @@ const coreStyleShape = {
   // -----------------------------------------------------------------------
   // Shadow — Static only (single or array of shadows)
   // -----------------------------------------------------------------------
-  boxShadow: z
-    .union([shadowObjectSchema, z.array(shadowObjectSchema)])
-    .optional(),
+  boxShadow: z.union([shadowObjectSchema, z.array(shadowObjectSchema)]).optional(),
 
   // -----------------------------------------------------------------------
   // Text shadow — Static only (single or array of shadows)
   // -----------------------------------------------------------------------
-  textShadow: z
-    .union([textShadowObjectSchema, z.array(textShadowObjectSchema)])
-    .optional(),
+  textShadow: z.union([textShadowObjectSchema, z.array(textShadowObjectSchema)]).optional(),
 
   // -----------------------------------------------------------------------
   // Borders — Static only
@@ -545,10 +520,12 @@ const coreStyleShape = {
 // (prevents infinite nesting)
 // ---------------------------------------------------------------------------
 
-export const hoverStylePropsSchema = z.object({
-  ...coreStyleShape,
-  transition: transitionFieldSchema,
-}).strict();
+export const hoverStylePropsSchema = z
+  .object({
+    ...coreStyleShape,
+    transition: transitionFieldSchema,
+  })
+  .strict();
 
 export type HoverStyleProps = z.infer<typeof hoverStylePropsSchema>;
 
@@ -556,9 +533,11 @@ export type HoverStyleProps = z.infer<typeof hoverStylePropsSchema>;
 // ResponsiveStyleProps — core style only (no hoverStyle / transition)
 // ---------------------------------------------------------------------------
 
-export const responsiveStylePropsSchema = z.object({
-  ...coreStyleShape,
-}).strict();
+export const responsiveStylePropsSchema = z
+  .object({
+    ...coreStyleShape,
+  })
+  .strict();
 
 export type ResponsiveStyleProps = z.infer<typeof responsiveStylePropsSchema>;
 
@@ -566,10 +545,12 @@ export type ResponsiveStyleProps = z.infer<typeof responsiveStylePropsSchema>;
 // ResponsiveProps — node-level breakpoint overrides
 // ---------------------------------------------------------------------------
 
-export const responsivePropsSchema = z.object({
-  medium: responsiveStylePropsSchema.optional(),
-  compact: responsiveStylePropsSchema.optional(),
-}).strict();
+export const responsivePropsSchema = z
+  .object({
+    medium: responsiveStylePropsSchema.optional(),
+    compact: responsiveStylePropsSchema.optional(),
+  })
+  .strict();
 
 export type ResponsiveProps = z.infer<typeof responsivePropsSchema>;
 
@@ -577,10 +558,12 @@ export type ResponsiveProps = z.infer<typeof responsivePropsSchema>;
 // StyleProps — core style + hoverStyle + transition
 // ---------------------------------------------------------------------------
 
-export const stylePropsSchema = z.object({
-  ...coreStyleShape,
-  hoverStyle: hoverStylePropsSchema.optional(),
-  transition: transitionFieldSchema,
-}).strict();
+export const stylePropsSchema = z
+  .object({
+    ...coreStyleShape,
+    hoverStyle: hoverStylePropsSchema.optional(),
+    transition: transitionFieldSchema,
+  })
+  .strict();
 
 export type StyleProps = z.infer<typeof stylePropsSchema>;

@@ -39,20 +39,12 @@ function getResponsiveStyle(
   mode: Exclude<ResponsiveMode, 'default'>,
 ): Record<string, unknown> | undefined {
   const responsive = node.responsive;
-  if (
-    responsive == null ||
-    typeof responsive !== 'object' ||
-    Array.isArray(responsive)
-  ) {
+  if (responsive == null || typeof responsive !== 'object' || Array.isArray(responsive)) {
     return undefined;
   }
 
   const override = (responsive as Record<string, unknown>)[mode];
-  if (
-    override == null ||
-    typeof override !== 'object' ||
-    Array.isArray(override)
-  ) {
+  if (override == null || typeof override !== 'object' || Array.isArray(override)) {
     return undefined;
   }
 
@@ -64,11 +56,7 @@ function stripResponsiveOnlyUnsupportedFields(
 ): Record<string, unknown> | undefined {
   if (!style) return undefined;
 
-  const {
-    hoverStyle: _hoverStyle,
-    transition: _transition,
-    ...rest
-  } = style;
+  const { hoverStyle: _hoverStyle, transition: _transition, ...rest } = style;
 
   return rest;
 }

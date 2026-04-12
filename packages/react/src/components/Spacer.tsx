@@ -9,5 +9,11 @@ interface SpacerProps {
 
 export function Spacer({ size, style, hoverStyle }: SpacerProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  return <div style={{ width: size, height: size, flexShrink: 0, ...resolvedStyle }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />;
+  return (
+    <div
+      style={{ width: size, height: size, flexShrink: 0, ...resolvedStyle }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    />
+  );
 }

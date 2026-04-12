@@ -63,9 +63,7 @@ describe('contract regressions — react renderer', () => {
 
     expect(screen.getByText('Profile content')).toBeTruthy();
 
-    rerender(
-      <Accordion items={makeItems(true)} defaultExpanded={['profile']} />,
-    );
+    rerender(<Accordion items={makeItems(true)} defaultExpanded={['profile']} />);
 
     expect(screen.queryByText('Profile content')).toBeNull();
   });

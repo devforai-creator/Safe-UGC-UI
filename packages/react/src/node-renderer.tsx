@@ -216,10 +216,7 @@ function mergeStyleWithCardStyles(
     return mergedStyle;
   }
 
-  const mergedHoverStyle = mergeNamedStyle(
-    rawHoverStyle as Record<string, unknown>,
-    cardStyles,
-  );
+  const mergedHoverStyle = mergeNamedStyle(rawHoverStyle as Record<string, unknown>, cardStyles);
 
   if (!mergedHoverStyle) {
     return mergedStyle;
@@ -238,11 +235,7 @@ function getResponsiveOverrideStyle(
   if (!nodeResponsive) return undefined;
 
   const override = nodeResponsive[mode];
-  if (
-    override == null ||
-    typeof override !== 'object' ||
-    Array.isArray(override)
-  ) {
+  if (override == null || typeof override !== 'object' || Array.isArray(override)) {
     return undefined;
   }
 
@@ -282,24 +275,17 @@ function mergeEffectiveNodeStyle(
   };
 }
 
-function resolveTextPayload(
-  node: UGCNodeLike,
-  ctx: RenderContext,
-): ResolvedTextPayload {
+function resolveTextPayload(node: UGCNodeLike, ctx: RenderContext): ResolvedTextPayload {
   const rawSpans = Array.isArray(node.spans) ? node.spans : undefined;
 
   if (rawSpans) {
     const spans = rawSpans.map((span) => {
       const rawSpan = span as Record<string, unknown>;
       const spanStyle =
-        rawSpan.style != null &&
-        typeof rawSpan.style === 'object' &&
-        !Array.isArray(rawSpan.style)
-          ? rawSpan.style as Record<string, unknown>
+        rawSpan.style != null && typeof rawSpan.style === 'object' && !Array.isArray(rawSpan.style)
+          ? (rawSpan.style as Record<string, unknown>)
           : undefined;
-      const resolvedStyle = spanStyle
-        ? mapStyle(spanStyle, ctx.state, ctx.locals)
-        : undefined;
+      const resolvedStyle = spanStyle ? mapStyle(spanStyle, ctx.state, ctx.locals) : undefined;
 
       return {
         text: resolveTextValue(rawSpan.text, ctx.state, ctx.locals),
@@ -335,46 +321,28 @@ function countResolvedCssBytes(style: CSSProperties | undefined): number {
   return utf8ByteLength(JSON.stringify(style));
 }
 
-function countResolvedItemLabelBytes(
-  items: unknown,
-  ctx: RenderContext,
-): number {
+function countResolvedItemLabelBytes(items: unknown, ctx: RenderContext): number {
   if (!Array.isArray(items)) {
     return 0;
   }
 
   return items.reduce((total, item) => {
-    if (
-      item == null ||
-      typeof item !== 'object' ||
-      Array.isArray(item)
-    ) {
+    if (item == null || typeof item !== 'object' || Array.isArray(item)) {
       return total;
     }
 
-    const label = resolveTextValue(
-      (item as Record<string, unknown>).label,
-      ctx.state,
-      ctx.locals,
-    );
+    const label = resolveTextValue((item as Record<string, unknown>).label, ctx.state, ctx.locals);
     return total + utf8ByteLength(label);
   }, 0);
 }
 
-function countDirectNodeTextBytes(
-  node: UGCNodeLike,
-  ctx: RenderContext,
-): number {
+function countDirectNodeTextBytes(node: UGCNodeLike, ctx: RenderContext): number {
   switch (node.type) {
     case 'Badge':
     case 'Chip':
     case 'Button':
       return utf8ByteLength(
-        resolveTextValue(
-          (node as Record<string, unknown>).label,
-          ctx.state,
-          ctx.locals,
-        ),
+        resolveTextValue((node as Record<string, unknown>).label, ctx.state, ctx.locals),
       );
     case 'Accordion':
       return countResolvedItemLabelBytes(node.items, ctx);
@@ -393,11 +361,7 @@ function resolveAccordionItems(
   const rawItems = Array.isArray(node.items) ? node.items : [];
 
   return rawItems.flatMap((item, index) => {
-    if (
-      item == null ||
-      typeof item !== 'object' ||
-      Array.isArray(item)
-    ) {
+    if (item == null || typeof item !== 'object' || Array.isArray(item)) {
       return [];
     }
 
@@ -406,11 +370,7 @@ function resolveAccordionItems(
     const label = resolveTextValue(rawItem.label, ctx.state, ctx.locals);
     const resolvedDisabled = resolveValue(rawItem.disabled, ctx.state, ctx.locals);
     const disabled = typeof resolvedDisabled === 'boolean' ? resolvedDisabled : undefined;
-    const content = renderNode(
-      rawItem.content,
-      ctx,
-      `${String(key)}.items[${index}].content`,
-    );
+    const content = renderNode(rawItem.content, ctx, `${String(key)}.items[${index}].content`);
 
     return [{ id, label, content, disabled }];
   });
@@ -424,11 +384,7 @@ function resolveTabsItems(
   const rawTabs = Array.isArray(node.tabs) ? node.tabs : [];
 
   return rawTabs.flatMap((tab, index) => {
-    if (
-      tab == null ||
-      typeof tab !== 'object' ||
-      Array.isArray(tab)
-    ) {
+    if (tab == null || typeof tab !== 'object' || Array.isArray(tab)) {
       return [];
     }
 
@@ -437,11 +393,7 @@ function resolveTabsItems(
     const label = resolveTextValue(rawTab.label, ctx.state, ctx.locals);
     const resolvedDisabled = resolveValue(rawTab.disabled, ctx.state, ctx.locals);
     const disabled = typeof resolvedDisabled === 'boolean' ? resolvedDisabled : undefined;
-    const content = renderNode(
-      rawTab.content,
-      ctx,
-      `${String(key)}.tabs[${index}].content`,
-    );
+    const content = renderNode(rawTab.content, ctx, `${String(key)}.tabs[${index}].content`);
 
     return [{ id, label, content, disabled }];
   });
@@ -455,18 +407,12 @@ function renderSwitchBranch(
   const resolvedValue = resolveValue(node.value, ctx.state, ctx.locals);
   const branchName = typeof resolvedValue === 'string' ? resolvedValue : undefined;
   const rawCases =
-    node.cases != null &&
-    typeof node.cases === 'object' &&
-    !Array.isArray(node.cases)
-      ? node.cases as Record<string, unknown>
+    node.cases != null && typeof node.cases === 'object' && !Array.isArray(node.cases)
+      ? (node.cases as Record<string, unknown>)
       : undefined;
 
   if (branchName && rawCases && rawCases[branchName] !== undefined) {
-    return renderNode(
-      rawCases[branchName],
-      ctx,
-      `${String(key)}.cases.${branchName}`,
-    );
+    return renderNode(rawCases[branchName], ctx, `${String(key)}.cases.${branchName}`);
   }
 
   if ('default' in node) {
@@ -476,10 +422,7 @@ function renderSwitchBranch(
   return null;
 }
 
-function reportRuntimeError(
-  ctx: RenderContext,
-  error: RuntimeRenderError,
-): null {
+function reportRuntimeError(ctx: RenderContext, error: RuntimeRenderError): null {
   ctx.onError?.([error]);
   return null;
 }
@@ -546,11 +489,7 @@ function resolveRuntimeAsset(
  * Performs runtime limits pre-check BEFORE rendering to prevent
  * DOM pollution when limits are exceeded.
  */
-export function renderNode(
-  node: unknown,
-  ctx: RenderContext,
-  key: string | number,
-): ReactNode {
+export function renderNode(node: unknown, ctx: RenderContext, key: string | number): ReactNode {
   if (node == null || typeof node !== 'object') return null;
 
   if (isFragmentUse(node)) {
@@ -559,30 +498,36 @@ export function renderNode(
     }
 
     if ((ctx.fragmentStack?.length ?? 0) > 0) {
-      ctx.onError?.([{
-        code: 'RUNTIME_FRAGMENT_NESTED_USE',
-        message: 'Fragments may not contain nested "$use" references',
-        path: String(key),
-      }]);
+      ctx.onError?.([
+        {
+          code: 'RUNTIME_FRAGMENT_NESTED_USE',
+          message: 'Fragments may not contain nested "$use" references',
+          path: String(key),
+        },
+      ]);
       return null;
     }
 
     if (ctx.fragmentStack?.includes(node.$use)) {
-      ctx.onError?.([{
-        code: 'RUNTIME_FRAGMENT_CYCLE',
-        message: `Fragment "${node.$use}" recursively references itself`,
-        path: String(key),
-      }]);
+      ctx.onError?.([
+        {
+          code: 'RUNTIME_FRAGMENT_CYCLE',
+          message: `Fragment "${node.$use}" recursively references itself`,
+          path: String(key),
+        },
+      ]);
       return null;
     }
 
     const fragment = ctx.fragments?.[node.$use];
     if (fragment == null) {
-      ctx.onError?.([{
-        code: 'RUNTIME_FRAGMENT_NOT_FOUND',
-        message: `Fragment "${node.$use}" was not found`,
-        path: String(key),
-      }]);
+      ctx.onError?.([
+        {
+          code: 'RUNTIME_FRAGMENT_NOT_FOUND',
+          message: `Fragment "${node.$use}" was not found`,
+          path: String(key),
+        },
+      ]);
       return null;
     }
 
@@ -629,19 +574,43 @@ export function renderNode(
 
   // --- Batch limit checks (all-or-nothing) ---
   if (ctx.limits.nodeCount + 1 > MAX_NODE_COUNT) {
-    ctx.onError?.([{ code: 'RUNTIME_NODE_LIMIT', message: `Node count exceeds maximum of ${MAX_NODE_COUNT}`, path: String(key) }]);
+    ctx.onError?.([
+      {
+        code: 'RUNTIME_NODE_LIMIT',
+        message: `Node count exceeds maximum of ${MAX_NODE_COUNT}`,
+        path: String(key),
+      },
+    ]);
     return null;
   }
   if (ctx.limits.styleBytes + styleDelta > STYLE_OBJECTS_TOTAL_MAX_BYTES) {
-    ctx.onError?.([{ code: 'RUNTIME_STYLE_LIMIT', message: `Style bytes exceed maximum of ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`, path: String(key) }]);
+    ctx.onError?.([
+      {
+        code: 'RUNTIME_STYLE_LIMIT',
+        message: `Style bytes exceed maximum of ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`,
+        path: String(key),
+      },
+    ]);
     return null;
   }
   if (ctx.limits.overflowAutoCount + overflowDelta > MAX_OVERFLOW_AUTO_COUNT) {
-    ctx.onError?.([{ code: 'RUNTIME_OVERFLOW_LIMIT', message: `Overflow auto count exceeds maximum of ${MAX_OVERFLOW_AUTO_COUNT}`, path: String(key) }]);
+    ctx.onError?.([
+      {
+        code: 'RUNTIME_OVERFLOW_LIMIT',
+        message: `Overflow auto count exceeds maximum of ${MAX_OVERFLOW_AUTO_COUNT}`,
+        path: String(key),
+      },
+    ]);
     return null;
   }
   if (ctx.limits.textBytes + textDelta > TEXT_CONTENT_TOTAL_MAX_BYTES) {
-    ctx.onError?.([{ code: 'RUNTIME_TEXT_LIMIT', message: `Text bytes exceed maximum of ${TEXT_CONTENT_TOTAL_MAX_BYTES}`, path: String(key) }]);
+    ctx.onError?.([
+      {
+        code: 'RUNTIME_TEXT_LIMIT',
+        message: `Text bytes exceed maximum of ${TEXT_CONTENT_TOTAL_MAX_BYTES}`,
+        path: String(key),
+      },
+    ]);
     return null;
   }
 
@@ -656,25 +625,43 @@ export function renderNode(
 
   switch (n.type) {
     case 'Box':
-      return <Box key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Box>;
+      return (
+        <Box key={key} style={cssStyle} hoverStyle={cssHoverStyle}>
+          {childElements}
+        </Box>
+      );
 
     case 'Row':
-      return <Row key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Row>;
+      return (
+        <Row key={key} style={cssStyle} hoverStyle={cssHoverStyle}>
+          {childElements}
+        </Row>
+      );
 
     case 'Column':
-      return <Column key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Column>;
+      return (
+        <Column key={key} style={cssStyle} hoverStyle={cssHoverStyle}>
+          {childElements}
+        </Column>
+      );
 
     case 'Stack':
-      return <Stack key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Stack>;
+      return (
+        <Stack key={key} style={cssStyle} hoverStyle={cssHoverStyle}>
+          {childElements}
+        </Stack>
+      );
 
     case 'Grid':
-      return <Grid key={key} style={cssStyle} hoverStyle={cssHoverStyle}>{childElements}</Grid>;
+      return (
+        <Grid key={key} style={cssStyle} hoverStyle={cssHoverStyle}>
+          {childElements}
+        </Grid>
+      );
 
     case 'Text': {
       const maxLines = typeof n.maxLines === 'number' ? n.maxLines : undefined;
-      const truncate = n.truncate === 'clip' || n.truncate === 'ellipsis'
-        ? n.truncate
-        : undefined;
+      const truncate = n.truncate === 'clip' || n.truncate === 'ellipsis' ? n.truncate : undefined;
 
       return (
         <Text
@@ -695,7 +682,9 @@ export function renderNode(
       if (!resolved) return null;
       const resolvedAlt = rv((n as Record<string, unknown>).alt);
       const alt = typeof resolvedAlt === 'string' ? resolvedAlt : undefined;
-      return <Image key={key} src={resolved} alt={alt} style={cssStyle} hoverStyle={cssHoverStyle} />;
+      return (
+        <Image key={key} src={resolved} alt={alt} style={cssStyle} hoverStyle={cssHoverStyle} />
+      );
     }
 
     case 'Avatar': {
@@ -703,17 +692,23 @@ export function renderNode(
       const resolved = resolveRuntimeAsset('Avatar', key, src, ctx);
       if (!resolved) return null;
       const resolvedSize = rv((n as Record<string, unknown>).size);
-      const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
-        ? resolvedSize : undefined;
-      return <Avatar key={key} src={resolved} size={size} style={cssStyle} hoverStyle={cssHoverStyle} />;
+      const size =
+        typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
+          ? resolvedSize
+          : undefined;
+      return (
+        <Avatar key={key} src={resolved} size={size} style={cssStyle} hoverStyle={cssHoverStyle} />
+      );
     }
 
     case 'Icon': {
       const resolvedName = rv((n as Record<string, unknown>).name);
       const name = typeof resolvedName === 'string' ? resolvedName : '';
       const resolvedSize = rv((n as Record<string, unknown>).size);
-      const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
-        ? resolvedSize : undefined;
+      const size =
+        typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
+          ? resolvedSize
+          : undefined;
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       return (
@@ -731,8 +726,10 @@ export function renderNode(
 
     case 'Spacer': {
       const resolvedSize = rv((n as Record<string, unknown>).size);
-      const size = typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
-        ? resolvedSize : undefined;
+      const size =
+        typeof resolvedSize === 'number' || typeof resolvedSize === 'string'
+          ? resolvedSize
+          : undefined;
       return <Spacer key={key} size={size} style={cssStyle} hoverStyle={cssHoverStyle} />;
     }
 
@@ -740,9 +737,19 @@ export function renderNode(
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
       const resolvedThickness = rv((n as Record<string, unknown>).thickness);
-      const thickness = typeof resolvedThickness === 'number' || typeof resolvedThickness === 'string'
-        ? resolvedThickness : undefined;
-      return <Divider key={key} color={color} thickness={thickness} style={cssStyle} hoverStyle={cssHoverStyle} />;
+      const thickness =
+        typeof resolvedThickness === 'number' || typeof resolvedThickness === 'string'
+          ? resolvedThickness
+          : undefined;
+      return (
+        <Divider
+          key={key}
+          color={color}
+          thickness={thickness}
+          style={cssStyle}
+          hoverStyle={cssHoverStyle}
+        />
+      );
     }
 
     case 'ProgressBar': {
@@ -752,21 +759,34 @@ export function renderNode(
       const max = typeof resolvedMax === 'number' ? resolvedMax : 100;
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      return <ProgressBar key={key} value={value} max={max} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
+      return (
+        <ProgressBar
+          key={key}
+          value={value}
+          max={max}
+          color={color}
+          style={cssStyle}
+          hoverStyle={cssHoverStyle}
+        />
+      );
     }
 
     case 'Badge': {
       const label = resolveTextValue((n as Record<string, unknown>).label, ctx.state, ctx.locals);
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      return <Badge key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
+      return (
+        <Badge key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />
+      );
     }
 
     case 'Chip': {
       const label = resolveTextValue((n as Record<string, unknown>).label, ctx.state, ctx.locals);
       const resolvedColor = rv((n as Record<string, unknown>).color);
       const color = typeof resolvedColor === 'string' ? resolvedColor : undefined;
-      return <Chip key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />;
+      return (
+        <Chip key={key} label={label} color={color} style={cssStyle} hoverStyle={cssHoverStyle} />
+      );
     }
 
     case 'Button': {
@@ -831,9 +851,10 @@ export function renderNode(
 
     case 'Tabs': {
       const tabs = resolveTabsItems(n, ctx, key);
-      const defaultTab = typeof (n as Record<string, unknown>).defaultTab === 'string'
-        ? (n as Record<string, unknown>).defaultTab as string
-        : undefined;
+      const defaultTab =
+        typeof (n as Record<string, unknown>).defaultTab === 'string'
+          ? ((n as Record<string, unknown>).defaultTab as string)
+          : undefined;
 
       return (
         <Tabs
@@ -855,10 +876,7 @@ export function renderNode(
 // renderChildren --- handle children arrays and for-loops
 // ---------------------------------------------------------------------------
 
-function renderChildren(
-  children: unknown,
-  ctx: RenderContext,
-): ReactNode[] | null {
+function renderChildren(children: unknown, ctx: RenderContext): ReactNode[] | null {
   if (!children) return null;
 
   // Array children
@@ -878,10 +896,7 @@ function renderChildren(
 // renderForLoop --- iterate over state array, render template per item
 // ---------------------------------------------------------------------------
 
-function renderForLoop(
-  loop: ForLoopLike,
-  ctx: RenderContext,
-): ReactNode[] {
+function renderForLoop(loop: ForLoopLike, ctx: RenderContext): ReactNode[] {
   // Resolve the source array from state (or locals)
   const source = resolveRef(loop.in, ctx.state, ctx.locals);
   if (source === undefined) {
@@ -890,11 +905,13 @@ function renderForLoop(
   }
   if (!Array.isArray(source)) {
     // Hard error: source exists but is not an array (type mismatch)
-    ctx.onError?.([{
-      code: 'RUNTIME_LOOP_SOURCE_INVALID',
-      message: `Loop source "${loop.in}" is not an array (got ${typeof source})`,
-      path: `for(${loop.for} in ${loop.in})`,
-    }]);
+    ctx.onError?.([
+      {
+        code: 'RUNTIME_LOOP_SOURCE_INVALID',
+        message: `Loop source "${loop.in}" is not an array (got ${typeof source})`,
+        path: `for(${loop.for} in ${loop.in})`,
+      },
+    ]);
     return [];
   }
 

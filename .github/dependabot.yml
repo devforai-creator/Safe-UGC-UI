@@ -1,35 +1,35 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     groups:
       security-updates:
-        applies-to: "security-updates"
+        applies-to: 'security-updates'
         patterns:
-          - "*"
+          - '*'
       test-toolchain:
         patterns:
-          - "vitest"
-          - "@vitest/*"
-          - "jsdom"
+          - 'vitest'
+          - '@vitest/*'
+          - 'jsdom'
       demo-vite:
         patterns:
-          - "vite"
-          - "@vitejs/*"
+          - 'vite'
+          - '@vitejs/*'
       react-types:
         patterns:
-          - "@types/react"
-          - "@types/react-dom"
+          - '@types/react'
+          - '@types/react-dom'
       node-types:
         patterns:
-          - "@types/node"
+          - '@types/node'
       schema-runtime:
         patterns:
-          - "zod"
+          - 'zod'
       build-tooling:
         patterns:
-          - "typescript"
-          - "tsup"
+          - 'typescript'
+          - 'tsup'
     open-pull-requests-limit: 10

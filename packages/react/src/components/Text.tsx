@@ -65,7 +65,9 @@ export function Text({
         <span key={index} style={span.style}>
           {span.text}
         </span>
-      )) ?? content ?? ''}
+      )) ??
+        content ??
+        ''}
     </span>
   );
 }

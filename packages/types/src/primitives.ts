@@ -42,10 +42,12 @@ const switchCaseNamePattern = /^[A-Za-z][A-Za-z0-9_-]*$/;
 // 1. FragmentUseNode — reusable subtree reference
 // ===========================================================================
 
-export const fragmentUseNodeSchema = z.object({
-  $use: z.string(),
-  $if: conditionSchema.optional(),
-}).strict();
+export const fragmentUseNodeSchema = z
+  .object({
+    $use: z.string(),
+    $if: conditionSchema.optional(),
+  })
+  .strict();
 
 export type FragmentUseNode = {
   $use: string;
@@ -82,10 +84,7 @@ export type ForLoop = {
 // 3. Children — array of nodes OR a for-loop
 // ===========================================================================
 
-const childrenSchema = z.union([
-  z.array(z.lazy(() => renderableNodeSchema)),
-  forLoopSchema,
-]);
+const childrenSchema = z.union([z.array(z.lazy(() => renderableNodeSchema)), forLoopSchema]);
 
 type Children = RenderableNode[] | ForLoop;
 
@@ -210,10 +209,10 @@ export const textNodeSchema = z.object({
 export type TextNode = {
   type: 'Text';
 } & z.infer<typeof textPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 5.2 ImageNode
@@ -228,10 +227,10 @@ export const imageNodeSchema = z.object({
 export type ImageNode = {
   type: 'Image';
 } & z.infer<typeof imagePropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ===========================================================================
 // 7. Display nodes
@@ -250,10 +249,10 @@ export const progressBarNodeSchema = z.object({
 export type ProgressBarNode = {
   type: 'ProgressBar';
 } & z.infer<typeof progressBarPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 6.2 AvatarNode
@@ -268,10 +267,10 @@ export const avatarNodeSchema = z.object({
 export type AvatarNode = {
   type: 'Avatar';
 } & z.infer<typeof avatarPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 6.3 IconNode
@@ -286,10 +285,10 @@ export const iconNodeSchema = z.object({
 export type IconNode = {
   type: 'Icon';
 } & z.infer<typeof iconPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 6.4 BadgeNode
@@ -304,10 +303,10 @@ export const badgeNodeSchema = z.object({
 export type BadgeNode = {
   type: 'Badge';
 } & z.infer<typeof badgePropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 6.5 ChipNode
@@ -322,10 +321,10 @@ export const chipNodeSchema = z.object({
 export type ChipNode = {
   type: 'Chip';
 } & z.infer<typeof chipPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 6.6 DividerNode
@@ -340,10 +339,10 @@ export const dividerNodeSchema = z.object({
 export type DividerNode = {
   type: 'Divider';
 } & z.infer<typeof dividerPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 6.7 SpacerNode
@@ -358,10 +357,10 @@ export const spacerNodeSchema = z.object({
 export type SpacerNode = {
   type: 'Spacer';
 } & z.infer<typeof spacerPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ===========================================================================
 // 8. Interaction nodes
@@ -380,10 +379,10 @@ export const buttonNodeSchema = z.object({
 export type ButtonNode = {
   type: 'Button';
 } & z.infer<typeof buttonPropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 7.2 ToggleNode
@@ -398,28 +397,29 @@ export const toggleNodeSchema = z.object({
 export type ToggleNode = {
   type: 'Toggle';
 } & z.infer<typeof togglePropsSchema> & {
-  $if?: z.infer<typeof conditionSchema>;
-  style?: z.infer<typeof stylePropsSchema>;
-  responsive?: z.infer<typeof responsivePropsSchema>;
-};
+    $if?: z.infer<typeof conditionSchema>;
+    style?: z.infer<typeof stylePropsSchema>;
+    responsive?: z.infer<typeof responsivePropsSchema>;
+  };
 
 // ---------------------------------------------------------------------------
 // 7.3 SwitchNode
 // ---------------------------------------------------------------------------
 
-export const switchNodeSchema = z.object({
-  type: z.literal('Switch'),
-  value: dynamicSchema(z.string().min(1)),
-  cases: z.record(
-    z.string().regex(
-      switchCaseNamePattern,
-      'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.',
+export const switchNodeSchema = z
+  .object({
+    type: z.literal('Switch'),
+    value: dynamicSchema(z.string().min(1)),
+    cases: z.record(
+      z
+        .string()
+        .regex(switchCaseNamePattern, 'Switch case names must match /^[A-Za-z][A-Za-z0-9_-]*$/.'),
+      z.lazy(() => renderableNodeSchema),
     ),
-    z.lazy(() => renderableNodeSchema),
-  ),
-  default: z.lazy(() => renderableNodeSchema).optional(),
-  $if: conditionSchema.optional(),
-}).strict();
+    default: z.lazy(() => renderableNodeSchema).optional(),
+    $if: conditionSchema.optional(),
+  })
+  .strict();
 
 export type SwitchNode = {
   type: 'Switch';
@@ -440,12 +440,14 @@ export const accordionItemSchema: z.ZodType<{
   label: z.infer<typeof templatedStringSchema>;
   content: RenderableNode;
   disabled?: boolean | { $ref: string };
-}> = z.object({
-  id: interactiveItemIdSchema,
-  label: templatedStringSchema,
-  content: z.lazy(() => renderableNodeSchema),
-  disabled: dynamicSchema(z.boolean()).optional(),
-}).strict();
+}> = z
+  .object({
+    id: interactiveItemIdSchema,
+    label: templatedStringSchema,
+    content: z.lazy(() => renderableNodeSchema),
+    disabled: dynamicSchema(z.boolean()).optional(),
+  })
+  .strict();
 
 export type AccordionItem = {
   id: string;
@@ -459,12 +461,14 @@ export const tabsItemSchema: z.ZodType<{
   label: z.infer<typeof templatedStringSchema>;
   content: RenderableNode;
   disabled?: boolean | { $ref: string };
-}> = z.object({
-  id: interactiveItemIdSchema,
-  label: templatedStringSchema,
-  content: z.lazy(() => renderableNodeSchema),
-  disabled: dynamicSchema(z.boolean()).optional(),
-}).strict();
+}> = z
+  .object({
+    id: interactiveItemIdSchema,
+    label: templatedStringSchema,
+    content: z.lazy(() => renderableNodeSchema),
+    disabled: dynamicSchema(z.boolean()).optional(),
+  })
+  .strict();
 
 export type TabsItem = {
   id: string;
@@ -569,10 +573,7 @@ export const ugcNodeSchema: z.ZodType<UGCNode> = z.lazy(() =>
 export type RenderableNode = UGCNode | FragmentUseNode;
 
 export const renderableNodeSchema: z.ZodType<RenderableNode> = z.lazy(() =>
-  z.union([
-    ugcNodeSchema,
-    fragmentUseNodeSchema,
-  ]),
+  z.union([ugcNodeSchema, fragmentUseNodeSchema]),
 );
 
 // ===========================================================================
@@ -582,12 +583,7 @@ export const renderableNodeSchema: z.ZodType<RenderableNode> = z.lazy(() =>
 /**
  * Phase 1 MVP node types: Box, Row, Column, Text, Image.
  */
-export type Phase1Node =
-  | BoxNode
-  | RowNode
-  | ColumnNode
-  | TextNode
-  | ImageNode;
+export type Phase1Node = BoxNode | RowNode | ColumnNode | TextNode | ImageNode;
 
 export const phase1NodeSchema: z.ZodType<Phase1Node> = z.lazy(() =>
   z.discriminatedUnion('type', [

@@ -41,6 +41,9 @@ untrusted UI cards.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
 - `pnpm clean` — remove package `dist` directories.
+- `pnpm format` — format the workspace with Prettier.
+- `pnpm format:check` — check whether the workspace is Prettier-formatted.
+- The main CI workflow also runs `pnpm format:check`.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app locally.
 - `pnpm --filter @safe-ugc-ui/validator test` — run validator tests only.
@@ -50,6 +53,7 @@ untrusted UI cards.
 
 - TypeScript ESM with `strict` enabled; use explicit `.js` extensions in local imports.
 - Follow existing 2-space indentation and file formatting.
+- Prettier is the workspace formatter; prefer `pnpm format` over manual whitespace-only edits.
 - File names use kebab-case. React components use PascalCase.
 - Constants use `SCREAMING_SNAKE_CASE`; functions and variables use camelCase.
 

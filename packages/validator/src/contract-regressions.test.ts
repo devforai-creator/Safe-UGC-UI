@@ -77,10 +77,14 @@ describe('contract regressions — validator', () => {
   });
 
   it('rejects unknown style keys at the schema boundary', () => {
-    const result = validateSchema(makeCard(makeViews({
-      type: 'Box',
-      style: { fontSzie: 12 },
-    })));
+    const result = validateSchema(
+      makeCard(
+        makeViews({
+          type: 'Box',
+          style: { fontSzie: 12 },
+        }),
+      ),
+    );
 
     expect(result.valid).toBe(false);
     expect(codes(result.errors)).toContain('SCHEMA_ERROR');
@@ -88,18 +92,24 @@ describe('contract regressions — validator', () => {
   });
 
   it('rejects unknown style keys in low-level style validation', () => {
-    const errors = validateStyles(makeViews({
-      type: 'Box',
-      style: {
-        hoverStyle: { fontSzie: 12 },
-      },
-      responsive: {
-        compact: { widthh: '100%' },
-      },
-    }));
+    const errors = validateStyles(
+      makeViews({
+        type: 'Box',
+        style: {
+          hoverStyle: { fontSzie: 12 },
+        },
+        responsive: {
+          compact: { widthh: '100%' },
+        },
+      }),
+    );
 
     expect(codes(errors)).toContain('INVALID_VALUE');
-    expect(errors.some((error) => error.path === 'views.Main.style.hoverStyle.fontSzie')).toBe(true);
-    expect(errors.some((error) => error.path === 'views.Main.responsive.compact.widthh')).toBe(true);
+    expect(errors.some((error) => error.path === 'views.Main.style.hoverStyle.fontSzie')).toBe(
+      true,
+    );
+    expect(errors.some((error) => error.path === 'views.Main.responsive.compact.widthh')).toBe(
+      true,
+    );
   });
 });

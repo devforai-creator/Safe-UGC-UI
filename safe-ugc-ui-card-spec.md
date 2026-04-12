@@ -20,14 +20,14 @@ A card is a JSON object with these top-level fields:
 }
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `meta` | Yes | `name` (string) and `version` (string, e.g. `"1.0.0"`) |
-| `assets` | No | Manifest of local assets used by the card (see below) |
-| `state` | No | Key-value pairs for dynamic data binding |
-| `styles` | No | Named style definitions for reuse via `$style` (see Section 3.17) |
-| `fragments` | No | Named reusable node subtrees for `$use` references (see Section 4.6.1) |
-| `views` | Yes | Named view definitions. Each value is a component tree or `$use` wrapper. Must have at least one view. |
+| Field       | Required | Description                                                                                            |
+| ----------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `meta`      | Yes      | `name` (string) and `version` (string, e.g. `"1.0.0"`)                                                 |
+| `assets`    | No       | Manifest of local assets used by the card (see below)                                                  |
+| `state`     | No       | Key-value pairs for dynamic data binding                                                               |
+| `styles`    | No       | Named style definitions for reuse via `$style` (see Section 3.17)                                      |
+| `fragments` | No       | Named reusable node subtrees for `$use` references (see Section 4.6.1)                                 |
+| `views`     | Yes      | Named view definitions. Each value is a component tree or `$use` wrapper. Must have at least one view. |
 
 ### Assets
 
@@ -43,6 +43,7 @@ The `assets` field declares which local assets the card references. Each value m
 ```
 
 **Rules:**
+
 - Every value must start with `@assets/`
 - No external or inline URLs (`https://`, `http://`, `//`, `data:`, `javascript:` are all rejected)
 - No path traversal (`../`)
@@ -60,6 +61,7 @@ Eighteen rendered component types plus one structural selector are available, or
 Layout components contain `children` — either an array of child nodes / `$use` wrappers or a `for...in` loop object (see Section 4.6).
 
 #### Box
+
 General-purpose container. No default flex direction.
 
 ```json
@@ -67,6 +69,7 @@ General-purpose container. No default flex direction.
 ```
 
 #### Row
+
 Horizontal layout (like `flexDirection: row`). Children are laid out left-to-right.
 
 ```json
@@ -74,6 +77,7 @@ Horizontal layout (like `flexDirection: row`). Children are laid out left-to-rig
 ```
 
 #### Column
+
 Vertical layout (like `flexDirection: column`). Children are laid out top-to-bottom.
 
 ```json
@@ -81,6 +85,7 @@ Vertical layout (like `flexDirection: column`). Children are laid out top-to-bot
 ```
 
 #### Stack
+
 Overlay container that establishes a positioning context (`position: relative`) for direct children with `position: "absolute"`. Use it for layered layouts and overlays.
 
 ```json
@@ -88,6 +93,7 @@ Overlay container that establishes a positioning context (`position: relative`) 
 ```
 
 #### Grid
+
 CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to define the grid tracks (see Section 3.16).
 
 ```json
@@ -96,19 +102,20 @@ CSS Grid container. Use `gridTemplateColumns` and `gridTemplateRows` in style to
 
 **All layout components** share these fields:
 
-| Field | Required | Type |
-|-------|----------|------|
-| `type` | Yes | `"Box"` \| `"Row"` \| `"Column"` \| `"Stack"` \| `"Grid"` |
-| `children` | No | Array of child nodes / `$use` wrappers, or a `for...in` loop object |
-| `$if` | No | Condition object, boolean literal, or boolean `$ref` (see Section 4.7) |
-| `style` | No | Style object (see Section 3) |
-| `responsive` | No | Node-level breakpoint overrides (see Section 3.18) |
+| Field        | Required | Type                                                                   |
+| ------------ | -------- | ---------------------------------------------------------------------- |
+| `type`       | Yes      | `"Box"` \| `"Row"` \| `"Column"` \| `"Stack"` \| `"Grid"`              |
+| `children`   | No       | Array of child nodes / `$use` wrappers, or a `for...in` loop object    |
+| `$if`        | No       | Condition object, boolean literal, or boolean `$ref` (see Section 4.7) |
+| `style`      | No       | Style object (see Section 3)                                           |
+| `responsive` | No       | Node-level breakpoint overrides (see Section 3.18)                     |
 
 ### 2.2 Content Components
 
 Content components do not have `children`. Their fields live directly on the node.
 
 #### Text
+
 Displays text content.
 
 ```json
@@ -123,12 +130,12 @@ Displays text content.
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `content` | Conditionally | string-like value | literal, $ref, or `$template` |
-| `spans` | Conditionally | array of `{ text, style? }` | ordered inline spans |
-| `maxLines` | No | integer `1`–`10` | literal only |
-| `truncate` | No | `"ellipsis"` \| `"clip"` | literal only |
+| Field      | Required      | Type                        | Dynamic                       |
+| ---------- | ------------- | --------------------------- | ----------------------------- |
+| `content`  | Conditionally | string-like value           | literal, $ref, or `$template` |
+| `spans`    | Conditionally | array of `{ text, style? }` | ordered inline spans          |
+| `maxLines` | No            | integer `1`–`10`            | literal only                  |
+| `truncate` | No            | `"ellipsis"` \| `"clip"`    | literal only                  |
 
 `Text` must define exactly one of `content` or `spans`.
 
@@ -147,153 +154,171 @@ Displays text content.
 - `textShadow`
 
 #### Image
+
 Displays an image from local assets only.
 
 ```json
 {
   "type": "Image",
-   "src": "@assets/photo.png", "alt": "My photo" ,
+  "src": "@assets/photo.png",
+  "alt": "My photo",
   "style": { "width": 200, "borderRadius": 8 }
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref |
-| `alt` | No | string | literal or $ref |
+| Field | Required | Type                      | Dynamic         |
+| ----- | -------- | ------------------------- | --------------- |
+| `src` | Yes      | AssetPath (`@assets/...`) | literal or $ref |
+| `alt` | No       | string                    | literal or $ref |
 
 To control image dimensions, use `style.width` and `style.height` on the Image node. There are no `width` / `height` fields on Image nodes.
 
 **Image src rules:**
+
 - Must start with `@assets/`
 - No external URLs — `https://`, `http://`, `//`, `data:`, `javascript:` are all forbidden
 - No path traversal (`../`)
 
 #### Avatar
+
 Circular image, typically used for profile pictures. Follows the same `@assets/` rules as Image.
 
 ```json
 {
   "type": "Avatar",
-   "src": "@assets/avatar.png", "size": 56 
+  "src": "@assets/avatar.png",
+  "size": 56
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `src` | Yes | AssetPath (`@assets/...`) | literal or $ref |
-| `size` | No | length | literal or $ref |
+| Field  | Required | Type                      | Dynamic         |
+| ------ | -------- | ------------------------- | --------------- |
+| `src`  | Yes      | AssetPath (`@assets/...`) | literal or $ref |
+| `size` | No       | length                    | literal or $ref |
 
 #### Icon
+
 Platform-provided icon. The icon name may be a literal string or a `$ref`.
 
 ```json
 {
   "type": "Icon",
-   "name": "heart", "size": 24, "color": "#ff0066" 
+  "name": "heart",
+  "size": 24,
+  "color": "#ff0066"
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `name` | Yes | string | literal or $ref |
-| `size` | No | length | literal or $ref |
-| `color` | No | color | literal or $ref |
+| Field   | Required | Type   | Dynamic         |
+| ------- | -------- | ------ | --------------- |
+| `name`  | Yes      | string | literal or $ref |
+| `size`  | No       | length | literal or $ref |
+| `color` | No       | color  | literal or $ref |
 
 #### Spacer
+
 Empty spacing element. Useful for adding fixed gaps or pushing siblings apart.
 
 ```json
-{ "type": "Spacer",  "size": 16  }
+{ "type": "Spacer", "size": 16 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `size` | No | length | literal or $ref |
+| Field  | Required | Type   | Dynamic         |
+| ------ | -------- | ------ | --------------- |
+| `size` | No       | length | literal or $ref |
 
 #### Divider
+
 Horizontal line separator.
 
 ```json
-{ "type": "Divider",  "color": "#333", "thickness": 1  }
+{ "type": "Divider", "color": "#333", "thickness": 1 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `color` | No | color | literal or $ref |
-| `thickness` | No | length | literal or $ref |
+| Field       | Required | Type   | Dynamic         |
+| ----------- | -------- | ------ | --------------- |
+| `color`     | No       | color  | literal or $ref |
+| `thickness` | No       | length | literal or $ref |
 
 #### ProgressBar
+
 Progress indicator, rendered as a filled bar.
 
 ```json
 {
   "type": "ProgressBar",
-   "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" 
+  "value": { "$ref": "$hp" },
+  "max": { "$ref": "$maxHp" },
+  "color": "#00ff88"
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `value` | Yes | number | literal or $ref |
-| `max` | Yes | number | literal or $ref |
-| `color` | No | color | literal or $ref |
+| Field   | Required | Type   | Dynamic         |
+| ------- | -------- | ------ | --------------- |
+| `value` | Yes      | number | literal or $ref |
+| `max`   | Yes      | number | literal or $ref |
+| `color` | No       | color  | literal or $ref |
 
 #### Badge
+
 Small label with a colored background. Good for status indicators, counts, or tags.
 
 ```json
-{ "type": "Badge",  "label": "NEW", "color": "#ff0066"  }
+{ "type": "Badge", "label": "NEW", "color": "#ff0066" }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `label` | Yes | string-like value | literal, $ref, or `$template` |
-| `color` | No | color | literal or $ref |
+| Field   | Required | Type              | Dynamic                       |
+| ------- | -------- | ----------------- | ----------------------------- |
+| `label` | Yes      | string-like value | literal, $ref, or `$template` |
+| `color` | No       | color             | literal or $ref               |
 
 #### Chip
+
 Label with a border outline, similar to Badge but outlined rather than filled.
 
 ```json
-{ "type": "Chip",  "label": "Hacker", "color": "#00f0ff"  }
+{ "type": "Chip", "label": "Hacker", "color": "#00f0ff" }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `label` | Yes | string-like value | literal, $ref, or `$template` |
-| `color` | No | color | literal or $ref |
+| Field   | Required | Type              | Dynamic                       |
+| ------- | -------- | ----------------- | ----------------------------- |
+| `label` | Yes      | string-like value | literal, $ref, or `$template` |
+| `color` | No       | color             | literal or $ref               |
 
 ### 2.3 Interaction Components
 
 Interaction components use fields and may trigger host callbacks or renderer-owned local state.
 
 #### Button
+
 Triggers an action callback when pressed. The `action` string identifies which callback to invoke.
 
 ```json
-{ "type": "Button",  "label": "Accept", "action": "onAccept"  }
+{ "type": "Button", "label": "Accept", "action": "onAccept" }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `label` | Yes | string-like value | literal, $ref, or `$template` |
-| `action` | Yes | string | static only |
-| `disabled` | No | boolean | literal or $ref |
+| Field      | Required | Type              | Dynamic                       |
+| ---------- | -------- | ----------------- | ----------------------------- |
+| `label`    | Yes      | string-like value | literal, $ref, or `$template` |
+| `action`   | Yes      | string            | static only                   |
+| `disabled` | No       | boolean           | literal or $ref               |
 
 #### Toggle
+
 Boolean toggle switch that triggers a callback when flipped.
 
 ```json
-{ "type": "Toggle",  "value": { "$ref": "$darkMode" }, "onToggle": "onToggleDarkMode"  }
+{ "type": "Toggle", "value": { "$ref": "$darkMode" }, "onToggle": "onToggleDarkMode" }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `value` | Yes | boolean | literal or $ref |
-| `onToggle` | Yes | string | static only |
-| `disabled` | No | boolean | literal or $ref |
+| Field      | Required | Type    | Dynamic         |
+| ---------- | -------- | ------- | --------------- |
+| `value`    | Yes      | boolean | literal or $ref |
+| `onToggle` | Yes      | string  | static only     |
+| `disabled` | No       | boolean | literal or $ref |
 
 #### Accordion
+
 Renderer-owned collapsible section list. Item content is standard renderable card content, so it may use loops, `$if`, and `$use`.
 
 ```json
@@ -315,20 +340,20 @@ Renderer-owned collapsible section list. Item content is standard renderable car
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `items` | Yes | array | static structure only |
-| `allowMultiple` | No | boolean | literal only |
-| `defaultExpanded` | No | string[] | literal only |
+| Field             | Required | Type     | Dynamic               |
+| ----------------- | -------- | -------- | --------------------- |
+| `items`           | Yes      | array    | static structure only |
+| `allowMultiple`   | No       | boolean  | literal only          |
+| `defaultExpanded` | No       | string[] | literal only          |
 
 Each `items[*]` entry must contain:
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `id` | Yes | string | static only |
-| `label` | Yes | string-like value | literal, $ref, or `$template` |
-| `content` | Yes | renderable node | static node or `$use` |
-| `disabled` | No | boolean | literal or $ref |
+| Field      | Required | Type              | Dynamic                       |
+| ---------- | -------- | ----------------- | ----------------------------- |
+| `id`       | Yes      | string            | static only                   |
+| `label`    | Yes      | string-like value | literal, $ref, or `$template` |
+| `content`  | Yes      | renderable node   | static node or `$use`         |
+| `disabled` | No       | boolean           | literal or $ref               |
 
 Rules:
 
@@ -339,6 +364,7 @@ Rules:
 - hidden accordion content still counts toward validator and runtime limits
 
 #### Tabs
+
 Renderer-owned tab list with local selected state. Tab content is standard renderable card content, so it may use loops, `$if`, and `$use`.
 
 ```json
@@ -361,19 +387,19 @@ Renderer-owned tab list with local selected state. Tab content is standard rende
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `tabs` | Yes | array | static structure only |
-| `defaultTab` | No | string | literal only |
+| Field        | Required | Type   | Dynamic               |
+| ------------ | -------- | ------ | --------------------- |
+| `tabs`       | Yes      | array  | static structure only |
+| `defaultTab` | No       | string | literal only          |
 
 Each `tabs[*]` entry must contain:
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `id` | Yes | string | static only |
-| `label` | Yes | string-like value | literal, $ref, or `$template` |
-| `content` | Yes | renderable node | static node or `$use` |
-| `disabled` | No | boolean | literal or $ref |
+| Field      | Required | Type              | Dynamic                       |
+| ---------- | -------- | ----------------- | ----------------------------- |
+| `id`       | Yes      | string            | static only                   |
+| `label`    | Yes      | string-like value | literal, $ref, or `$template` |
+| `content`  | Yes      | renderable node   | static node or `$use`         |
+| `disabled` | No       | boolean           | literal or $ref               |
 
 Rules:
 
@@ -395,6 +421,7 @@ Keyboard behavior:
 Structural selectors choose which statically declared subtree should render. They do not render DOM and do not accept `style`, `responsive`, or `children` fields.
 
 #### Switch
+
 Selects one branch by string key. Use it when layout or framing changes by a bounded state value such as a theme, character, or mode.
 
 ```json
@@ -409,12 +436,12 @@ Selects one branch by string key. Use it when layout or framing changes by a bou
 }
 ```
 
-| Field | Required | Type | Dynamic |
-|------|----------|------|---------|
-| `value` | Yes | string | literal or $ref |
-| `cases` | Yes | object map | static structure only |
-| `default` | No | renderable node | static node or `$use` |
-| `$if` | No | condition | same as other nodes |
+| Field     | Required | Type            | Dynamic               |
+| --------- | -------- | --------------- | --------------------- |
+| `value`   | Yes      | string          | literal or $ref       |
+| `cases`   | Yes      | object map      | static structure only |
+| `default` | No       | renderable node | static node or `$use` |
+| `$if`     | No       | condition       | same as other nodes   |
 
 Rules:
 
@@ -432,10 +459,12 @@ Every component accepts an optional `style` object. Every component may also inc
 Style objects are a closed DSL: unknown style keys are invalid and must be rejected, not ignored.
 
 **Static-only style properties** (literal values only):
+
 - `position`, `top`, `right`, `bottom`, `left`, `zIndex`
 - `overflow`
 
 **Structured style objects** must still be object literals, but selected leaf fields inside them may use `$ref`:
+
 - `transform.rotate`, `transform.scale`, `transform.translateX`, `transform.translateY`
 - `border*.width`, `border*.style`, `border*.color`
 - `boxShadow.offsetX`, `boxShadow.offsetY`, `boxShadow.blur`, `boxShadow.spread`, `boxShadow.color`
@@ -463,16 +492,16 @@ All other style properties accept literal values or `$ref`.
 }
 ```
 
-| Property | Values |
-|----------|--------|
-| `display` | `"flex"` \| `"block"` \| `"none"` |
-| `flexDirection` | `"row"` \| `"column"` \| `"row-reverse"` \| `"column-reverse"` |
+| Property         | Values                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `display`        | `"flex"` \| `"block"` \| `"none"`                                                                                                 |
+| `flexDirection`  | `"row"` \| `"column"` \| `"row-reverse"` \| `"column-reverse"`                                                                    |
 | `justifyContent` | `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"space-between"` \| `"space-around"` \| `"space-evenly"` |
-| `alignItems` | `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"stretch"` \| `"baseline"` |
-| `alignSelf` | `"auto"` \| `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"stretch"` |
-| `flexWrap` | `"nowrap"` \| `"wrap"` \| `"wrap-reverse"` |
-| `flex` | number |
-| `gap` | number or length string |
+| `alignItems`     | `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"stretch"` \| `"baseline"`                               |
+| `alignSelf`      | `"auto"` \| `"start"` \| `"flex-start"` \| `"center"` \| `"end"` \| `"flex-end"` \| `"stretch"`                                   |
+| `flexWrap`       | `"nowrap"` \| `"wrap"` \| `"wrap-reverse"`                                                                                        |
+| `flex`           | number                                                                                                                            |
+| `gap`            | number or length string                                                                                                           |
 
 `"start"` / `"end"` are preferred, but `"flex-start"` / `"flex-end"` are also accepted.
 
@@ -487,12 +516,12 @@ All other style properties accept literal values or `$ref`.
 }
 ```
 
-| Property | Values |
-|----------|--------|
-| `width`, `height` | number \| length string \| percentage string \| `"auto"` |
-| `aspectRatio` | positive number \| ratio string like `"16 / 9"` |
-| `minWidth`, `maxWidth` | number \| length string \| percentage string |
-| `minHeight`, `maxHeight` | number \| length string \| percentage string |
+| Property                 | Values                                                   |
+| ------------------------ | -------------------------------------------------------- |
+| `width`, `height`        | number \| length string \| percentage string \| `"auto"` |
+| `aspectRatio`            | positive number \| ratio string like `"16 / 9"`          |
+| `minWidth`, `maxWidth`   | number \| length string \| percentage string             |
+| `minHeight`, `maxHeight` | number \| length string \| percentage string             |
 
 Length values: bare number (treated as px), `"100px"`, `"50%"`, `"2em"`, `"1.5rem"`.
 `aspectRatio` accepts a positive number or a ratio string with positive numeric parts.
@@ -509,10 +538,10 @@ Only `width` and `height` accept the literal `"auto"` in the sizing group.
 }
 ```
 
-| Property | Values |
-|----------|--------|
-| `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft` | number or length string |
-| `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft` | number or length string or `"auto"` |
+| Property                                                                | Values                              |
+| ----------------------------------------------------------------------- | ----------------------------------- |
+| `padding`, `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft` | number or length string             |
+| `margin`, `marginTop`, `marginRight`, `marginBottom`, `marginLeft`      | number or length string or `"auto"` |
 
 ### 3.4 Color Properties
 
@@ -524,6 +553,7 @@ Only `width` and `height` accept the literal `"auto"` in the sizing group.
 ```
 
 Accepted color formats:
+
 - Hex: `"#fff"`, `"#ff0000"`, `"#ff000080"`
 - RGB: `"rgb(255, 0, 0)"`, `"rgba(255, 0, 0, 0.5)"`
 - HSL: `"hsl(0, 100%, 50%)"`, `"hsla(0, 100%, 50%, 0.5)"`
@@ -544,16 +574,16 @@ Accepted color formats:
 }
 ```
 
-| Property | Values | Constraints |
-|----------|--------|-------------|
-| `fontFamily` | `"sans"` \| `"serif"` \| `"mono"` \| `"rounded"` \| `"display"` \| `"handwriting"` | mapped to renderer-provided safe font stacks |
-| `fontSize` | number or length string | 8–72 px |
-| `fontWeight` | `"normal"` \| `"bold"` \| `"100"`–`"900"` \| 100–900 (hundreds) | — |
-| `fontStyle` | `"normal"` \| `"italic"` | — |
-| `textAlign` | `"left"` \| `"center"` \| `"right"` \| `"justify"` | — |
-| `textDecoration` | `"none"` \| `"underline"` \| `"line-through"` | — |
-| `lineHeight` | number (multiplier) or length | — |
-| `letterSpacing` | number or length string | -10–50 px |
+| Property         | Values                                                                             | Constraints                                  |
+| ---------------- | ---------------------------------------------------------------------------------- | -------------------------------------------- |
+| `fontFamily`     | `"sans"` \| `"serif"` \| `"mono"` \| `"rounded"` \| `"display"` \| `"handwriting"` | mapped to renderer-provided safe font stacks |
+| `fontSize`       | number or length string                                                            | 8–72 px                                      |
+| `fontWeight`     | `"normal"` \| `"bold"` \| `"100"`–`"900"` \| 100–900 (hundreds)                    | —                                            |
+| `fontStyle`      | `"normal"` \| `"italic"`                                                           | —                                            |
+| `textAlign`      | `"left"` \| `"center"` \| `"right"` \| `"justify"`                                 | —                                            |
+| `textDecoration` | `"none"` \| `"underline"` \| `"line-through"`                                      | —                                            |
+| `lineHeight`     | number (multiplier) or length                                                      | —                                            |
+| `letterSpacing`  | number or length string                                                            | -10–50 px                                    |
 
 ### 3.6 Border & Radius
 
@@ -564,15 +594,15 @@ Accepted color formats:
 }
 ```
 
-| Property | Values | Constraints |
-|----------|--------|-------------|
-| `borderRadius` | number or length string | max 9999 |
-| `borderRadiusTopLeft` | number or length string | max 9999 |
-| `borderRadiusTopRight` | number or length string | max 9999 |
-| `borderRadiusBottomLeft` | number or length string | max 9999 |
-| `borderRadiusBottomRight` | number or length string | max 9999 |
-| `border` | BorderObject | — |
-| `borderTop`, `borderRight`, `borderBottom`, `borderLeft` | BorderObject | — |
+| Property                                                 | Values                  | Constraints |
+| -------------------------------------------------------- | ----------------------- | ----------- |
+| `borderRadius`                                           | number or length string | max 9999    |
+| `borderRadiusTopLeft`                                    | number or length string | max 9999    |
+| `borderRadiusTopRight`                                   | number or length string | max 9999    |
+| `borderRadiusBottomLeft`                                 | number or length string | max 9999    |
+| `borderRadiusBottomRight`                                | number or length string | max 9999    |
+| `border`                                                 | BorderObject            | —           |
+| `borderTop`, `borderRight`, `borderBottom`, `borderLeft` | BorderObject            | —           |
 
 **BorderObject:** `{ "width": number, "style": "solid"|"dashed"|"dotted"|"none", "color": string }`
 
@@ -594,11 +624,16 @@ Each directional borderRadius has the same max 9999 constraint as `borderRadius`
 ```json
 {
   "boxShadow": {
-    "offsetX": 0, "offsetY": 4, "blur": 12, "spread": 0,
+    "offsetX": 0,
+    "offsetY": 4,
+    "blur": 12,
+    "spread": 0,
     "color": "rgba(0,0,0,0.15)"
   },
   "textShadow": {
-    "offsetX": 0, "offsetY": 1, "blur": 8,
+    "offsetX": 0,
+    "offsetY": 1,
+    "blur": 8,
     "color": "rgba(255,255,255,0.85)"
   }
 }
@@ -638,11 +673,11 @@ Types: `"linear"` (requires `direction`) or `"radial"`.
 }
 ```
 
-| Field | Constraints |
-|-------|-------------|
-| `scale` | 0.1–1.5 |
-| `translateX`, `translateY` | -500–500 |
-| `rotate` | any valid deg string |
+| Field                      | Constraints          |
+| -------------------------- | -------------------- |
+| `scale`                    | 0.1–1.5              |
+| `translateX`, `translateY` | -500–500             |
+| `rotate`                   | any valid deg string |
 
 ### 3.10 Image Fit Properties
 
@@ -661,9 +696,9 @@ These properties control how an image is sized and positioned within its contain
 }
 ```
 
-| Property | Values | Dynamic |
-|----------|--------|---------|
-| `objectFit` | `"cover"` \| `"contain"` \| `"fill"` \| `"none"` \| `"scale-down"` | literal or $ref |
+| Property         | Values                                                                    | Dynamic         |
+| ---------------- | ------------------------------------------------------------------------- | --------------- |
+| `objectFit`      | `"cover"` \| `"contain"` \| `"fill"` \| `"none"` \| `"scale-down"`        | literal or $ref |
 | `objectPosition` | string (CSS object-position value, e.g. `"center"`, `"top"`, `"50% 20%"`) | literal or $ref |
 
 Both properties are allowed in `hoverStyle` and as `transition` targets. This enables effects like panning across a cropped image on hover:
@@ -676,33 +711,34 @@ Both properties are allowed in `hoverStyle` and as `transition` targets. This en
     "hoverStyle": {
       "objectPosition": "center 5%"
     },
-    "transition": [
-      { "property": "objectPosition", "duration": 600, "easing": "ease" }
-    ]
+    "transition": [{ "property": "objectPosition", "duration": 600, "easing": "ease" }]
   }
 }
 ```
 
 ### 3.11 Other Properties
 
-| Property | Values | Constraints |
-|----------|--------|-------------|
-| `opacity` | number | 0–1 |
-| `backdropBlur` | number | 0–40 |
-| `overflow` | `"visible"` \| `"hidden"` \| `"auto"` | see overflow rules below |
-| `position` | `"static"` \| `"relative"` \| `"absolute"` | `"absolute"` is allowed inside Stack only |
-| `top`, `right`, `bottom`, `left` | number or length string | only meaningful with `position: "absolute"` |
-| `zIndex` | number | 0–100 |
+| Property                         | Values                                     | Constraints                                 |
+| -------------------------------- | ------------------------------------------ | ------------------------------------------- |
+| `opacity`                        | number                                     | 0–1                                         |
+| `backdropBlur`                   | number                                     | 0–40                                        |
+| `overflow`                       | `"visible"` \| `"hidden"` \| `"auto"`      | see overflow rules below                    |
+| `position`                       | `"static"` \| `"relative"` \| `"absolute"` | `"absolute"` is allowed inside Stack only   |
+| `top`, `right`, `bottom`, `left` | number or length string                    | only meaningful with `position: "absolute"` |
+| `zIndex`                         | number                                     | 0–100                                       |
 
 **Overflow rules:**
+
 - Max 2 elements with `overflow: "auto"` per card
 - Nested `overflow: "auto"` is forbidden — if a parent has `auto`, its descendants cannot also use `auto`
 
 **Position rules:**
+
 - `position: "absolute"` is only allowed on direct children of a `Stack` component
 - Using `position: "absolute"` inside Box, Row, Column, or Grid is forbidden
 
 **Backdrop blur rules:**
+
 - `backdropBlur` accepts only numeric values
 - Allowed range: `0–40`
 - The renderer maps it to `backdrop-filter: blur(...)`
@@ -714,11 +750,11 @@ Both properties are allowed in `hoverStyle` and as `transition` targets. This en
 
 Supported shapes:
 
-| Shape | Fields |
-|-------|--------|
-| `circle` | `{ "type": "circle", "radius": Length }` |
-| `ellipse` | `{ "type": "ellipse", "rx": Length, "ry": Length }` |
-| `inset` | `{ "type": "inset", "top": Length, "right": Length, "bottom": Length, "left": Length, "round"?: Length }` |
+| Shape     | Fields                                                                                                    |
+| --------- | --------------------------------------------------------------------------------------------------------- |
+| `circle`  | `{ "type": "circle", "radius": Length }`                                                                  |
+| `ellipse` | `{ "type": "ellipse", "rx": Length, "ry": Length }`                                                       |
+| `inset`   | `{ "type": "inset", "top": Length, "right": Length, "bottom": Length, "left": Length, "round"?: Length }` |
 
 `Length` follows the same safe single-value model used elsewhere in the style system: bare numbers, `"100px"`, `"50%"`, `"2em"`, `"1.5rem"`.
 
@@ -750,12 +786,12 @@ Every component's `style` object can include a `hoverStyle` sub-object. When the
 
 `hoverStyle` accepts the same style properties and validation rules as the base style, with these restrictions:
 
-| Rule | Description |
-|------|-------------|
-| No nesting | `hoverStyle` cannot contain another `hoverStyle` |
-| `$style` allowed | `$style` references are allowed inside `hoverStyle`, using the same trim-and-merge semantics as base `style` |
-| No `$style` in `card.styles` | `card.styles` definitions cannot contain `$style` at the top level or inside `hoverStyle` |
-| Same validation | Forbidden properties, value ranges, and color validation apply exactly as they do in the base style |
+| Rule                         | Description                                                                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| No nesting                   | `hoverStyle` cannot contain another `hoverStyle`                                                             |
+| `$style` allowed             | `$style` references are allowed inside `hoverStyle`, using the same trim-and-merge semantics as base `style` |
+| No `$style` in `card.styles` | `card.styles` definitions cannot contain `$style` at the top level or inside `hoverStyle`                    |
+| Same validation              | Forbidden properties, value ranges, and color validation apply exactly as they do in the base style          |
 
 The renderer implements hover by swapping inline style objects on `onMouseEnter`/`onMouseLeave` and merging `hoverStyle` on top of the base style. No raw CSS `:hover` pseudo-class is used.
 
@@ -788,20 +824,20 @@ It is most commonly placed on the base `style` to animate changes when `hoverSty
 
 **TransitionDef fields:**
 
-| Field | Required | Type | Description |
-|-------|----------|------|-------------|
-| `property` | Yes | string | CSS property to animate. Must be in the allowed list (see below). |
-| `duration` | Yes | number | Duration in milliseconds. Range: 0–2000. |
-| `easing` | No | string | Easing function. One of: `"ease"`, `"linear"`, `"ease-in"`, `"ease-out"`, `"ease-in-out"`. Default: `"ease"`. |
-| `delay` | No | number | Delay in milliseconds before the transition starts. Range: 0–1000. |
+| Field      | Required | Type   | Description                                                                                                   |
+| ---------- | -------- | ------ | ------------------------------------------------------------------------------------------------------------- |
+| `property` | Yes      | string | CSS property to animate. Must be in the allowed list (see below).                                             |
+| `duration` | Yes      | number | Duration in milliseconds. Range: 0–2000.                                                                      |
+| `easing`   | No       | string | Easing function. One of: `"ease"`, `"linear"`, `"ease-in"`, `"ease-out"`, `"ease-in-out"`. Default: `"ease"`. |
+| `delay`    | No       | number | Delay in milliseconds before the transition starts. Range: 0–1000.                                            |
 
 **Constraints:**
 
-| Resource | Limit |
-|----------|-------|
-| Max transition definitions per style | 10 |
-| Duration range | 0–2000 ms |
-| Delay range | 0–1000 ms |
+| Resource                             | Limit     |
+| ------------------------------------ | --------- |
+| Max transition definitions per style | 10        |
+| Duration range                       | 0–2000 ms |
+| Delay range                          | 0–1000 ms |
 
 **Allowed transition properties:**
 
@@ -854,12 +890,12 @@ Grid-specific style properties are used on `Grid` containers and their children.
 }
 ```
 
-| Property | Type | Dynamic |
-|----------|------|---------|
+| Property              | Type   | Dynamic         |
+| --------------------- | ------ | --------------- |
 | `gridTemplateColumns` | string | literal or $ref |
-| `gridTemplateRows` | string | literal or $ref |
-| `gridColumn` | string | literal or $ref |
-| `gridRow` | string | literal or $ref |
+| `gridTemplateRows`    | string | literal or $ref |
+| `gridColumn`          | string | literal or $ref |
+| `gridRow`             | string | literal or $ref |
 
 All grid properties accept string values. Use standard CSS Grid track syntax (`"1fr 1fr"`, `"auto 1fr"`, `"repeat(3, 1fr)"`, etc.).
 
@@ -885,7 +921,7 @@ Cards can define reusable named styles in the top-level `styles` field and refer
   "views": {
     "Main": {
       "type": "Text",
-       "content": "Title" ,
+      "content": "Title",
       "style": { "$style": "heading", "marginBottom": 8 }
     }
   }
@@ -895,6 +931,7 @@ Cards can define reusable named styles in the top-level `styles` field and refer
 In this example, the Text node receives all properties from the `heading` style, plus the inline `marginBottom: 8`.
 
 **Rules:**
+
 - Style names must match `/^[A-Za-z][A-Za-z0-9_-]*$/`
 - Inline style properties override `$style` base values (inline wins)
 - `$style` cannot be used inside `styles` definitions (no circular references)
@@ -907,10 +944,10 @@ Nodes may include an optional `responsive` object. It contains breakpoint-specif
 
 Version 1 currently supports two breakpoints:
 
-| Breakpoint | Activates When |
-|------------|----------------|
-| `medium` | The rendered card container is `768px` wide or narrower |
-| `compact` | The rendered card container is `480px` wide or narrower |
+| Breakpoint | Activates When                                          |
+| ---------- | ------------------------------------------------------- |
+| `medium`   | The rendered card container is `768px` wide or narrower |
+| `compact`  | The rendered card container is `480px` wide or narrower |
 
 ```json
 {
@@ -989,16 +1026,18 @@ Use `{ "$ref": "$variableName" }` in fields or style values:
 ```json
 {
   "type": "Text",
-   "content": { "$ref": "$username" } 
+  "content": { "$ref": "$username" }
 }
 ```
 
 **Dot notation** for nested objects:
+
 ```json
 { "$ref": "$user.name" }
 ```
 
 **Bracket notation** for arrays (digits only):
+
 ```json
 { "$ref": "$items[0].name" }
 ```
@@ -1033,12 +1072,7 @@ Use `$template` for safe string composition without introducing a second express
 
 ```json
 {
-  "$template": [
-    "@",
-    { "$ref": "$username" },
-    " · Lv.",
-    { "$ref": "$level" }
-  ]
+  "$template": ["@", { "$ref": "$username" }, " · Lv.", { "$ref": "$level" }]
 }
 ```
 
@@ -1082,21 +1116,22 @@ Children of a layout component can be a **for-loop object** instead of an array.
     "in": "$messages",
     "template": {
       "type": "Text",
-       "content": { "$ref": "$item.text" } 
+      "content": { "$ref": "$item.text" }
     }
   }
 }
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `for` | Yes | Loop variable name (without `$`). Referenced as `$item` in the template. |
-| `in` | Yes | State path to an array (starts with `$`). |
-| `template` | Yes | A single node to render for each array element. |
+| Field      | Required | Description                                                              |
+| ---------- | -------- | ------------------------------------------------------------------------ |
+| `for`      | Yes      | Loop variable name (without `$`). Referenced as `$item` in the template. |
+| `in`       | Yes      | State path to an array (starts with `$`).                                |
+| `template` | Yes      | A single node to render for each array element.                          |
 
 Inside the template, `$item` (or whatever you named the loop variable) refers to the current element, and `$index` refers to the current iteration index (0-based).
 
 **Loop constraints:**
+
 - Max 1000 iterations per loop
 - Max 2 levels of nested loops
 - Loop source must resolve to an array from state or loop-local variables (undefined is soft-skipped with empty render; non-array triggers an error)
@@ -1222,7 +1257,7 @@ Constraints:
     "template": {
       "type": "Column",
       "children": [
-        { "type": "Text",  "content": { "$ref": "$msg.text" }  },
+        { "type": "Text", "content": { "$ref": "$msg.text" } },
         {
           "type": "Row",
           "children": {
@@ -1230,7 +1265,7 @@ Constraints:
             "in": "$msg.reactions",
             "template": {
               "type": "Text",
-               "content": { "$ref": "$reaction" } 
+              "content": { "$ref": "$reaction" }
             }
           }
         }
@@ -1246,39 +1281,39 @@ In this example, the outer loop iterates over `$messages`, and for each message,
 
 ## 5. Constraints Summary
 
-| Resource | Limit |
-|----------|-------|
-| Card JSON size | max 1 MB |
-| Text content total | max 200 KB (sum of renderable text output after `$template` / `$ref` resolution for `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, `Accordion.items[*].label`, and `Tabs.tabs[*].label` using the effective merged state) |
-| Style objects total | max 100 KB (sum of effective style objects after `$style` merge and `$ref` resolution using the effective merged state, including responsive overrides) |
-| Total node count | max 10,000 |
-| Loop iterations | max 1000 per loop |
-| Nested loops | max 2 levels |
-| Stack nesting | max 3 levels |
-| fontSize | 8–72 px |
-| letterSpacing | -10–50 px |
-| borderRadius | max 9999 |
-| directional borderRadius | max 9999 each |
-| opacity | 0–1 |
-| zIndex | 0–100 |
-| transform scale | 0.1–1.5 |
-| transform translate | -500–500 |
-| boxShadow count | max 5 |
-| boxShadow blur | max 100 |
-| boxShadow spread | max 50 |
-| textShadow count | max 5 |
-| textShadow blur | max 100 |
-| overflow: auto count | max 2 per card, no nesting |
-| transition definitions per style | max 10 |
-| transition duration | 0–2000 ms |
-| transition delay | 0–1000 ms |
-| hoverStyle nesting | forbidden (no hoverStyle inside hoverStyle) |
-| `$style` inside card.styles definitions | forbidden, including `hoverStyle.$style` |
-| responsive breakpoints | `medium`, `compact` |
-| medium breakpoint threshold | container width ≤ 768 px |
-| compact breakpoint threshold | container width ≤ 480 px |
-| `backdropBlur` | 0–40 |
-| `hoverStyle` / `transition` inside `responsive.medium` / `responsive.compact` | forbidden |
+| Resource                                                                      | Limit                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Card JSON size                                                                | max 1 MB                                                                                                                                                                                                                                                      |
+| Text content total                                                            | max 200 KB (sum of renderable text output after `$template` / `$ref` resolution for `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, `Accordion.items[*].label`, and `Tabs.tabs[*].label` using the effective merged state) |
+| Style objects total                                                           | max 100 KB (sum of effective style objects after `$style` merge and `$ref` resolution using the effective merged state, including responsive overrides)                                                                                                       |
+| Total node count                                                              | max 10,000                                                                                                                                                                                                                                                    |
+| Loop iterations                                                               | max 1000 per loop                                                                                                                                                                                                                                             |
+| Nested loops                                                                  | max 2 levels                                                                                                                                                                                                                                                  |
+| Stack nesting                                                                 | max 3 levels                                                                                                                                                                                                                                                  |
+| fontSize                                                                      | 8–72 px                                                                                                                                                                                                                                                       |
+| letterSpacing                                                                 | -10–50 px                                                                                                                                                                                                                                                     |
+| borderRadius                                                                  | max 9999                                                                                                                                                                                                                                                      |
+| directional borderRadius                                                      | max 9999 each                                                                                                                                                                                                                                                 |
+| opacity                                                                       | 0–1                                                                                                                                                                                                                                                           |
+| zIndex                                                                        | 0–100                                                                                                                                                                                                                                                         |
+| transform scale                                                               | 0.1–1.5                                                                                                                                                                                                                                                       |
+| transform translate                                                           | -500–500                                                                                                                                                                                                                                                      |
+| boxShadow count                                                               | max 5                                                                                                                                                                                                                                                         |
+| boxShadow blur                                                                | max 100                                                                                                                                                                                                                                                       |
+| boxShadow spread                                                              | max 50                                                                                                                                                                                                                                                        |
+| textShadow count                                                              | max 5                                                                                                                                                                                                                                                         |
+| textShadow blur                                                               | max 100                                                                                                                                                                                                                                                       |
+| overflow: auto count                                                          | max 2 per card, no nesting                                                                                                                                                                                                                                    |
+| transition definitions per style                                              | max 10                                                                                                                                                                                                                                                        |
+| transition duration                                                           | 0–2000 ms                                                                                                                                                                                                                                                     |
+| transition delay                                                              | 0–1000 ms                                                                                                                                                                                                                                                     |
+| hoverStyle nesting                                                            | forbidden (no hoverStyle inside hoverStyle)                                                                                                                                                                                                                   |
+| `$style` inside card.styles definitions                                       | forbidden, including `hoverStyle.$style`                                                                                                                                                                                                                      |
+| responsive breakpoints                                                        | `medium`, `compact`                                                                                                                                                                                                                                           |
+| medium breakpoint threshold                                                   | container width ≤ 768 px                                                                                                                                                                                                                                      |
+| compact breakpoint threshold                                                  | container width ≤ 480 px                                                                                                                                                                                                                                      |
+| `backdropBlur`                                                                | 0–40                                                                                                                                                                                                                                                          |
+| `hoverStyle` / `transition` inside `responsive.medium` / `responsive.compact` | forbidden                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -1304,8 +1339,8 @@ Host-provided container styling may extend that wrapper, but must not override t
   "type": "Row",
   "style": { "gap": 12, "alignItems": "center" },
   "children": [
-    { "type": "Text",  "content": "Label"  },
-    { "type": "Text",  "content": "Value"  }
+    { "type": "Text", "content": "Label" },
+    { "type": "Text", "content": "Value" }
   ]
 }
 ```
@@ -1334,12 +1369,12 @@ Host-provided container styling may extend that wrapper, but must not override t
   "children": [
     {
       "type": "Text",
-       "content": { "$ref": "$level" } ,
+      "content": { "$ref": "$level" },
       "style": { "fontSize": 18, "color": "#ffcc00" }
     },
     {
       "type": "Text",
-       "content": "LEVEL" ,
+      "content": "LEVEL",
       "style": { "fontSize": 10, "color": "#666" }
     }
   ]
@@ -1363,7 +1398,7 @@ Host-provided container styling may extend that wrapper, but must not override t
 ### 6.5 Divider Line
 
 ```json
-{ "type": "Divider",  "color": "#333"  }
+{ "type": "Divider", "color": "#333" }
 ```
 
 ### 6.6 Chat Bubble (Other Person)
@@ -1375,7 +1410,8 @@ Host-provided container styling may extend that wrapper, but must not override t
   "children": [
     {
       "type": "Avatar",
-       "src": "@assets/sender-avatar.png", "size": 36 
+      "src": "@assets/sender-avatar.png",
+      "size": 36
     },
     {
       "type": "Column",
@@ -1383,7 +1419,7 @@ Host-provided container styling may extend that wrapper, but must not override t
       "children": [
         {
           "type": "Text",
-           "content": { "$ref": "$senderName" } ,
+          "content": { "$ref": "$senderName" },
           "style": { "fontSize": 11, "color": "#555" }
         },
         {
@@ -1392,18 +1428,23 @@ Host-provided container styling may extend that wrapper, but must not override t
           "children": [
             {
               "type": "Box",
-              "style": { "backgroundColor": "#ffffff", "padding": 10, "borderRadius": 12, "maxWidth": "220px" },
+              "style": {
+                "backgroundColor": "#ffffff",
+                "padding": 10,
+                "borderRadius": 12,
+                "maxWidth": "220px"
+              },
               "children": [
                 {
                   "type": "Text",
-                   "content": { "$ref": "$message" } ,
+                  "content": { "$ref": "$message" },
                   "style": { "fontSize": 13, "color": "#333", "lineHeight": 18 }
                 }
               ]
             },
             {
               "type": "Text",
-               "content": { "$ref": "$time" } ,
+              "content": { "$ref": "$time" },
               "style": { "fontSize": 10, "color": "#8899aa" }
             }
           ]
@@ -1423,16 +1464,21 @@ Host-provided container styling may extend that wrapper, but must not override t
   "children": [
     {
       "type": "Text",
-       "content": { "$ref": "$myTime" } ,
+      "content": { "$ref": "$myTime" },
       "style": { "fontSize": 10, "color": "#8899aa" }
     },
     {
       "type": "Box",
-      "style": { "backgroundColor": "#fef01b", "padding": 10, "borderRadius": 12, "maxWidth": "220px" },
+      "style": {
+        "backgroundColor": "#fef01b",
+        "padding": 10,
+        "borderRadius": 12,
+        "maxWidth": "220px"
+      },
       "children": [
         {
           "type": "Text",
-           "content": { "$ref": "$myMsg" } ,
+          "content": { "$ref": "$myMsg" },
           "style": { "fontSize": 13, "color": "#333", "lineHeight": 18 }
         }
       ]
@@ -1458,7 +1504,8 @@ Render a list of messages from state using a `for...in` loop:
       "children": [
         {
           "type": "Avatar",
-           "src": { "$ref": "$msg.avatar" }, "size": 32 
+          "src": { "$ref": "$msg.avatar" },
+          "size": 32
         },
         {
           "type": "Column",
@@ -1466,12 +1513,12 @@ Render a list of messages from state using a `for...in` loop:
           "children": [
             {
               "type": "Text",
-               "content": { "$ref": "$msg.sender" } ,
+              "content": { "$ref": "$msg.sender" },
               "style": { "fontSize": 13, "fontWeight": "bold", "color": "#ffffff" }
             },
             {
               "type": "Text",
-               "content": { "$ref": "$msg.text" } ,
+              "content": { "$ref": "$msg.text" },
               "style": { "fontSize": 12, "color": "#aaaaaa" }
             }
           ]
@@ -1498,23 +1545,17 @@ A 3-column grid of items:
     {
       "type": "Box",
       "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
-      "children": [
-        { "type": "Text",  "content": "Item 1" , "style": { "color": "#fff" } }
-      ]
+      "children": [{ "type": "Text", "content": "Item 1", "style": { "color": "#fff" } }]
     },
     {
       "type": "Box",
       "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
-      "children": [
-        { "type": "Text",  "content": "Item 2" , "style": { "color": "#fff" } }
-      ]
+      "children": [{ "type": "Text", "content": "Item 2", "style": { "color": "#fff" } }]
     },
     {
       "type": "Box",
       "style": { "backgroundColor": "#1a1a2e", "padding": 16, "borderRadius": 8 },
-      "children": [
-        { "type": "Text",  "content": "Item 3" , "style": { "color": "#fff" } }
-      ]
+      "children": [{ "type": "Text", "content": "Item 3", "style": { "color": "#fff" } }]
     }
   ]
 }
@@ -1531,13 +1572,19 @@ A 3-column grid of items:
       "type": "Row",
       "style": { "justifyContent": "space-between" },
       "children": [
-        { "type": "Text",  "content": "HP" , "style": { "fontSize": 12, "color": "#555570" } },
-        { "type": "Text",  "content": { "$ref": "$hpLabel" } , "style": { "fontSize": 12, "color": "#00ff88" } }
+        { "type": "Text", "content": "HP", "style": { "fontSize": 12, "color": "#555570" } },
+        {
+          "type": "Text",
+          "content": { "$ref": "$hpLabel" },
+          "style": { "fontSize": 12, "color": "#00ff88" }
+        }
       ]
     },
     {
       "type": "ProgressBar",
-       "value": { "$ref": "$hp" }, "max": { "$ref": "$maxHp" }, "color": "#00ff88" 
+      "value": { "$ref": "$hp" },
+      "max": { "$ref": "$maxHp" },
+      "color": "#00ff88"
     }
   ]
 }
@@ -1557,9 +1604,24 @@ Using `$style` for consistent badge styling:
       "type": "Row",
       "style": { "gap": 8 },
       "children": [
-        { "type": "Badge",  "label": "Hacker", "color": "#ff0066" , "style": { "$style": "tagBadge" } },
-        { "type": "Badge",  "label": "Elite", "color": "#00f0ff" , "style": { "$style": "tagBadge" } },
-        { "type": "Badge",  "label": "Verified", "color": "#00ff88" , "style": { "$style": "tagBadge" } }
+        {
+          "type": "Badge",
+          "label": "Hacker",
+          "color": "#ff0066",
+          "style": { "$style": "tagBadge" }
+        },
+        {
+          "type": "Badge",
+          "label": "Elite",
+          "color": "#00f0ff",
+          "style": { "$style": "tagBadge" }
+        },
+        {
+          "type": "Badge",
+          "label": "Verified",
+          "color": "#00ff88",
+          "style": { "$style": "tagBadge" }
+        }
       ]
     }
   }
@@ -1609,7 +1671,8 @@ Using `$style` for consistent badge styling:
           "children": [
             {
               "type": "Avatar",
-               "src": "@assets/avatar.png", "size": 56 
+              "src": "@assets/avatar.png",
+              "size": 56
             },
             {
               "type": "Column",
@@ -1617,20 +1680,20 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                   "content": { "$ref": "$username" } ,
+                  "content": { "$ref": "$username" },
                   "style": { "fontSize": 20, "color": "#00f0ff" }
                 },
                 {
                   "type": "Text",
-                   "content": { "$ref": "$title" } ,
+                  "content": { "$ref": "$title" },
                   "style": { "fontSize": 12, "color": "#ff00aa", "letterSpacing": 2 }
                 }
               ]
             }
           ]
         },
-        { "type": "Divider",  "color": "#1a1a2e"  },
-        { "type": "Spacer",  "size": 16  },
+        { "type": "Divider", "color": "#1a1a2e" },
+        { "type": "Spacer", "size": 16 },
         {
           "type": "Row",
           "style": { "justifyContent": "space-between", "marginBottom": 16 },
@@ -1641,12 +1704,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                   "content": { "$ref": "$level" } ,
+                  "content": { "$ref": "$level" },
                   "style": { "$style": "statValue", "color": "#ffcc00" }
                 },
                 {
                   "type": "Text",
-                   "content": "LEVEL" ,
+                  "content": "LEVEL",
                   "style": { "$style": "statLabel" }
                 }
               ]
@@ -1657,12 +1720,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                   "content": { "$ref": "$hpLabel" } ,
+                  "content": { "$ref": "$hpLabel" },
                   "style": { "$style": "statValue", "color": "#00ff88" }
                 },
                 {
                   "type": "Text",
-                   "content": "HP" ,
+                  "content": "HP",
                   "style": { "$style": "statLabel" }
                 }
               ]
@@ -1673,12 +1736,12 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                   "content": { "$ref": "$credits" } ,
+                  "content": { "$ref": "$credits" },
                   "style": { "$style": "statValue", "color": "#ff6600" }
                 },
                 {
                   "type": "Text",
-                   "content": "CREDITS" ,
+                  "content": "CREDITS",
                   "style": { "$style": "statLabel" }
                 }
               ]
@@ -1687,29 +1750,33 @@ Using `$style` for consistent badge styling:
         },
         {
           "type": "ProgressBar",
-          
-            "value": { "$ref": "$hp" },
-            "max": { "$ref": "$maxHp" },
-            "color": "#00ff88"
-          ,
+
+          "value": { "$ref": "$hp" },
+          "max": { "$ref": "$maxHp" },
+          "color": "#00ff88",
           "style": { "marginBottom": 16 }
         },
         {
           "type": "Box",
-          "style": { "backgroundColor": "#12121f", "padding": 12, "borderRadius": 8, "marginBottom": 16 },
+          "style": {
+            "backgroundColor": "#12121f",
+            "padding": 12,
+            "borderRadius": 8,
+            "marginBottom": 16
+          },
           "children": [
             {
               "type": "Text",
-               "content": { "$ref": "$bio" } ,
+              "content": { "$ref": "$bio" },
               "style": { "fontSize": 12, "color": "#8888aa", "lineHeight": 18 }
             }
           ]
         },
-        { "type": "Divider",  "color": "#1a1a2e"  },
-        { "type": "Spacer",  "size": 12  },
+        { "type": "Divider", "color": "#1a1a2e" },
+        { "type": "Spacer", "size": 12 },
         {
           "type": "Text",
-           "content": "SKILLS" ,
+          "content": "SKILLS",
           "style": { "$style": "statLabel", "marginBottom": 8, "letterSpacing": 2 }
         },
         {
@@ -1724,12 +1791,13 @@ Using `$style` for consistent badge styling:
               "children": [
                 {
                   "type": "Text",
-                   "content": { "$ref": "$skill.name" } ,
+                  "content": { "$ref": "$skill.name" },
                   "style": { "$style": "skillText" }
                 },
                 {
                   "type": "Badge",
-                   "label": { "$ref": "$skill.level" }, "color": "#00f0ff" 
+                  "label": { "$ref": "$skill.level" },
+                  "color": "#00f0ff"
                 }
               ]
             }
@@ -1748,12 +1816,14 @@ Using `$style` for consistent badge styling:
 Before outputting a card, verify:
 
 **Structure:**
+
 - [ ] `meta` has `name` and `version` (both strings)
 - [ ] `views` has at least one view (usually `"Main"`)
 - [ ] Each view root is a valid node or a `$use` wrapper
 - [ ] `fragments`, if present, maps names to normal node subtrees
 
 **Components:**
+
 - [ ] Layout nodes (`Box`, `Row`, `Column`, `Stack`, `Grid`) use `children` (array of nodes / `$use`, or for-loop object)
 - [ ] Content nodes (`Text`, `Image`, `Avatar`, `Icon`, `Spacer`, `Divider`, `ProgressBar`, `Badge`, `Chip`) use top-level fields (no `props` object)
 - [ ] Interaction nodes (`Button`, `Toggle`, `Accordion`) use top-level fields (no `props` object)
@@ -1779,6 +1849,7 @@ Before outputting a card, verify:
 - [ ] `Switch.cases[*]` and `Switch.default`, if present, are renderable nodes or `$use`
 
 **Dynamic values:**
+
 - [ ] Dynamic values use `$ref` or structured `$template` where allowed
 - [ ] `$template` is used only in `Text.content`, `Text.spans[*].text`, `Badge.label`, `Chip.label`, `Button.label`, `Accordion.items[*].label`, or `Tabs.tabs[*].label`
 - [ ] Node-level `$if` uses a boolean literal, boolean `$ref`, or a supported condition object
@@ -1788,6 +1859,7 @@ Before outputting a card, verify:
 - [ ] State values referenced by `$ref` exist in the `state` object
 
 **Styles:**
+
 - [ ] Alignment uses valid layout keywords (`"start"`, `"end"`, `"flex-start"`, `"flex-end"`, etc.)
 - [ ] `fontSize` is between 8 and 72
 - [ ] `opacity` is between 0 and 1
@@ -1803,6 +1875,7 @@ Before outputting a card, verify:
 - [ ] Grid properties use string values
 
 **Hover & Transition:**
+
 - [ ] `hoverStyle` is inside `style`, not at node level
 - [ ] No nested `hoverStyle` (hoverStyle inside hoverStyle is forbidden)
 - [ ] `$style` inside `hoverStyle` references a valid `styles` entry
@@ -1817,15 +1890,18 @@ Before outputting a card, verify:
 - [ ] Max 10 transition definitions per style
 
 **Style reuse:**
+
 - [ ] `$style` references exist in the card's `styles` section
 - [ ] Style names match `/^[A-Za-z][A-Za-z0-9_-]*$/`
 - [ ] No `$style` inside `styles` definitions (no circular references)
 
 **Layout:**
+
 - [ ] `Stack` is used for absolute positioning (not other containers)
 - [ ] `position: "absolute"` only appears on direct children of `Stack`
 
 **Loops:**
+
 - [ ] `for...in` loop sources resolve to arrays (from state or loop-local variables)
 - [ ] Loop variable names don't start with `$` in the `for` field
 - [ ] Loop nesting does not exceed 2 levels

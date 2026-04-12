@@ -20,5 +20,13 @@ export function Image({ src, alt, style, hoverStyle }: ImageComponentProps) {
     return null;
   }
 
-  return <img src={src} alt={alt ?? ''} style={resolvedStyle} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />;
+  return (
+    <img
+      src={src}
+      alt={alt ?? ''}
+      style={resolvedStyle}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    />
+  );
 }

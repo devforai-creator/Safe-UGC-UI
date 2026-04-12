@@ -64,9 +64,9 @@ export const SAMPLE_CYBERPUNK = {
                 {
                   type: 'Text',
                   content: { $ref: '$level' },
-                  style: { '$style': 'stat', color: '#ffcc00' },
+                  style: { $style: 'stat', color: '#ffcc00' },
                 },
-                { type: 'Text', content: 'LEVEL', style: { '$style': 'label' } },
+                { type: 'Text', content: 'LEVEL', style: { $style: 'label' } },
               ],
             },
             {
@@ -76,9 +76,9 @@ export const SAMPLE_CYBERPUNK = {
                 {
                   type: 'Text',
                   content: { $ref: '$hpLabel' },
-                  style: { '$style': 'stat', color: '#00ff88' },
+                  style: { $style: 'stat', color: '#00ff88' },
                 },
-                { type: 'Text', content: 'HP', style: { '$style': 'label' } },
+                { type: 'Text', content: 'HP', style: { $style: 'label' } },
               ],
             },
             {
@@ -88,9 +88,9 @@ export const SAMPLE_CYBERPUNK = {
                 {
                   type: 'Text',
                   content: { $ref: '$credits' },
-                  style: { '$style': 'stat', color: '#ff6600' },
+                  style: { $style: 'stat', color: '#ff6600' },
                 },
-                { type: 'Text', content: 'CREDITS', style: { '$style': 'label' } },
+                { type: 'Text', content: 'CREDITS', style: { $style: 'label' } },
               ],
             },
           ],
@@ -144,8 +144,18 @@ export const SAMPLE_KAKAO = {
     memberCount: '4명',
     messages: [
       { name: '민지', msg: '토요일 몇 시에 출발해?', time: '2:41', avatar: '@assets/minji.png' },
-      { name: '유나', msg: '9시 좋을 거 같아! 서울역에서 만나자', time: '2:42', avatar: '@assets/yuna.png' },
-      { name: '수빈', msg: '내가 운전할게! 3명까지 탈 수 있어', time: '2:43', avatar: '@assets/soobin.png' },
+      {
+        name: '유나',
+        msg: '9시 좋을 거 같아! 서울역에서 만나자',
+        time: '2:42',
+        avatar: '@assets/yuna.png',
+      },
+      {
+        name: '수빈',
+        msg: '내가 운전할게! 3명까지 탈 수 있어',
+        time: '2:43',
+        avatar: '@assets/soobin.png',
+      },
     ],
     myMsg: '좋아~ 나는 간식 챙길게 🍙',
     myTime: '2:44',
@@ -161,7 +171,12 @@ export const SAMPLE_KAKAO = {
       children: [
         {
           type: 'Box',
-          style: { backgroundColor: '#a1b8cc', padding: 14, borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+          style: {
+            backgroundColor: '#a1b8cc',
+            padding: 14,
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+          },
           children: [
             {
               type: 'Row',
@@ -224,7 +239,15 @@ export const SAMPLE_KAKAO = {
                           children: [
                             {
                               type: 'Box',
-                              style: { backgroundColor: '#ffffff', paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, borderRadius: 12, alignSelf: 'start' },
+                              style: {
+                                backgroundColor: '#ffffff',
+                                paddingTop: 7,
+                                paddingBottom: 7,
+                                paddingLeft: 10,
+                                paddingRight: 10,
+                                borderRadius: 12,
+                                alignSelf: 'start',
+                              },
                               children: [
                                 {
                                   type: 'Text',
@@ -258,7 +281,15 @@ export const SAMPLE_KAKAO = {
                 },
                 {
                   type: 'Box',
-                  style: { backgroundColor: '#fef01b', paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, borderRadius: 12, alignSelf: 'end' },
+                  style: {
+                    backgroundColor: '#fef01b',
+                    paddingTop: 7,
+                    paddingBottom: 7,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    borderRadius: 12,
+                    alignSelf: 'end',
+                  },
                   children: [
                     {
                       type: 'Text',
@@ -275,7 +306,11 @@ export const SAMPLE_KAKAO = {
           type: 'Box',
           style: { backgroundColor: '#ffffff', padding: 10, margin: 12, borderRadius: 20 },
           children: [
-            { type: 'Text', content: '메시지를 입력하세요...', style: { fontSize: 13, color: '#aaaaaa' } },
+            {
+              type: 'Text',
+              content: '메시지를 입력하세요...',
+              style: { fontSize: 13, color: '#aaaaaa' },
+            },
           ],
         },
       ],
@@ -367,7 +402,7 @@ export const SAMPLE_CHARACTER = {
         {
           type: 'Box',
           style: {
-            '$style': 'cardBox',
+            $style: 'cardBox',
             marginBottom: 14,
           },
           children: [
@@ -384,41 +419,56 @@ export const SAMPLE_CHARACTER = {
           children: [
             {
               type: 'Box',
-              style: { '$style': 'cardBox' },
+              style: { $style: 'cardBox' },
               children: [
-                { type: 'Text', content: 'HP', style: { '$style': 'label' } },
+                { type: 'Text', content: 'HP', style: { $style: 'label' } },
                 {
                   type: 'Text',
                   content: { $ref: '$hpLabel' },
-                  style: { '$style': 'value', color: '#34d399', marginBottom: 6 },
+                  style: { $style: 'value', color: '#34d399', marginBottom: 6 },
                 },
-                { type: 'ProgressBar', value: { $ref: '$hp' }, max: { $ref: '$maxHp' }, color: '#34d399' },
+                {
+                  type: 'ProgressBar',
+                  value: { $ref: '$hp' },
+                  max: { $ref: '$maxHp' },
+                  color: '#34d399',
+                },
               ],
             },
             {
               type: 'Box',
-              style: { '$style': 'cardBox' },
+              style: { $style: 'cardBox' },
               children: [
-                { type: 'Text', content: 'MP', style: { '$style': 'label' } },
+                { type: 'Text', content: 'MP', style: { $style: 'label' } },
                 {
                   type: 'Text',
                   content: { $ref: '$mpLabel' },
-                  style: { '$style': 'value', color: '#60a5fa', marginBottom: 6 },
+                  style: { $style: 'value', color: '#60a5fa', marginBottom: 6 },
                 },
-                { type: 'ProgressBar', value: { $ref: '$mp' }, max: { $ref: '$maxMp' }, color: '#60a5fa' },
+                {
+                  type: 'ProgressBar',
+                  value: { $ref: '$mp' },
+                  max: { $ref: '$maxMp' },
+                  color: '#60a5fa',
+                },
               ],
             },
             {
               type: 'Box',
-              style: { '$style': 'cardBox' },
+              style: { $style: 'cardBox' },
               children: [
-                { type: 'Text', content: 'EXP', style: { '$style': 'label' } },
+                { type: 'Text', content: 'EXP', style: { $style: 'label' } },
                 {
                   type: 'Text',
                   content: { $ref: '$expLabel' },
-                  style: { '$style': 'value', color: '#fbbf24', marginBottom: 6 },
+                  style: { $style: 'value', color: '#fbbf24', marginBottom: 6 },
                 },
-                { type: 'ProgressBar', value: { $ref: '$exp' }, max: { $ref: '$maxExp' }, color: '#fbbf24' },
+                {
+                  type: 'ProgressBar',
+                  value: { $ref: '$exp' },
+                  max: { $ref: '$maxExp' },
+                  color: '#fbbf24',
+                },
               ],
             },
           ],
@@ -490,7 +540,10 @@ export const SAMPLE_SHORTS = {
           type: 'Box',
           style: {
             position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             backgroundGradient: {
               type: 'linear',
               direction: '180deg',
@@ -536,32 +589,38 @@ export const SAMPLE_SHORTS = {
               children: [
                 {
                   type: 'Column',
-                  style: { '$style': 'iconBtn' },
+                  style: { $style: 'iconBtn' },
                   children: [
                     { type: 'Icon', name: 'heart', size: 28, color: '#ffffff' },
-                    { type: 'Text', content: { $ref: '$likes' }, style: { '$style': 'iconLabel' } },
+                    { type: 'Text', content: { $ref: '$likes' }, style: { $style: 'iconLabel' } },
                   ],
                 },
                 {
                   type: 'Column',
-                  style: { '$style': 'iconBtn' },
+                  style: { $style: 'iconBtn' },
                   children: [
                     { type: 'Icon', name: 'chat', size: 28, color: '#ffffff' },
-                    { type: 'Text', content: { $ref: '$comments' }, style: { '$style': 'iconLabel' } },
+                    {
+                      type: 'Text',
+                      content: { $ref: '$comments' },
+                      style: { $style: 'iconLabel' },
+                    },
                   ],
                 },
                 {
                   type: 'Column',
-                  style: { '$style': 'iconBtn' },
+                  style: { $style: 'iconBtn' },
                   children: [
                     { type: 'Icon', name: 'share', size: 28, color: '#ffffff' },
-                    { type: 'Text', content: { $ref: '$shares' }, style: { '$style': 'iconLabel' } },
+                    { type: 'Text', content: { $ref: '$shares' }, style: { $style: 'iconLabel' } },
                   ],
                 },
                 {
                   type: 'Box',
                   style: {
-                    width: 32, height: 32, borderRadius: 6,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 6,
                     overflow: 'hidden',
                   },
                   children: [
@@ -626,7 +685,14 @@ export const SAMPLE_SHORTS = {
         },
         {
           type: 'Box',
-          style: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, backgroundColor: '#ff0033' },
+          style: {
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 3,
+            backgroundColor: '#ff0033',
+          },
         },
       ],
     },
@@ -741,7 +807,8 @@ export const SAMPLE_V07_FEATURES = {
     isEligibleForBonus: true,
     stockLeft: 0,
     ctaLabel: '보상 받기',
-    helperText: '조건부 렌더링과 비활성 버튼, 비율 고정 미디어 블록을 한 카드에서 확인할 수 있습니다.',
+    helperText:
+      '조건부 렌더링과 비활성 버튼, 비율 고정 미디어 블록을 한 카드에서 확인할 수 있습니다.',
   },
   styles: {
     panel: {
@@ -804,7 +871,7 @@ export const SAMPLE_V07_FEATURES = {
         },
         {
           type: 'Box',
-          style: { '$style': 'panel' },
+          style: { $style: 'panel' },
           children: [
             {
               type: 'Column',
@@ -813,7 +880,7 @@ export const SAMPLE_V07_FEATURES = {
                 {
                   type: 'Text',
                   content: { $ref: '$helperText' },
-                  style: { '$style': 'muted' },
+                  style: { $style: 'muted' },
                 },
                 {
                   type: 'Badge',
@@ -933,7 +1000,7 @@ export const SAMPLE_V08_TEXT = {
         },
         {
           type: 'Box',
-          style: { '$style': 'panel' },
+          style: { $style: 'panel' },
           children: [
             {
               type: 'Column',
@@ -971,7 +1038,7 @@ export const SAMPLE_V08_TEXT = {
                   content: { $ref: '$description' },
                   maxLines: 2,
                   truncate: 'ellipsis',
-                  style: { '$style': 'muted' },
+                  style: { $style: 'muted' },
                 },
               ],
             },
@@ -1054,7 +1121,7 @@ export const SAMPLE_V09_FRAGMENTS = {
             {
               type: 'Text',
               content: { $ref: '$pilotRole' },
-              style: { '$style': 'muted' },
+              style: { $style: 'muted' },
             },
           ],
         },
@@ -1121,14 +1188,12 @@ export const SAMPLE_V09_FRAGMENTS = {
         },
         {
           type: 'Box',
-          style: { '$style': 'panel' },
-          children: [
-            { $use: 'profileHeader' },
-          ],
+          style: { $style: 'panel' },
+          children: [{ $use: 'profileHeader' }],
         },
         {
           type: 'Box',
-          style: { '$style': 'panel' },
+          style: { $style: 'panel' },
           children: [
             {
               type: 'Column',
@@ -1207,7 +1272,7 @@ export const SAMPLE_V10_ACCORDION = {
         {
           type: 'Text',
           content: { $ref: '$pilotRole' },
-          style: { '$style': 'muted' },
+          style: { $style: 'muted' },
         },
       ],
     },
@@ -1231,7 +1296,7 @@ export const SAMPLE_V10_ACCORDION = {
   views: {
     Main: {
       type: 'Column',
-      style: { '$style': 'shell', gap: 14 },
+      style: { $style: 'shell', gap: 14 },
       children: [
         {
           type: 'Column',
@@ -1252,7 +1317,7 @@ export const SAMPLE_V10_ACCORDION = {
         {
           type: 'Accordion',
           defaultExpanded: ['profile'],
-          style: { '$style': 'panel', overflow: 'hidden' },
+          style: { $style: 'panel', overflow: 'hidden' },
           items: [
             {
               id: 'profile',
@@ -1279,7 +1344,7 @@ export const SAMPLE_V10_ACCORDION = {
               content: {
                 type: 'Text',
                 content: 'Disabled accordion items do not open.',
-                style: { '$style': 'muted' },
+                style: { $style: 'muted' },
               },
             },
           ],
@@ -1336,7 +1401,7 @@ export const SAMPLE_V10_TABS = {
         {
           type: 'Text',
           content: { $ref: '$missionStatus' },
-          style: { '$style': 'muted' },
+          style: { $style: 'muted' },
         },
       ],
     },
@@ -1360,7 +1425,7 @@ export const SAMPLE_V10_TABS = {
   views: {
     Main: {
       type: 'Column',
-      style: { '$style': 'shell', gap: 14 },
+      style: { $style: 'shell', gap: 14 },
       children: [
         {
           type: 'Column',
@@ -1381,7 +1446,7 @@ export const SAMPLE_V10_TABS = {
         {
           type: 'Tabs',
           defaultTab: 'overview',
-          style: { '$style': 'panel' },
+          style: { $style: 'panel' },
           tabs: [
             {
               id: 'overview',
@@ -1408,7 +1473,7 @@ export const SAMPLE_V10_TABS = {
               content: {
                 type: 'Text',
                 content: 'Disabled tabs cannot be selected.',
-                style: { '$style': 'muted' },
+                style: { $style: 'muted' },
               },
             },
           ],
@@ -1426,8 +1491,7 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
   state: {
     title: 'v1.1 Visual Layout',
     subtitle: 'medium + backdropBlur + clipPath',
-    note:
-      'Resize the preview below 768px to see the feature row stack. The visuals stay inside the same safe style model.',
+    note: 'Resize the preview below 768px to see the feature row stack. The visuals stay inside the same safe style model.',
   },
   styles: {
     shell: {
@@ -1459,7 +1523,7 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
   views: {
     Main: {
       type: 'Column',
-      style: { '$style': 'shell', gap: 16 },
+      style: { $style: 'shell', gap: 16 },
       children: [
         {
           type: 'Column',
@@ -1480,7 +1544,7 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
         {
           type: 'Text',
           content: { $ref: '$note' },
-          style: { '$style': 'muted' },
+          style: { $style: 'muted' },
         },
         {
           type: 'Row',
@@ -1493,7 +1557,7 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
             {
               type: 'Box',
               style: {
-                '$style': 'glass',
+                $style: 'glass',
                 width: 220,
                 padding: 14,
               },
@@ -1535,13 +1599,13 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
               children: [
                 {
                   type: 'Box',
-                  style: { '$style': 'glass', padding: 14 },
+                  style: { $style: 'glass', padding: 14 },
                   children: [
                     {
                       type: 'Text',
                       content:
                         'structured clipPath stays object-only, backdropBlur stays numeric, and responsive.medium reuses the same validator path as compact.',
-                      style: { '$style': 'muted' },
+                      style: { $style: 'muted' },
                     },
                   ],
                 },
@@ -1555,7 +1619,7 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
                     {
                       type: 'Column',
                       style: {
-                        '$style': 'glass',
+                        $style: 'glass',
                         flex: 1,
                         padding: 12,
                         alignItems: 'center',
@@ -1583,7 +1647,7 @@ export const SAMPLE_V11_VISUAL_LAYOUT = {
                     {
                       type: 'Column',
                       style: {
-                        '$style': 'glass',
+                        $style: 'glass',
                         flex: 1,
                         padding: 12,
                         alignItems: 'center',

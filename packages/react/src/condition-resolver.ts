@@ -99,15 +99,15 @@ export function evaluateCondition(
     case 'not':
       return !evaluateCondition(conditionObj.value, state, locals, depth + 1);
     case 'and':
-      return Array.isArray(conditionObj.values) &&
-        conditionObj.values.every((value) =>
-          evaluateCondition(value, state, locals, depth + 1),
-        );
+      return (
+        Array.isArray(conditionObj.values) &&
+        conditionObj.values.every((value) => evaluateCondition(value, state, locals, depth + 1))
+      );
     case 'or':
-      return Array.isArray(conditionObj.values) &&
-        conditionObj.values.some((value) =>
-          evaluateCondition(value, state, locals, depth + 1),
-        );
+      return (
+        Array.isArray(conditionObj.values) &&
+        conditionObj.values.some((value) => evaluateCondition(value, state, locals, depth + 1))
+      );
     case 'eq':
     case 'ne':
     case 'gt':

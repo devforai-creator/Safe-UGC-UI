@@ -26,12 +26,7 @@
 
 import { CARD_JSON_MAX_BYTES, type UGCCard } from '@safe-ugc-ui/types';
 
-import {
-  type ValidationError,
-  type ValidationResult,
-  createError,
-  toResult,
-} from './result.js';
+import { type ValidationError, type ValidationResult, createError, toResult } from './result.js';
 import { validateSchema, parseCard } from './schema.js';
 import { validateFragments } from './fragment-validator.js';
 import { validateNodes } from './node-validator.js';
@@ -100,9 +95,7 @@ function utf8ByteLength(str: string): number {
   return bytes;
 }
 
-type RawParseResult =
-  | { ok: true; parsed: unknown }
-  | { ok: false; errors: ValidationError[] };
+type RawParseResult = { ok: true; parsed: unknown } | { ok: false; errors: ValidationError[] };
 
 function parseRawJsonInput(rawJson: string): RawParseResult {
   const byteSize = utf8ByteLength(rawJson);
@@ -128,9 +121,7 @@ function parseRawJsonInput(rawJson: string): RawParseResult {
     const message = e instanceof Error ? e.message : 'Invalid JSON';
     return {
       ok: false,
-      errors: [
-        createError('INVALID_JSON', `Failed to parse JSON: ${message}`, ''),
-      ],
+      errors: [createError('INVALID_JSON', `Failed to parse JSON: ${message}`, '')],
     };
   }
 }
@@ -157,27 +148,28 @@ function runAllChecks(input: unknown): ValidationError[] {
   errors.push(...validateConditions(views, fragments));
   errors.push(...validateValueTypes(views, fragments));
   errors.push(...validateStyles(views, cardStyles, fragments));
-  errors.push(...validateSecurity({
-    views,
-    state: obj.state as Record<string, unknown> | undefined,
-    cardAssets: obj.assets as Record<string, string> | undefined,
-    cardStyles,
-    fragments,
-  }));
-  errors.push(...validateLimits({
-    state: obj.state as Record<string, unknown> | undefined,
-    views,
-    cardStyles,
-    fragments,
-  }));
+  errors.push(
+    ...validateSecurity({
+      views,
+      state: obj.state as Record<string, unknown> | undefined,
+      cardAssets: obj.assets as Record<string, string> | undefined,
+      cardStyles,
+      fragments,
+    }),
+  );
+  errors.push(
+    ...validateLimits({
+      state: obj.state as Record<string, unknown> | undefined,
+      views,
+      cardStyles,
+      fragments,
+    }),
+  );
 
   return errors;
 }
 
-function toLoadedCardResult(
-  validationResult: ValidationResult,
-  input: unknown,
-): LoadedCardResult {
+function toLoadedCardResult(validationResult: ValidationResult, input: unknown): LoadedCardResult {
   if (!validationResult.valid) {
     return {
       valid: false,

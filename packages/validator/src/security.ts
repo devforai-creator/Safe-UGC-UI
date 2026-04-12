@@ -46,13 +46,7 @@ const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
  * URL prefixes that are forbidden in Image/Avatar `src` values.
  * Checked case-insensitively to prevent bypass via mixed case.
  */
-const FORBIDDEN_URL_PREFIXES = [
-  'http://',
-  'https://',
-  '//',
-  'data:',
-  'javascript:',
-] as const;
+const FORBIDDEN_URL_PREFIXES = ['http://', 'https://', '//', 'data:', 'javascript:'] as const;
 
 // ---------------------------------------------------------------------------
 // Helper: scanForRefs — recursively find $ref values for pollution check
@@ -67,11 +61,7 @@ const FORBIDDEN_URL_PREFIXES = [
  * @param path - The JSON-pointer-like location for error reporting.
  * @param errors - Accumulator for any validation errors found.
  */
-function scanForRefs(
-  obj: unknown,
-  path: string,
-  errors: ValidationError[],
-): void {
+function scanForRefs(obj: unknown, path: string, errors: ValidationError[]): void {
   if (obj === null || obj === undefined || typeof obj !== 'object') {
     return;
   }
@@ -80,9 +70,7 @@ function scanForRefs(
   if (isRef(obj)) {
     const refStr = (obj as { $ref: string }).$ref;
     const segments = parseRefPathSegments(refStr);
-    const offendingSegment = segments.find((segment) =>
-      hasForbiddenRefPathSegments([segment]),
-    );
+    const offendingSegment = segments.find((segment) => hasForbiddenRefPathSegments([segment]));
     if (offendingSegment) {
       errors.push(
         createError(
@@ -133,9 +121,7 @@ function isForbiddenUrl(value: string): boolean {
  *
  * @returns An error code if invalid, or null if the path is acceptable.
  */
-function validateAssetPath(
-  value: string,
-): 'ASSET_PATH_TRAVERSAL' | 'INVALID_ASSET_PATH' | null {
+function validateAssetPath(value: string): 'ASSET_PATH_TRAVERSAL' | 'INVALID_ASSET_PATH' | null {
   if (!value.startsWith('@assets/')) {
     return 'INVALID_ASSET_PATH';
   }
@@ -211,9 +197,7 @@ function pushUniqueError(
   errors.push(error);
 }
 
-function isForLoopLike(
-  value: unknown,
-): value is { for: string; in: string; template: unknown } {
+function isForLoopLike(value: unknown): value is { for: string; in: string; template: unknown } {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -231,10 +215,7 @@ function resolveRefWithLocals(
 ): unknown {
   const segments = parseRefPathSegments(refPath);
   const firstSeg = segments[0];
-  const root =
-    locals && firstSeg && firstSeg in locals
-      ? locals
-      : state;
+  const root = locals && firstSeg && firstSeg in locals ? locals : state;
 
   if (!root) {
     return undefined;
@@ -263,16 +244,10 @@ function validateResolvedAssetSrcsForRenderable(
       return;
     }
 
-    validateResolvedAssetSrcsForRenderable(
-      target,
-      path,
-      state,
-      fragments,
-      errors,
-      seen,
-      locals,
-      [...fragmentStack, renderable.$use],
-    );
+    validateResolvedAssetSrcsForRenderable(target, path, state, fragments, errors, seen, locals, [
+      ...fragmentStack,
+      renderable.$use,
+    ]);
     return;
   }
 
@@ -389,9 +364,7 @@ function validateResolvedAssetSrcs(
   }
 }
 
-function getScannableNodeFields(
-  node: TraversableNode,
-): Record<string, unknown> {
+function getScannableNodeFields(node: TraversableNode): Record<string, unknown> {
   const nodeFields = { ...node } as Record<string, unknown>;
   delete nodeFields.type;
   delete nodeFields.style;
@@ -403,19 +376,11 @@ function getScannableNodeFields(
   }
 
   const interactiveField =
-    node.type === 'Accordion'
-      ? 'items'
-      : node.type === 'Tabs'
-        ? 'tabs'
-        : null;
+    node.type === 'Accordion' ? 'items' : node.type === 'Tabs' ? 'tabs' : null;
 
   if (interactiveField && Array.isArray(node[interactiveField])) {
     nodeFields[interactiveField] = node[interactiveField].map((item) => {
-      if (
-        item == null ||
-        typeof item !== 'object' ||
-        Array.isArray(item)
-      ) {
+      if (item == null || typeof item !== 'object' || Array.isArray(item)) {
         return item;
       }
 
@@ -457,64 +422,64 @@ function validateEffectiveStylesForMode(
   errors: ValidationError[],
   seen: Set<string>,
 ): void {
-  const styleResolver = (node: TraversableNode) =>
-    getEffectiveStyleForMode(node, cardStyles, mode);
+  const styleResolver = (node: TraversableNode) => getEffectiveStyleForMode(node, cardStyles, mode);
 
-  traverseCard(views, (node: TraversableNode, context: TraversalContext) => {
-    const effectiveStyle = styleResolver(node);
+  traverseCard(
+    views,
+    (node: TraversableNode, context: TraversalContext) => {
+      const effectiveStyle = styleResolver(node);
 
-    if (effectiveStyle && typeof effectiveStyle.position === 'string') {
-      const position = effectiveStyle.position;
+      if (effectiveStyle && typeof effectiveStyle.position === 'string') {
+        const position = effectiveStyle.position;
 
-      if (position === 'fixed') {
+        if (position === 'fixed') {
+          pushUniqueError(
+            errors,
+            seen,
+            createError(
+              'POSITION_FIXED_FORBIDDEN',
+              'CSS position "fixed" is not allowed.',
+              `${context.path}.style.position`,
+            ),
+          );
+        } else if (position === 'sticky') {
+          pushUniqueError(
+            errors,
+            seen,
+            createError(
+              'POSITION_STICKY_FORBIDDEN',
+              'CSS position "sticky" is not allowed.',
+              `${context.path}.style.position`,
+            ),
+          );
+        } else if (position === 'absolute' && context.parentType !== 'Stack') {
+          pushUniqueError(
+            errors,
+            seen,
+            createError(
+              'POSITION_ABSOLUTE_NOT_IN_STACK',
+              'CSS position "absolute" is only allowed inside a Stack component.',
+              `${context.path}.style.position`,
+            ),
+          );
+        }
+      }
+
+      if (effectiveStyle && effectiveStyle.overflow === 'auto' && context.overflowAutoAncestor) {
         pushUniqueError(
           errors,
           seen,
           createError(
-            'POSITION_FIXED_FORBIDDEN',
-            'CSS position "fixed" is not allowed.',
-            `${context.path}.style.position`,
-          ),
-        );
-      } else if (position === 'sticky') {
-        pushUniqueError(
-          errors,
-          seen,
-          createError(
-            'POSITION_STICKY_FORBIDDEN',
-            'CSS position "sticky" is not allowed.',
-            `${context.path}.style.position`,
-          ),
-        );
-      } else if (position === 'absolute' && context.parentType !== 'Stack') {
-        pushUniqueError(
-          errors,
-          seen,
-          createError(
-            'POSITION_ABSOLUTE_NOT_IN_STACK',
-            'CSS position "absolute" is only allowed inside a Stack component.',
-            `${context.path}.style.position`,
+            'OVERFLOW_AUTO_NESTED',
+            'Nested overflow:auto is not allowed. An ancestor already has overflow:auto.',
+            `${context.path}.style.overflow`,
           ),
         );
       }
-    }
-
-    if (
-      effectiveStyle &&
-      effectiveStyle.overflow === 'auto' &&
-      context.overflowAutoAncestor
-    ) {
-      pushUniqueError(
-        errors,
-        seen,
-        createError(
-          'OVERFLOW_AUTO_NESTED',
-          'Nested overflow:auto is not allowed. An ancestor already has overflow:auto.',
-          `${context.path}.style.overflow`,
-        ),
-      );
-    }
-  }, styleResolver, fragments);
+    },
+    styleResolver,
+    fragments,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -586,7 +551,7 @@ export function validateSecurity(card: {
       traversableNode.style != null &&
       typeof traversableNode.style === 'object' &&
       !Array.isArray(traversableNode.style)
-        ? traversableNode.style as Record<string, unknown>
+        ? (traversableNode.style as Record<string, unknown>)
         : undefined;
     const type = traversableNode.type;
     const nodeFields = getScannableNodeFields(traversableNode);
@@ -597,18 +562,10 @@ export function validateSecurity(card: {
     scanStyleStringsForUrl(style, `${path}.style`, errors);
 
     const responsive = traversableNode.responsive;
-    if (
-      responsive != null &&
-      typeof responsive === 'object' &&
-      !Array.isArray(responsive)
-    ) {
+    if (responsive != null && typeof responsive === 'object' && !Array.isArray(responsive)) {
       for (const mode of RESPONSIVE_OVERRIDE_KEYS) {
         const override = (responsive as Record<string, unknown>)[mode];
-        if (
-          override != null &&
-          typeof override === 'object' &&
-          !Array.isArray(override)
-        ) {
+        if (override != null && typeof override === 'object' && !Array.isArray(override)) {
           scanStyleStringsForUrl(
             override as Record<string, unknown>,
             `${path}.responsive.${mode}`,
@@ -622,20 +579,12 @@ export function validateSecurity(card: {
       const spans = (traversableNode as Record<string, unknown>).spans as unknown[];
       for (let i = 0; i < spans.length; i++) {
         const span = spans[i];
-        if (
-          span == null ||
-          typeof span !== 'object' ||
-          Array.isArray(span)
-        ) {
+        if (span == null || typeof span !== 'object' || Array.isArray(span)) {
           continue;
         }
 
         const spanStyle = (span as Record<string, unknown>).style;
-        if (
-          spanStyle != null &&
-          typeof spanStyle === 'object' &&
-          !Array.isArray(spanStyle)
-        ) {
+        if (spanStyle != null && typeof spanStyle === 'object' && !Array.isArray(spanStyle)) {
           scanStyleStringsForUrl(
             spanStyle as Record<string, unknown>,
             `${path}.spans[${i}].style`,
@@ -652,11 +601,7 @@ export function validateSecurity(card: {
     if (style) {
       scanForRefs(style, `${path}.style`, errors);
     }
-    if (
-      responsive != null &&
-      typeof responsive === 'object' &&
-      !Array.isArray(responsive)
-    ) {
+    if (responsive != null && typeof responsive === 'object' && !Array.isArray(responsive)) {
       scanForRefs(responsive, `${path}.responsive`, errors);
     }
   });

@@ -44,12 +44,7 @@ function validateConditionDepth(
 
   if ((op === 'and' || op === 'or') && Array.isArray(conditionObj.values)) {
     for (let i = 0; i < conditionObj.values.length; i++) {
-      validateConditionDepth(
-        conditionObj.values[i],
-        `${path}.values[${i}]`,
-        errors,
-        depth + 1,
-      );
+      validateConditionDepth(conditionObj.values[i], `${path}.values[${i}]`, errors, depth + 1);
     }
   }
 }

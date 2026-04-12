@@ -31,12 +31,15 @@ const containerStyle: CSSProperties = {
  * Consumer styles may extend the container, but cannot override the
  * core isolation properties defined above.
  */
-export const UGCContainer = forwardRef<HTMLDivElement, UGCContainerProps>(
-  function UGCContainer({ children, style }, ref) {
-    const mergedStyle: CSSProperties = style
-      ? { ...style, ...containerStyle }
-      : containerStyle;
+export const UGCContainer = forwardRef<HTMLDivElement, UGCContainerProps>(function UGCContainer(
+  { children, style },
+  ref,
+) {
+  const mergedStyle: CSSProperties = style ? { ...style, ...containerStyle } : containerStyle;
 
-    return <div ref={ref} style={mergedStyle}>{children}</div>;
-  },
-);
+  return (
+    <div ref={ref} style={mergedStyle}>
+      {children}
+    </div>
+  );
+});

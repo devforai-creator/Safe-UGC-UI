@@ -9,5 +9,9 @@ interface BoxProps {
 
 export function Box({ style, hoverStyle, children }: BoxProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  return <div style={resolvedStyle} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>{children}</div>;
+  return (
+    <div style={resolvedStyle} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      {children}
+    </div>
+  );
 }

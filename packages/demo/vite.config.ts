@@ -7,7 +7,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@safe-ugc-ui/types': fileURLToPath(new URL('../types/src/index.ts', import.meta.url)),
-      '@safe-ugc-ui/validator': fileURLToPath(new URL('../validator/src/index.ts', import.meta.url)),
+      '@safe-ugc-ui/validator': fileURLToPath(
+        new URL('../validator/src/index.ts', import.meta.url),
+      ),
       '@safe-ugc-ui/react': fileURLToPath(new URL('../react/src/index.ts', import.meta.url)),
     },
   },

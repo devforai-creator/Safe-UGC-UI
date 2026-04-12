@@ -45,25 +45,67 @@ import { resolveValue } from './state-resolver.js';
 // ---------------------------------------------------------------------------
 
 const DIRECT_MAP_PROPS = [
-  'display', 'flexDirection', 'justifyContent', 'alignItems', 'alignSelf',
-  'flexWrap', 'flex', 'gap', 'width', 'height', 'aspectRatio', 'minWidth', 'maxWidth',
-  'minHeight', 'maxHeight', 'padding', 'paddingTop', 'paddingRight',
-  'paddingBottom', 'paddingLeft', 'margin', 'marginTop', 'marginRight',
-  'marginBottom', 'marginLeft', 'backgroundColor', 'color', 'borderRadius',
-  'borderRadiusTopLeft', 'borderRadiusTopRight',
-  'borderRadiusBottomLeft', 'borderRadiusBottomRight',
-  'fontSize', 'fontWeight', 'fontStyle', 'textAlign', 'textDecoration',
-  'lineHeight', 'letterSpacing', 'opacity', 'overflow', 'position',
-  'top', 'right', 'bottom', 'left', 'zIndex',
-  'gridTemplateColumns', 'gridTemplateRows', 'gridColumn', 'gridRow',
-  'objectFit', 'objectPosition',
+  'display',
+  'flexDirection',
+  'justifyContent',
+  'alignItems',
+  'alignSelf',
+  'flexWrap',
+  'flex',
+  'gap',
+  'width',
+  'height',
+  'aspectRatio',
+  'minWidth',
+  'maxWidth',
+  'minHeight',
+  'maxHeight',
+  'padding',
+  'paddingTop',
+  'paddingRight',
+  'paddingBottom',
+  'paddingLeft',
+  'margin',
+  'marginTop',
+  'marginRight',
+  'marginBottom',
+  'marginLeft',
+  'backgroundColor',
+  'color',
+  'borderRadius',
+  'borderRadiusTopLeft',
+  'borderRadiusTopRight',
+  'borderRadiusBottomLeft',
+  'borderRadiusBottomRight',
+  'fontSize',
+  'fontWeight',
+  'fontStyle',
+  'textAlign',
+  'textDecoration',
+  'lineHeight',
+  'letterSpacing',
+  'opacity',
+  'overflow',
+  'position',
+  'top',
+  'right',
+  'bottom',
+  'left',
+  'zIndex',
+  'gridTemplateColumns',
+  'gridTemplateRows',
+  'gridColumn',
+  'gridRow',
+  'objectFit',
+  'objectPosition',
 ] as const;
 
 const FONT_FAMILY_STACKS: Record<string, string> = {
   sans: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   serif: 'ui-serif, Georgia, Cambria, "Times New Roman", serif',
   mono: 'ui-monospace, "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
-  rounded: '"SF Pro Rounded", ui-rounded, "Hiragino Maru Gothic ProN", "Nunito", system-ui, sans-serif',
+  rounded:
+    '"SF Pro Rounded", ui-rounded, "Hiragino Maru Gothic ProN", "Nunito", system-ui, sans-serif',
   display: '"Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif',
   handwriting: '"Bradley Hand", "Segoe Print", "Comic Sans MS", "Marker Felt", cursive',
 };
@@ -142,7 +184,7 @@ const FORBIDDEN_CSS_FUNCTIONS_LOWER = ['url(', 'var(', 'calc(', 'env(', 'express
 
 function containsForbiddenCssFunction(value: string): boolean {
   const lower = value.toLowerCase();
-  return FORBIDDEN_CSS_FUNCTIONS_LOWER.some(fn => lower.includes(fn));
+  return FORBIDDEN_CSS_FUNCTIONS_LOWER.some((fn) => lower.includes(fn));
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -293,7 +335,7 @@ function resolveStructuredLength(
 }
 
 function resolveDirectLengthValue(
-  prop: typeof DIRECT_MAP_PROPS[number],
+  prop: (typeof DIRECT_MAP_PROPS)[number],
   value: unknown,
   state: Record<string, unknown>,
   locals?: Record<string, unknown>,
@@ -327,10 +369,8 @@ function resolveDirectLengthValue(
   const numericValue = parseLengthValue(resolved);
   if (
     numericValue !== null &&
-    (
-      (range?.min !== undefined && numericValue < range.min) ||
-      (range?.max !== undefined && numericValue > range.max)
-    )
+    ((range?.min !== undefined && numericValue < range.min) ||
+      (range?.max !== undefined && numericValue > range.max))
   ) {
     return undefined;
   }
@@ -371,7 +411,7 @@ function resolveAllowedStringValue(
 }
 
 function resolveDirectMappedPropValue(
-  prop: typeof DIRECT_MAP_PROPS[number],
+  prop: (typeof DIRECT_MAP_PROPS)[number],
   value: unknown,
   state: Record<string, unknown>,
   locals?: Record<string, unknown>,
@@ -433,21 +473,15 @@ function resolveDirectMappedPropValue(
     case 'borderRadiusTopRight':
     case 'borderRadiusBottomLeft':
     case 'borderRadiusBottomRight':
-      return resolveDirectLengthValue(
-        prop,
-        value,
-        state,
-        locals,
-        { min: 0, max: BORDER_RADIUS_MAX },
-      );
+      return resolveDirectLengthValue(prop, value, state, locals, {
+        min: 0,
+        max: BORDER_RADIUS_MAX,
+      });
     case 'fontSize':
-      return resolveDirectLengthValue(
-        prop,
-        value,
-        state,
-        locals,
-        { min: FONT_SIZE_MIN, max: FONT_SIZE_MAX },
-      );
+      return resolveDirectLengthValue(prop, value, state, locals, {
+        min: FONT_SIZE_MIN,
+        max: FONT_SIZE_MAX,
+      });
     case 'fontWeight': {
       const resolved = resolveStyleValue(value, state, locals);
       if (
@@ -465,27 +499,14 @@ function resolveDirectMappedPropValue(
     case 'lineHeight':
       return resolveLineHeightValue(value, state, locals);
     case 'letterSpacing':
-      return resolveDirectLengthValue(
-        prop,
-        value,
-        state,
-        locals,
-        { min: LETTER_SPACING_MIN, max: LETTER_SPACING_MAX },
-      );
+      return resolveDirectLengthValue(prop, value, state, locals, {
+        min: LETTER_SPACING_MIN,
+        max: LETTER_SPACING_MAX,
+      });
     case 'opacity':
-      return resolveStructuredNumber(
-        value,
-        state,
-        locals,
-        { min: OPACITY_MIN, max: OPACITY_MAX },
-      );
+      return resolveStructuredNumber(value, state, locals, { min: OPACITY_MIN, max: OPACITY_MAX });
     case 'zIndex':
-      return resolveStructuredNumber(
-        value,
-        state,
-        locals,
-        { min: ZINDEX_MIN, max: ZINDEX_MAX },
-      );
+      return resolveStructuredNumber(value, state, locals, { min: ZINDEX_MIN, max: ZINDEX_MAX });
     case 'gridTemplateColumns':
     case 'gridTemplateRows':
     case 'gridColumn':
@@ -539,24 +560,18 @@ function resolveTransformObject(
 
   const resolved: Record<string, unknown> = {};
   const rotate = resolveStructuredString(transform.rotate, state, locals);
-  const scale = resolveStructuredNumber(
-    transform.scale,
-    state,
-    locals,
-    { min: TRANSFORM_SCALE_MIN, max: TRANSFORM_SCALE_MAX },
-  );
-  const translateX = resolveStructuredNumber(
-    transform.translateX,
-    state,
-    locals,
-    { min: TRANSFORM_TRANSLATE_MIN, max: TRANSFORM_TRANSLATE_MAX },
-  );
-  const translateY = resolveStructuredNumber(
-    transform.translateY,
-    state,
-    locals,
-    { min: TRANSFORM_TRANSLATE_MIN, max: TRANSFORM_TRANSLATE_MAX },
-  );
+  const scale = resolveStructuredNumber(transform.scale, state, locals, {
+    min: TRANSFORM_SCALE_MIN,
+    max: TRANSFORM_SCALE_MAX,
+  });
+  const translateX = resolveStructuredNumber(transform.translateX, state, locals, {
+    min: TRANSFORM_TRANSLATE_MIN,
+    max: TRANSFORM_TRANSLATE_MAX,
+  });
+  const translateY = resolveStructuredNumber(transform.translateY, state, locals, {
+    min: TRANSFORM_TRANSLATE_MIN,
+    max: TRANSFORM_TRANSLATE_MAX,
+  });
 
   if (rotate !== undefined) resolved.rotate = rotate;
   if (scale !== undefined) resolved.scale = scale;
@@ -591,18 +606,14 @@ function resolveShadowObject(
   const resolved: Record<string, unknown> = {};
   const offsetX = resolveStructuredNumber(shadow.offsetX, state, locals);
   const offsetY = resolveStructuredNumber(shadow.offsetY, state, locals);
-  const blur = resolveStructuredNumber(
-    shadow.blur,
-    state,
-    locals,
-    { min: 0, max: BOX_SHADOW_BLUR_MAX },
-  );
-  const spread = resolveStructuredNumber(
-    shadow.spread,
-    state,
-    locals,
-    { min: 0, max: BOX_SHADOW_SPREAD_MAX },
-  );
+  const blur = resolveStructuredNumber(shadow.blur, state, locals, {
+    min: 0,
+    max: BOX_SHADOW_BLUR_MAX,
+  });
+  const spread = resolveStructuredNumber(shadow.spread, state, locals, {
+    min: 0,
+    max: BOX_SHADOW_SPREAD_MAX,
+  });
   const color = resolveStructuredColor(shadow.color, state, locals);
 
   if (offsetX !== undefined) resolved.offsetX = offsetX;
@@ -616,9 +627,7 @@ function resolveShadowObject(
 
 function shadowToCss(shadow: unknown): string {
   if (Array.isArray(shadow)) {
-    return shadow
-      .map((s) => singleShadowToCss(s as Record<string, unknown>))
-      .join(', ');
+    return shadow.map((s) => singleShadowToCss(s as Record<string, unknown>)).join(', ');
   }
   if (typeof shadow === 'object' && shadow !== null) {
     return singleShadowToCss(shadow as Record<string, unknown>);
@@ -664,12 +673,10 @@ function resolveTextShadowObject(
   const resolved: Record<string, unknown> = {};
   const offsetX = resolveStructuredNumber(shadow.offsetX, state, locals);
   const offsetY = resolveStructuredNumber(shadow.offsetY, state, locals);
-  const blur = resolveStructuredNumber(
-    shadow.blur,
-    state,
-    locals,
-    { min: 0, max: TEXT_SHADOW_BLUR_MAX },
-  );
+  const blur = resolveStructuredNumber(shadow.blur, state, locals, {
+    min: 0,
+    max: TEXT_SHADOW_BLUR_MAX,
+  });
   const color = resolveStructuredColor(shadow.color, state, locals);
 
   if (offsetX !== undefined) resolved.offsetX = offsetX;
@@ -682,9 +689,7 @@ function resolveTextShadowObject(
 
 function textShadowToCss(shadow: unknown): string {
   if (Array.isArray(shadow)) {
-    return shadow
-      .map((s) => singleTextShadowToCss(s as Record<string, unknown>))
-      .join(', ');
+    return shadow.map((s) => singleTextShadowToCss(s as Record<string, unknown>)).join(', ');
   }
   if (typeof shadow === 'object' && shadow !== null) {
     return singleTextShadowToCss(shadow as Record<string, unknown>);
@@ -714,9 +719,7 @@ function gradientToCss(gradient: Record<string, unknown>): string {
   const stops = gradient.stops as Array<{ color: string; position: string }> | undefined;
   if (!stops || !Array.isArray(stops)) return '';
 
-  const stopsStr = stops
-    .map((s) => `${s.color} ${s.position}`)
-    .join(', ');
+  const stopsStr = stops.map((s) => `${s.color} ${s.position}`).join(', ');
 
   if (gradient.type === 'radial') {
     return `radial-gradient(circle, ${stopsStr})`;
@@ -859,9 +862,7 @@ function resolveClipPathObject(
     case 'ellipse': {
       const rx = resolveStructuredLength(clipPath.rx, state, locals);
       const ry = resolveStructuredLength(clipPath.ry, state, locals);
-      return rx !== undefined && ry !== undefined
-        ? { type: 'ellipse', rx, ry }
-        : undefined;
+      return rx !== undefined && ry !== undefined ? { type: 'ellipse', rx, ry } : undefined;
     }
 
     case 'inset': {
@@ -871,12 +872,7 @@ function resolveClipPathObject(
       const left = resolveStructuredLength(clipPath.left, state, locals);
       const round = resolveStructuredLength(clipPath.round, state, locals);
 
-      if (
-        top === undefined ||
-        right === undefined ||
-        bottom === undefined ||
-        left === undefined
-      ) {
+      if (top === undefined || right === undefined || bottom === undefined || left === undefined) {
         return undefined;
       }
 
@@ -904,11 +900,7 @@ const FLEX_ALIGNMENT_MAP: Record<string, string> = {
   end: 'flex-end',
 };
 
-const FLEX_ALIGNMENT_PROPS = new Set([
-  'justifyContent',
-  'alignItems',
-  'alignSelf',
-]);
+const FLEX_ALIGNMENT_PROPS = new Set(['justifyContent', 'alignItems', 'alignSelf']);
 
 // ---------------------------------------------------------------------------
 // Main: mapStyle
@@ -1019,12 +1011,10 @@ export function mapStyle(
     }
   }
 
-  const resolvedBackdropBlur = resolveStructuredNumber(
-    style.backdropBlur,
-    state,
-    locals,
-    { min: 0, max: BACKDROP_BLUR_MAX },
-  );
+  const resolvedBackdropBlur = resolveStructuredNumber(style.backdropBlur, state, locals, {
+    min: 0,
+    max: BACKDROP_BLUR_MAX,
+  });
   if (resolvedBackdropBlur !== undefined) {
     (css as Record<string, unknown>).backdropFilter = `blur(${resolvedBackdropBlur}px)`;
   }
@@ -1114,11 +1104,7 @@ export function mapTransition(transition: unknown): string | undefined {
     }
     if (
       typeof t.delay === 'number' &&
-      (
-        !Number.isFinite(t.delay) ||
-        t.delay < 0 ||
-        t.delay > TRANSITION_DELAY_MAX
-      )
+      (!Number.isFinite(t.delay) || t.delay < 0 || t.delay > TRANSITION_DELAY_MAX)
     ) {
       continue;
     }

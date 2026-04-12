@@ -12,12 +12,7 @@
 
 import { ugcCardSchema, type UGCCard } from '@safe-ugc-ui/types';
 
-import {
-  type ValidationError,
-  type ValidationResult,
-  createError,
-  toResult,
-} from './result.js';
+import { type ValidationError, type ValidationResult, createError, toResult } from './result.js';
 
 function formatIssuePath(path: readonly PropertyKey[]): string {
   if (path.length === 0) {
@@ -42,13 +37,15 @@ type IssueLike = {
   code?: string;
   message: string;
   path: readonly PropertyKey[];
-  errors?: Array<Array<{
-    code?: string;
-    message: string;
-    path: readonly PropertyKey[];
-    errors?: IssueLike['errors'];
-    issues?: IssueLike[];
-  }>>;
+  errors?: Array<
+    Array<{
+      code?: string;
+      message: string;
+      path: readonly PropertyKey[];
+      errors?: IssueLike['errors'];
+      issues?: IssueLike[];
+    }>
+  >;
   issues?: IssueLike[];
 };
 
@@ -89,9 +86,7 @@ function formatIssueMessage(issue: IssueLike): string {
     .slice(0, 3)
     .map((nestedIssue) => {
       const nestedPath = formatIssuePath(nestedIssue.path);
-      return nestedPath.length > 0
-        ? `${nestedPath}: ${nestedIssue.message}`
-        : nestedIssue.message;
+      return nestedPath.length > 0 ? `${nestedPath}: ${nestedIssue.message}` : nestedIssue.message;
     });
 
   if (nested.length === 0) {
@@ -121,9 +116,7 @@ export function validateSchema(input: unknown): ValidationResult {
 
   // Quick structural pre-checks for better error messages
   if (typeof input !== 'object' || input === null || Array.isArray(input)) {
-    errors.push(
-      createError('SCHEMA_ERROR', 'Card must be a plain object.', ''),
-    );
+    errors.push(createError('SCHEMA_ERROR', 'Card must be a plain object.', ''));
     return toResult(errors);
   }
 
@@ -131,14 +124,10 @@ export function validateSchema(input: unknown): ValidationResult {
 
   // Check required top-level fields before full Zod parse
   if (!obj.meta) {
-    errors.push(
-      createError('MISSING_FIELD', 'Card is missing required field "meta".', 'meta'),
-    );
+    errors.push(createError('MISSING_FIELD', 'Card is missing required field "meta".', 'meta'));
   }
   if (!obj.views) {
-    errors.push(
-      createError('MISSING_FIELD', 'Card is missing required field "views".', 'views'),
-    );
+    errors.push(createError('MISSING_FIELD', 'Card is missing required field "views".', 'views'));
   }
 
   // If critical fields are missing, return early
@@ -148,9 +137,7 @@ export function validateSchema(input: unknown): ValidationResult {
 
   // Check meta structure
   if (typeof obj.meta !== 'object' || obj.meta === null) {
-    errors.push(
-      createError('INVALID_TYPE', '"meta" must be an object.', 'meta'),
-    );
+    errors.push(createError('INVALID_TYPE', '"meta" must be an object.', 'meta'));
     return toResult(errors);
   }
 
@@ -162,23 +149,23 @@ export function validateSchema(input: unknown): ValidationResult {
   }
   if (typeof meta.version !== 'string') {
     errors.push(
-      createError('MISSING_FIELD', '"meta.version" is required and must be a string.', 'meta.version'),
+      createError(
+        'MISSING_FIELD',
+        '"meta.version" is required and must be a string.',
+        'meta.version',
+      ),
     );
   }
 
   // Check views structure
   if (typeof obj.views !== 'object' || obj.views === null || Array.isArray(obj.views)) {
-    errors.push(
-      createError('INVALID_TYPE', '"views" must be an object.', 'views'),
-    );
+    errors.push(createError('INVALID_TYPE', '"views" must be an object.', 'views'));
     return toResult(errors);
   }
 
   const views = obj.views as Record<string, unknown>;
   if (Object.keys(views).length === 0) {
-    errors.push(
-      createError('MISSING_FIELD', '"views" must contain at least one view.', 'views'),
-    );
+    errors.push(createError('MISSING_FIELD', '"views" must contain at least one view.', 'views'));
   }
 
   // If pre-checks found issues, return them
@@ -192,9 +179,7 @@ export function validateSchema(input: unknown): ValidationResult {
   if (!result.success) {
     for (const issue of result.error.issues) {
       const path = formatIssuePath(issue.path);
-      errors.push(
-        createError('SCHEMA_ERROR', formatIssueMessage(issue), path),
-      );
+      errors.push(createError('SCHEMA_ERROR', formatIssueMessage(issue), path));
     }
   }
 

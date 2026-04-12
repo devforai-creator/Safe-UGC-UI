@@ -57,9 +57,7 @@ function utf8ByteLength(str: string): number {
   return bytes;
 }
 
-function isTemplateObject(
-  value: unknown,
-): value is { $template: unknown[] } {
+function isTemplateObject(value: unknown): value is { $template: unknown[] } {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -75,11 +73,7 @@ function stringifyTextScalar(value: unknown): string {
   if (value === null) {
     return 'null';
   }
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'boolean'
-  ) {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
   }
   return '';
@@ -93,9 +87,7 @@ function countResolvedTemplatedStringBytes(
     const resolved = value.$template
       .map((part) => {
         if (isRef(part)) {
-          return stringifyTextScalar(
-            state ? resolveRefPath(part.$ref, state) : undefined,
-          );
+          return stringifyTextScalar(state ? resolveRefPath(part.$ref, state) : undefined);
         }
         return stringifyTextScalar(part);
       })
@@ -105,29 +97,20 @@ function countResolvedTemplatedStringBytes(
 
   if (isRef(value)) {
     return utf8ByteLength(
-      stringifyTextScalar(
-        state ? resolveRefPath(value.$ref, state) : undefined,
-      ),
+      stringifyTextScalar(state ? resolveRefPath(value.$ref, state) : undefined),
     );
   }
 
   return utf8ByteLength(stringifyTextScalar(value));
 }
 
-function countInteractiveLabelBytes(
-  items: unknown,
-  state?: Record<string, unknown>,
-): number {
+function countInteractiveLabelBytes(items: unknown, state?: Record<string, unknown>): number {
   if (!Array.isArray(items)) {
     return 0;
   }
 
   return items.reduce((total, item) => {
-    if (
-      item == null ||
-      typeof item !== 'object' ||
-      Array.isArray(item)
-    ) {
+    if (item == null || typeof item !== 'object' || Array.isArray(item)) {
       return total;
     }
 
@@ -142,17 +125,12 @@ function countNodeTextBytes(
 ): number {
   if (Array.isArray(node.spans)) {
     return node.spans.reduce((total, span) => {
-      if (
-        span == null ||
-        typeof span !== 'object' ||
-        Array.isArray(span)
-      ) {
+      if (span == null || typeof span !== 'object' || Array.isArray(span)) {
         return total;
       }
 
-      return total + countResolvedTemplatedStringBytes(
-        (span as Record<string, unknown>).text,
-        state,
+      return (
+        total + countResolvedTemplatedStringBytes((span as Record<string, unknown>).text, state)
       );
     }, 0);
   }
@@ -173,10 +151,7 @@ function countNodeTextBytes(
   }
 }
 
-function resolveSerializableStyleValue(
-  value: unknown,
-  state?: Record<string, unknown>,
-): unknown {
+function resolveSerializableStyleValue(value: unknown, state?: Record<string, unknown>): unknown {
   if (value === undefined) {
     return undefined;
   }
@@ -206,18 +181,17 @@ function resolveSerializableStyleValue(
   }
 
   if (typeof value === 'object' && value !== null) {
-    const resolvedEntries = Object.entries(value as Record<string, unknown>)
-      .reduce<Record<string, unknown>>((acc, [key, child]) => {
-        const resolvedChild = resolveSerializableStyleValue(child, state);
-        if (resolvedChild !== undefined) {
-          acc[key] = resolvedChild;
-        }
-        return acc;
-      }, {});
+    const resolvedEntries = Object.entries(value as Record<string, unknown>).reduce<
+      Record<string, unknown>
+    >((acc, [key, child]) => {
+      const resolvedChild = resolveSerializableStyleValue(child, state);
+      if (resolvedChild !== undefined) {
+        acc[key] = resolvedChild;
+      }
+      return acc;
+    }, {});
 
-    return Object.keys(resolvedEntries).length > 0
-      ? resolvedEntries
-      : undefined;
+    return Object.keys(resolvedEntries).length > 0 ? resolvedEntries : undefined;
   }
 
   return value;
@@ -228,11 +202,7 @@ function countResolvedStyleBytes(
   state?: Record<string, unknown>,
 ): number {
   const resolvedStyle = resolveSerializableStyleValue(style, state);
-  if (
-    resolvedStyle == null ||
-    typeof resolvedStyle !== 'object' ||
-    Array.isArray(resolvedStyle)
-  ) {
+  if (resolvedStyle == null || typeof resolvedStyle !== 'object' || Array.isArray(resolvedStyle)) {
     return 0;
   }
 
@@ -253,27 +223,16 @@ function countTextSpanStyleBytes(
   }
 
   return node.spans.reduce((total, span) => {
-    if (
-      span == null ||
-      typeof span !== 'object' ||
-      Array.isArray(span)
-    ) {
+    if (span == null || typeof span !== 'object' || Array.isArray(span)) {
       return total;
     }
 
     const style = (span as Record<string, unknown>).style;
-    if (
-      style == null ||
-      typeof style !== 'object' ||
-      Array.isArray(style)
-    ) {
+    if (style == null || typeof style !== 'object' || Array.isArray(style)) {
       return total;
     }
 
-    return total + countResolvedStyleBytes(
-      style as Record<string, unknown>,
-      state,
-    );
+    return total + countResolvedStyleBytes(style as Record<string, unknown>, state);
   }, 0);
 }
 
@@ -317,41 +276,21 @@ function countTemplateMetrics(
         result.nodes += 1;
       }
 
-      result.textBytes += countNodeTextBytes(
-        node as Record<string, unknown>,
-        state,
-      );
+      result.textBytes += countNodeTextBytes(node as Record<string, unknown>, state);
 
       if (node.type === 'Text') {
-        result.styleBytes += countTextSpanStyleBytes(
-          node as Record<string, unknown>,
-          state,
-        );
+        result.styleBytes += countTextSpanStyleBytes(node as Record<string, unknown>, state);
       }
 
-      const baseStyleForBytes = getEffectiveStyleForMode(
-        node,
-        cardStyles,
-        'default',
-      );
+      const baseStyleForBytes = getEffectiveStyleForMode(node, cardStyles, 'default');
       if (baseStyleForBytes) {
-        result.styleBytes += countResolvedStyleBytes(
-          baseStyleForBytes,
-          state,
-        );
+        result.styleBytes += countResolvedStyleBytes(baseStyleForBytes, state);
       }
 
       for (const mode of ['medium', 'compact'] as const) {
-        const responsiveStyleForBytes = getMergedResponsiveStyleOverride(
-          node,
-          cardStyles,
-          mode,
-        );
+        const responsiveStyleForBytes = getMergedResponsiveStyleOverride(node, cardStyles, mode);
         if (responsiveStyleForBytes) {
-          result.styleBytes += countResolvedStyleBytes(
-            responsiveStyleForBytes,
-            state,
-          );
+          result.styleBytes += countResolvedStyleBytes(responsiveStyleForBytes, state);
         }
       }
 
@@ -388,14 +327,12 @@ function countTemplateMetrics(
  * @param card - A card object with optional `state` and required `views`.
  * @returns An array of validation errors (empty if all limits are satisfied).
  */
-export function validateLimits(
-  card: {
-    state?: Record<string, unknown>;
-    views: Record<string, unknown>;
-    cardStyles?: Record<string, Record<string, unknown>>;
-    fragments?: Record<string, unknown>;
-  },
-): ValidationError[] {
+export function validateLimits(card: {
+  state?: Record<string, unknown>;
+  views: Record<string, unknown>;
+  cardStyles?: Record<string, Record<string, unknown>>;
+  fragments?: Record<string, unknown>;
+}): ValidationError[] {
   const errors: ValidationError[] = [];
 
   let nodeCount = 0;
@@ -407,168 +344,157 @@ export function validateLimits(
     compact: 0,
   };
 
-  traverseCard(card.views, (node: TraversableNode, context: TraversalContext) => {
-    // -----------------------------------------------------------------------
-    // 1. Node count
-    // -----------------------------------------------------------------------
-    if (node.type !== 'Switch') {
-      nodeCount++;
-    }
-
-    // -----------------------------------------------------------------------
-    // 2. Text content total bytes
-    // -----------------------------------------------------------------------
-    textContentBytes += countNodeTextBytes(
-      node as Record<string, unknown>,
-      card.state,
-    );
-
-    if (node.type === 'Text') {
-      styleObjectsBytes += countTextSpanStyleBytes(
-        node as Record<string, unknown>,
-        card.state,
-      );
-    }
-
-    // -----------------------------------------------------------------------
-    // 3. Style objects total bytes (use merged style if $style is present)
-    // -----------------------------------------------------------------------
-    {
-      const baseStyleForBytes = getEffectiveStyleForMode(
-        node,
-        card.cardStyles,
-        'default',
-      );
-      if (baseStyleForBytes) {
-        styleObjectsBytes += countResolvedStyleBytes(
-          baseStyleForBytes,
-          card.state,
-        );
+  traverseCard(
+    card.views,
+    (node: TraversableNode, context: TraversalContext) => {
+      // -----------------------------------------------------------------------
+      // 1. Node count
+      // -----------------------------------------------------------------------
+      if (node.type !== 'Switch') {
+        nodeCount++;
       }
 
-      for (const mode of ['medium', 'compact'] as const) {
-        const responsiveStyleForBytes = getMergedResponsiveStyleOverride(
-          node,
-          card.cardStyles,
-          mode,
-        );
-        if (responsiveStyleForBytes) {
-          styleObjectsBytes += countResolvedStyleBytes(
-            responsiveStyleForBytes,
-            card.state,
-          );
+      // -----------------------------------------------------------------------
+      // 2. Text content total bytes
+      // -----------------------------------------------------------------------
+      textContentBytes += countNodeTextBytes(node as Record<string, unknown>, card.state);
+
+      if (node.type === 'Text') {
+        styleObjectsBytes += countTextSpanStyleBytes(node as Record<string, unknown>, card.state);
+      }
+
+      // -----------------------------------------------------------------------
+      // 3. Style objects total bytes (use merged style if $style is present)
+      // -----------------------------------------------------------------------
+      {
+        const baseStyleForBytes = getEffectiveStyleForMode(node, card.cardStyles, 'default');
+        if (baseStyleForBytes) {
+          styleObjectsBytes += countResolvedStyleBytes(baseStyleForBytes, card.state);
         }
-      }
-    }
 
-    // -----------------------------------------------------------------------
-    // 4. Loop iterations
-    // -----------------------------------------------------------------------
-    const children = node.children;
-    if (
-      children != null &&
-      typeof children === 'object' &&
-      !Array.isArray(children) &&
-      'for' in children &&
-      'in' in children &&
-      'template' in children
-    ) {
-      const forLoop = children as { for: string; in: string; template: unknown };
-      const inValue = forLoop.in;
-
-      if (typeof inValue === 'string' && inValue.startsWith('$')) {
-        if (card.state == null) {
-          // No state — loop source may be provided at runtime, skip validation
-        } else {
-          const source = resolveRefPath(inValue, card.state);
-          if (source === undefined) {
-            // Single-segment path (e.g. "$items") at top-level (loopDepth 0)
-            // must be a state key. If missing, likely a typo → report error.
-            // Dotted paths or paths inside nested loops may reference
-            // locals variables → skip.
-            const pathAfterDollar = inValue.slice(1);
-            if (!pathAfterDollar.includes('.') && context.loopDepth === 0) {
-              errors.push(
-                createError(
-                  'LOOP_SOURCE_MISSING',
-                  `Loop source "${inValue}" not found in card state`,
-                  `${context.path}.children`,
-                ),
-              );
-            }
-          } else if (!Array.isArray(source)) {
-            errors.push(
-              createError(
-                'LOOP_SOURCE_NOT_ARRAY',
-                `Loop source "${inValue}" is not an array`,
-                `${context.path}.children`,
-              ),
-            );
-          } else if (source.length > MAX_LOOP_ITERATIONS) {
-            errors.push(
-              createError(
-                'LOOP_ITERATIONS_EXCEEDED',
-                `Loop source "${inValue}" has ${source.length} items, max is ${MAX_LOOP_ITERATIONS}`,
-                `${context.path}.children`,
-              ),
-            );
-          } else if (source.length > 1) {
-            // Multiply template metrics by (N - 1) since traversal already
-            // counts the template once
-            const tplMetrics = countTemplateMetrics(
-              forLoop.template,
-              card.state,
-              card.cardStyles,
-              card.fragments,
-            );
-            const multiplier = source.length - 1;
-            nodeCount += tplMetrics.nodes * multiplier;
-            textContentBytes += tplMetrics.textBytes * multiplier;
-            styleObjectsBytes += tplMetrics.styleBytes * multiplier;
-            for (const mode of RESPONSIVE_MODES) {
-              overflowAutoCount[mode] += tplMetrics.overflowAutoCount[mode] * multiplier;
-            }
+        for (const mode of ['medium', 'compact'] as const) {
+          const responsiveStyleForBytes = getMergedResponsiveStyleOverride(
+            node,
+            card.cardStyles,
+            mode,
+          );
+          if (responsiveStyleForBytes) {
+            styleObjectsBytes += countResolvedStyleBytes(responsiveStyleForBytes, card.state);
           }
         }
       }
 
-      // -------------------------------------------------------------------
-      // 5. Nested loops
-      // -------------------------------------------------------------------
-      if (context.loopDepth >= MAX_NESTED_LOOPS) {
+      // -----------------------------------------------------------------------
+      // 4. Loop iterations
+      // -----------------------------------------------------------------------
+      const children = node.children;
+      if (
+        children != null &&
+        typeof children === 'object' &&
+        !Array.isArray(children) &&
+        'for' in children &&
+        'in' in children &&
+        'template' in children
+      ) {
+        const forLoop = children as { for: string; in: string; template: unknown };
+        const inValue = forLoop.in;
+
+        if (typeof inValue === 'string' && inValue.startsWith('$')) {
+          if (card.state == null) {
+            // No state — loop source may be provided at runtime, skip validation
+          } else {
+            const source = resolveRefPath(inValue, card.state);
+            if (source === undefined) {
+              // Single-segment path (e.g. "$items") at top-level (loopDepth 0)
+              // must be a state key. If missing, likely a typo → report error.
+              // Dotted paths or paths inside nested loops may reference
+              // locals variables → skip.
+              const pathAfterDollar = inValue.slice(1);
+              if (!pathAfterDollar.includes('.') && context.loopDepth === 0) {
+                errors.push(
+                  createError(
+                    'LOOP_SOURCE_MISSING',
+                    `Loop source "${inValue}" not found in card state`,
+                    `${context.path}.children`,
+                  ),
+                );
+              }
+            } else if (!Array.isArray(source)) {
+              errors.push(
+                createError(
+                  'LOOP_SOURCE_NOT_ARRAY',
+                  `Loop source "${inValue}" is not an array`,
+                  `${context.path}.children`,
+                ),
+              );
+            } else if (source.length > MAX_LOOP_ITERATIONS) {
+              errors.push(
+                createError(
+                  'LOOP_ITERATIONS_EXCEEDED',
+                  `Loop source "${inValue}" has ${source.length} items, max is ${MAX_LOOP_ITERATIONS}`,
+                  `${context.path}.children`,
+                ),
+              );
+            } else if (source.length > 1) {
+              // Multiply template metrics by (N - 1) since traversal already
+              // counts the template once
+              const tplMetrics = countTemplateMetrics(
+                forLoop.template,
+                card.state,
+                card.cardStyles,
+                card.fragments,
+              );
+              const multiplier = source.length - 1;
+              nodeCount += tplMetrics.nodes * multiplier;
+              textContentBytes += tplMetrics.textBytes * multiplier;
+              styleObjectsBytes += tplMetrics.styleBytes * multiplier;
+              for (const mode of RESPONSIVE_MODES) {
+                overflowAutoCount[mode] += tplMetrics.overflowAutoCount[mode] * multiplier;
+              }
+            }
+          }
+        }
+
+        // -------------------------------------------------------------------
+        // 5. Nested loops
+        // -------------------------------------------------------------------
+        if (context.loopDepth >= MAX_NESTED_LOOPS) {
+          errors.push(
+            createError(
+              'NESTED_LOOPS_EXCEEDED',
+              `Loop nesting depth ${context.loopDepth + 1} exceeds maximum of ${MAX_NESTED_LOOPS}`,
+              `${context.path}.children`,
+            ),
+          );
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // 6. overflow: auto count (use merged style if $style is present)
+      // -----------------------------------------------------------------------
+      for (const mode of RESPONSIVE_MODES) {
+        const effectiveStyle = getEffectiveStyleForMode(node, card.cardStyles, mode);
+        if (effectiveStyle?.overflow === 'auto') {
+          overflowAutoCount[mode]++;
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      // 7. Stack nesting
+      // -----------------------------------------------------------------------
+      if (node.type === 'Stack' && context.stackDepth >= MAX_STACK_NESTING) {
         errors.push(
           createError(
-            'NESTED_LOOPS_EXCEEDED',
-            `Loop nesting depth ${context.loopDepth + 1} exceeds maximum of ${MAX_NESTED_LOOPS}`,
-            `${context.path}.children`,
+            'STACK_NESTING_EXCEEDED',
+            `Stack nesting depth ${context.stackDepth + 1} exceeds maximum of ${MAX_STACK_NESTING}`,
+            context.path,
           ),
         );
       }
-    }
-
-    // -----------------------------------------------------------------------
-    // 6. overflow: auto count (use merged style if $style is present)
-    // -----------------------------------------------------------------------
-    for (const mode of RESPONSIVE_MODES) {
-      const effectiveStyle = getEffectiveStyleForMode(node, card.cardStyles, mode);
-      if (effectiveStyle?.overflow === 'auto') {
-        overflowAutoCount[mode]++;
-      }
-    }
-
-    // -----------------------------------------------------------------------
-    // 7. Stack nesting
-    // -----------------------------------------------------------------------
-    if (node.type === 'Stack' && context.stackDepth >= MAX_STACK_NESTING) {
-      errors.push(
-        createError(
-          'STACK_NESTING_EXCEEDED',
-          `Stack nesting depth ${context.stackDepth + 1} exceeds maximum of ${MAX_STACK_NESTING}`,
-          context.path,
-        ),
-      );
-    }
-  }, undefined, card.fragments);
+    },
+    undefined,
+    card.fragments,
+  );
 
   // -------------------------------------------------------------------------
   // Post-traversal aggregate checks

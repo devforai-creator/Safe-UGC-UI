@@ -138,26 +138,16 @@ export function validateValueTypes(
     }
 
     const style =
-      node.style != null &&
-      typeof node.style === 'object' &&
-      !Array.isArray(node.style)
-        ? node.style as Record<string, unknown>
+      node.style != null && typeof node.style === 'object' && !Array.isArray(node.style)
+        ? (node.style as Record<string, unknown>)
         : undefined;
     validateNodeStyle(style, `${ctx.path}.style`, errors);
 
     const responsive = node.responsive;
-    if (
-      responsive != null &&
-      typeof responsive === 'object' &&
-      !Array.isArray(responsive)
-    ) {
+    if (responsive != null && typeof responsive === 'object' && !Array.isArray(responsive)) {
       for (const mode of RESPONSIVE_OVERRIDE_KEYS) {
         const override = (responsive as Record<string, unknown>)[mode];
-        if (
-          override != null &&
-          typeof override === 'object' &&
-          !Array.isArray(override)
-        ) {
+        if (override != null && typeof override === 'object' && !Array.isArray(override)) {
           validateNodeStyle(
             override as Record<string, unknown>,
             `${ctx.path}.responsive.${mode}`,

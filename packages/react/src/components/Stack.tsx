@@ -13,5 +13,13 @@ const stackBase: CSSProperties = {
 
 export function Stack({ style, hoverStyle, children }: StackProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);
-  return <div style={{ ...stackBase, ...resolvedStyle }} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>{children}</div>;
+  return (
+    <div
+      style={{ ...stackBase, ...resolvedStyle }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </div>
+  );
 }

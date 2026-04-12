@@ -32,10 +32,12 @@ import { textSpanStyleSchema } from './styles.js';
 // 1. TextProps
 // ---------------------------------------------------------------------------
 
-export const textSpanSchema = z.object({
-  text: templatedStringSchema,
-  style: textSpanStyleSchema.optional(),
-}).strict();
+export const textSpanSchema = z
+  .object({
+    text: templatedStringSchema,
+    style: textSpanStyleSchema.optional(),
+  })
+  .strict();
 
 export type TextSpan = z.infer<typeof textSpanSchema>;
 

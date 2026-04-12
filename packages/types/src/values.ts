@@ -33,18 +33,16 @@ export const templatePartSchema = z.union([
   refSchema,
 ]);
 
-export const templateValueSchema = z.object({
-  $template: z.array(templatePartSchema).min(1),
-}).strict();
+export const templateValueSchema = z
+  .object({
+    $template: z.array(templatePartSchema).min(1),
+  })
+  .strict();
 
 export type TemplatePart = z.infer<typeof templatePartSchema>;
 export type TemplateValue = z.infer<typeof templateValueSchema>;
 
-export const templatedStringSchema = z.union([
-  z.string(),
-  refSchema,
-  templateValueSchema,
-]);
+export const templatedStringSchema = z.union([z.string(), refSchema, templateValueSchema]);
 
 // ---------------------------------------------------------------------------
 // 3. AssetPath — local asset reference (`@assets/...`)

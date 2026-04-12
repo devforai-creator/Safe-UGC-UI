@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  isRef,
-  isDynamic,
-  isAssetPath,
-  refSchema,
-  assetPathSchema,
-} from './values.js';
+import { isRef, isDynamic, isAssetPath, refSchema, assetPathSchema } from './values.js';
 import {
   CARD_JSON_MAX_BYTES,
   MAX_NODE_COUNT,

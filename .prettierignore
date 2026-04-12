@@ -1,0 +1,4 @@
+node_modules/
+coverage/
+audit-output/
+packages/*/dist/

@@ -8,16 +8,12 @@ const DEMO_ASSETS: Record<string, string> = {
     'https://ui-avatars.com/api/?name=NR&background=00f0ff&color=0a0a12&size=128&bold=true',
   '@assets/char-avatar.png':
     'https://ui-avatars.com/api/?name=AR&background=a78bfa&color=18181b&size=128&bold=true',
-  '@assets/minji.png':
-    'https://ui-avatars.com/api/?name=민지&background=ff9eaa&color=fff&size=84',
-  '@assets/yuna.png':
-    'https://ui-avatars.com/api/?name=유나&background=a8d8ea&color=333&size=84',
-  '@assets/soobin.png':
-    'https://ui-avatars.com/api/?name=수빈&background=c3aed6&color=fff&size=84',
+  '@assets/minji.png': 'https://ui-avatars.com/api/?name=민지&background=ff9eaa&color=fff&size=84',
+  '@assets/yuna.png': 'https://ui-avatars.com/api/?name=유나&background=a8d8ea&color=333&size=84',
+  '@assets/soobin.png': 'https://ui-avatars.com/api/?name=수빈&background=c3aed6&color=fff&size=84',
   '@assets/shorts-channel.png':
     'https://ui-avatars.com/api/?name=CM&background=ff0033&color=fff&size=84&bold=true',
-  '@assets/shorts-music.png':
-    'https://ui-avatars.com/api/?name=♪&background=333&color=fff&size=84',
+  '@assets/shorts-music.png': 'https://ui-avatars.com/api/?name=♪&background=333&color=fff&size=84',
   '@assets/shorts-thumbnail.png':
     'https://ui-avatars.com/api/?name=🍳&background=1a1a1a&color=ff6b35&size=600&bold=true',
 };
@@ -26,9 +22,7 @@ const sampleNames = Object.keys(SAMPLES);
 
 export function App() {
   const [selectedSample, setSelectedSample] = useState(sampleNames[0]);
-  const [jsonText, setJsonText] = useState(() =>
-    JSON.stringify(SAMPLES[sampleNames[0]], null, 2),
-  );
+  const [jsonText, setJsonText] = useState(() => JSON.stringify(SAMPLES[sampleNames[0]], null, 2));
 
   const handleSampleChange = (name: string) => {
     setSelectedSample(name);
@@ -62,7 +56,9 @@ export function App() {
               style={styles.sampleSelect}
             >
               {sampleNames.map((name) => (
-                <option key={name} value={name}>{name}</option>
+                <option key={name} value={name}>
+                  {name}
+                </option>
               ))}
             </select>
           </div>
@@ -82,9 +78,7 @@ export function App() {
                 <div key={i} style={styles.errorItem}>
                   <span style={styles.errorCode}>{err.code}</span>
                   <span style={styles.errorMsg}>{err.message}</span>
-                  {err.path && (
-                    <span style={styles.errorPath}>{err.path}</span>
-                  )}
+                  {err.path && <span style={styles.errorPath}>{err.path}</span>}
                 </div>
               ))}
             </div>
@@ -96,16 +90,10 @@ export function App() {
           <div style={styles.paneHeader}>Preview</div>
           <div style={styles.previewArea}>
             {card ? (
-              <UGCRenderer
-                card={card}
-                assets={DEMO_ASSETS}
-                containerStyle={{ maxWidth: '100%' }}
-              />
+              <UGCRenderer card={card} assets={DEMO_ASSETS} containerStyle={{ maxWidth: '100%' }} />
             ) : (
               <div style={styles.placeholder}>
-                {errors.length > 0
-                  ? 'Fix errors to see preview'
-                  : 'Enter valid card JSON'}
+                {errors.length > 0 ? 'Fix errors to see preview' : 'Enter valid card JSON'}
               </div>
             )}
           </div>
