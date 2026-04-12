@@ -203,6 +203,7 @@ Recommended host boundary:
 The validation pipeline enforces:
 
 - external URL blocking for user-controlled asset fields
+- style objects as a closed DSL, so unknown style keys are rejected instead of ignored
 - path traversal checks for `@assets/...`
 - CSS function restrictions such as `url()`, `var()`, `calc()`, `expression()`
 - layout isolation rules like forbidding `position: fixed` and `position: sticky`

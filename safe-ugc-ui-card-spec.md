@@ -429,6 +429,7 @@ Rules:
 ## 3. Style System
 
 Every component accepts an optional `style` object. Every component may also include an optional node-level `responsive` object for container-width overrides (see Section 3.18). Most style values can be literal or `$ref` (see Section 4), but some properties remain **static-only** — they must be literal values, no `$ref`.
+Style objects are a closed DSL: unknown style keys are invalid and must be rejected, not ignored.
 
 **Static-only style properties** (literal values only):
 - `position`, `top`, `right`, `bottom`, `left`, `zIndex`

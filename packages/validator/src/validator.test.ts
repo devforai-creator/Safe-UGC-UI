@@ -444,6 +444,23 @@ describe('validateSchema', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('rejects unknown node style keys at schema boundary', () => {
+    const result = validateSchema({
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Box',
+          style: { fontSzie: 12 },
+        },
+      },
+    });
+
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
+    expect(result.errors.some((e) => e.path === 'views.Main')).toBe(true);
+    expect(result.errors.some((e) => e.message.includes('fontSzie'))).toBe(true);
+  });
+
   it('summarizes nested union issues with child paths in schema errors', () => {
     const result = validateSchema({
       meta: { name: 'test', version: '1.0.0' },
@@ -1249,6 +1266,31 @@ describe('validateStyles', () => {
     });
     const errors = validateStyles(views);
     expect(codes(errors)).toContain('FORBIDDEN_STYLE_PROPERTY');
+  });
+
+  it('rejects unknown base style properties', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: { fontSzie: 12 },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path === 'views.Main.style.fontSzie')).toBe(true);
+  });
+
+  it('rejects unknown Text span style properties', () => {
+    const views = makeViews({
+      type: 'Text',
+      spans: [
+        {
+          text: 'typo',
+          style: { padding: 4 },
+        },
+      ],
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path === 'views.Main.spans[0].style.padding')).toBe(true);
   });
 
   it('rejects zIndex out of range (negative)', () => {
@@ -2288,7 +2330,7 @@ describe('validate', () => {
     );
     const result = validate(card);
     expect(result.valid).toBe(false);
-    expect(codes(result.errors)).toContain('FORBIDDEN_STYLE_PROPERTY');
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
   });
 
   it('returns valid: false for missing meta (schema level)', () => {
@@ -2360,13 +2402,13 @@ describe('validate', () => {
     const card = makeCard(
       makeViews({
         type: 'Box',
-        style: { backgroundImage: 'url(x)', zIndex: -5 },
+        style: { backgroundColor: 'url(x)', zIndex: -5 },
         children: [{ type: 'Text',  content: 'ok'  }],
       }),
     );
     const result = validate(card);
     expect(result.valid).toBe(false);
-    // Should have errors from styles (forbidden property + range) and security (url())
+    // Should have errors from styles (invalid color / CSS function + range)
     expect(result.errors.length).toBeGreaterThanOrEqual(2);
   });
 });
@@ -3414,6 +3456,18 @@ describe('validateStyles — hoverStyle', () => {
     const errors = validateStyles(views, cardStyles);
     expect(codes(errors)).toContain('STYLE_VALUE_OUT_OF_RANGE');
   });
+
+  it('rejects unknown hoverStyle properties', () => {
+    const views = makeViews({
+      type: 'Box',
+      style: {
+        hoverStyle: { fontSzie: 12 },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path === 'views.Main.style.hoverStyle.fontSzie')).toBe(true);
+  });
 });
 
 describe('validateStyles — transition', () => {
@@ -3587,6 +3641,20 @@ describe('validateStyles — responsive compact', () => {
     const errors = validateStyles(views, cardStyles);
     expect(codes(errors)).toContain('INVALID_VALUE');
   });
+
+  it('rejects unknown responsive compact properties', () => {
+    const views = makeViews({
+      type: 'Box',
+      responsive: {
+        compact: {
+          fontSzie: 12,
+        },
+      },
+    });
+    const errors = validateStyles(views);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path === 'views.Main.responsive.compact.fontSzie')).toBe(true);
+  });
 });
 
 describe('validateStyles — responsive medium', () => {
@@ -3617,6 +3685,21 @@ describe('validateStyles — responsive medium', () => {
     const errors = validateStyles(views);
     expect(codes(errors)).toContain('INVALID_VALUE');
     expect(errors.some((e) => e.path.includes('responsive.medium.hoverStyle'))).toBe(true);
+  });
+});
+
+describe('validateStyles — card.styles unknown keys', () => {
+  it('rejects unknown card.styles properties', () => {
+    const cardStyles = {
+      card: { fontSzie: 12 } as Record<string, unknown>,
+    };
+    const views = makeViews({
+      type: 'Box',
+      style: { $style: 'card' },
+    });
+    const errors = validateStyles(views, cardStyles);
+    expect(codes(errors)).toContain('INVALID_VALUE');
+    expect(errors.some((e) => e.path === 'styles.card.fontSzie')).toBe(true);
   });
 });
 

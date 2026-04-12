@@ -6,8 +6,8 @@ production gate with explicit evidence, scope, and acceptance criteria.
 
 ## Current Gate
 
-- Current gate status: blocked
-- Production rollout status: do not approve until all open `P0` items are closed
+- Current gate status: pending re-review
+- Production rollout status: all current `P0` items are closed; rerun a targeted production-readiness review before approving rollout
 - Review source: 2026-04-12 production-readiness audit
 
 ## How To Use This Backlog
@@ -29,10 +29,10 @@ For each item:
 
 | ID | Priority | Release Gate | Theme | Status |
 | --- | --- | --- | --- | --- |
-| PRB-001 | P0 | Before production | Validator/renderer asset contract alignment | Open |
-| PRB-002 | P0 | Before production | Runtime error signaling and no silent render drops | Open |
-| PRB-003 | P0 | Before production | `Accordion` prop/state reconciliation | Open |
-| PRB-004 | P1 | Next iteration | Closed DSL enforcement for style keys | Open |
+| PRB-001 | P0 | Before production | Validator/renderer asset contract alignment | Closed |
+| PRB-002 | P0 | Before production | Runtime error signaling and no silent render drops | Closed |
+| PRB-003 | P0 | Before production | `Accordion` prop/state reconciliation | Closed |
+| PRB-004 | P1 | Next iteration | Closed DSL enforcement for style keys | Closed |
 | PRB-005 | P1 | Next iteration | Regression tests and CI gate for contract boundaries | Open |
 | PRB-006 | P1 | Next iteration | Clean-checkout workspace reproducibility | Open |
 | PRB-007 | P2 | Strategic | Shared style/responsive semantics layer | Open |
@@ -173,10 +173,9 @@ For each item:
 
 ## Suggested Execution Order
 
-1. Close `PRB-001`, `PRB-002`, and `PRB-003` first. These are the current release blockers.
-2. Land `PRB-005` alongside those fixes so the same defects cannot reopen.
-3. Fix `PRB-006` next to improve contributor and CI reliability.
-4. Tackle `PRB-004` and `PRB-007` once the immediate contract gaps are closed.
+1. Land `PRB-005` next so the recently fixed contract boundaries cannot reopen.
+2. Fix `PRB-006` after that to remove clean-checkout workspace drift.
+3. Tackle `PRB-007` once the current validator/renderer contract is locked in tests.
 
 ## Exit Criteria For Re-Review
 

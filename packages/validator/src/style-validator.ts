@@ -42,6 +42,10 @@ import {
   TRANSITION_MAX_COUNT,
   ALLOWED_TRANSITION_PROPERTIES,
   isRef,
+  hoverStylePropsSchema,
+  responsiveStylePropsSchema,
+  stylePropsSchema,
+  textSpanStyleSchema,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
@@ -66,6 +70,21 @@ const LENGTH_AUTO_ALLOWED = new Set([
 ]);
 
 const RESPONSIVE_OVERRIDE_KEYS = ['medium', 'compact'] as const;
+const STYLE_ALLOWED_KEYS = new Set(Object.keys(stylePropsSchema.shape));
+const HOVER_STYLE_ALLOWED_KEYS = new Set([
+  ...Object.keys(hoverStylePropsSchema.shape),
+  'hoverStyle',
+]);
+const RESPONSIVE_STYLE_ALLOWED_KEYS = new Set([
+  ...Object.keys(responsiveStylePropsSchema.shape),
+  'hoverStyle',
+  'transition',
+]);
+const TEXT_SPAN_STYLE_ALLOWED_KEYS = new Set([
+  ...Object.keys(textSpanStyleSchema.shape),
+  'hoverStyle',
+  'transition',
+]);
 
 // Properties that have range limits AND accept string lengths
 const RANGE_LENGTH_PROPERTIES: Record<string, { min: number; max: number }> = {
@@ -82,6 +101,7 @@ interface StyleValidationOptions {
   allowHoverStyle?: boolean;
   allowTransition?: boolean;
   allowHoverStyleRefs?: boolean;
+  allowedKeys?: ReadonlySet<string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -501,6 +521,7 @@ function validateSingleStyle(
     allowHoverStyle = true,
     allowTransition = true,
     allowHoverStyleRefs = true,
+    allowedKeys = STYLE_ALLOWED_KEYS,
   } = options;
 
   // ------------------------------------------------------------------
@@ -520,6 +541,17 @@ function validateSingleStyle(
         createError(
           'FORBIDDEN_STYLE_PROPERTY',
           `Style property "${key}" is forbidden at "${stylePath}.${key}"`,
+          `${stylePath}.${key}`,
+        ),
+      );
+      continue;
+    }
+
+    if (!allowedKeys.has(key)) {
+      errors.push(
+        createError(
+          'INVALID_VALUE',
+          `Unknown style property "${key}" at "${stylePath}.${key}"`,
           `${stylePath}.${key}`,
         ),
       );
@@ -1024,6 +1056,7 @@ function validateSingleStyle(
             allowHoverStyle,
             allowTransition,
             allowHoverStyleRefs,
+            allowedKeys: HOVER_STYLE_ALLOWED_KEYS,
           },
         );
       }
@@ -1183,6 +1216,7 @@ export function validateStyles(
       // Run all per-style validations on this entry
       validateSingleStyle(styleEntry, entryPath, errors, undefined, {
         allowHoverStyleRefs: false,
+        allowedKeys: STYLE_ALLOWED_KEYS,
       });
     }
   }
@@ -1237,6 +1271,7 @@ export function validateStyles(
               allowHoverStyle: false,
               allowTransition: false,
               allowHoverStyleRefs: false,
+              allowedKeys: RESPONSIVE_STYLE_ALLOWED_KEYS,
             });
           }
         }
@@ -1273,6 +1308,7 @@ export function validateStyles(
             allowHoverStyle: false,
             allowTransition: false,
             allowHoverStyleRefs: false,
+            allowedKeys: TEXT_SPAN_STYLE_ALLOWED_KEYS,
           },
         );
       }

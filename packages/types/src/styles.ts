@@ -548,7 +548,7 @@ const coreStyleShape = {
 export const hoverStylePropsSchema = z.object({
   ...coreStyleShape,
   transition: transitionFieldSchema,
-});
+}).strict();
 
 export type HoverStyleProps = z.infer<typeof hoverStylePropsSchema>;
 
@@ -558,7 +558,7 @@ export type HoverStyleProps = z.infer<typeof hoverStylePropsSchema>;
 
 export const responsiveStylePropsSchema = z.object({
   ...coreStyleShape,
-});
+}).strict();
 
 export type ResponsiveStyleProps = z.infer<typeof responsiveStylePropsSchema>;
 
@@ -581,6 +581,6 @@ export const stylePropsSchema = z.object({
   ...coreStyleShape,
   hoverStyle: hoverStylePropsSchema.optional(),
   transition: transitionFieldSchema,
-});
+}).strict();
 
 export type StyleProps = z.infer<typeof stylePropsSchema>;
