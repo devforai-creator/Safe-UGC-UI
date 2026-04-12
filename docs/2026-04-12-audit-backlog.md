@@ -12,8 +12,9 @@ as the historical audit ledger that tracks older items and prior closure state.
 - Audit grade: `A`
 - Current ruling:
   - limited production use is possible
-  - fix clean-checkout reproducibility and silent host-integration failures before
-    treating the repository as production-ready
+  - clean-checkout reproducibility is closed
+  - fix silent host-integration failures before treating the repository as
+    production-ready
 
 ## Priority Model
 
@@ -29,7 +30,7 @@ as the historical audit ledger that tracks older items and prior closure state.
 
 | ID      | Priority | Release Gate      | Theme                                                | Status |
 | ------- | -------- | ----------------- | ---------------------------------------------------- | ------ |
-| AAB-001 | P0       | Before production | Clean-checkout workspace verification loop           | Open   |
+| AAB-001 | P0       | Before production | Clean-checkout workspace verification loop           | Closed |
 | AAB-002 | P0       | Before production | Structured diagnostics for host integration failures | Open   |
 | AAB-003 | P1       | Next iteration    | Regression coverage for integration-failure paths    | Open   |
 | AAB-004 | P2       | Strategic         | Shared style/responsive/limit semantics layer        | Open   |
@@ -65,6 +66,16 @@ as the historical audit ledger that tracks older items and prior closure state.
     missing local `dist` outputs
   - docs no longer imply that a clean checkout supports a broader loop than it
     really does
+- Closure:
+  - local test resolution now targets workspace source entry points through
+    shared Vitest aliases instead of requiring prebuilt package `dist` outputs
+  - `pnpm test:clean-checkout` is now the explicit clean-workspace contract:
+    `pnpm clean && pnpm test:run && pnpm --filter @safe-ugc-ui/demo typecheck && pnpm --filter @safe-ugc-ui/demo build`
+  - verified on `2026-04-12` with:
+    - `pnpm test:clean-checkout`
+    - `pnpm build`
+    - `pnpm -r exec tsc --noEmit`
+    - `pnpm format:check`
 
 ## AAB-002 — Turn Silent Host Integration Failures Into Structured Diagnostics
 

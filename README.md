@@ -54,7 +54,7 @@ pnpm add @safe-ugc-ui/types
 
 - `pnpm build` — build all workspace packages
 - `pnpm test` — run Vitest in workspace mode
-- `pnpm test:clean-checkout` — verify the demo typechecks and builds from a clean workspace without prebuilt package `dist` outputs
+- `pnpm test:clean-checkout` — verify workspace tests plus demo typecheck and build from a clean workspace without prebuilt package `dist` outputs
 - `pnpm test:contracts` — run the targeted contract-regression gate for validator/renderer boundary bugs
 - `pnpm test:run` — run the full workspace test suite once
 - `pnpm test:coverage` — run the workspace suite with coverage

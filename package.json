@@ -4,7 +4,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "vitest",
-    "test:clean-checkout": "pnpm clean && pnpm --filter @safe-ugc-ui/demo typecheck && pnpm --filter @safe-ugc-ui/demo build",
+    "test:clean-checkout": "pnpm clean && pnpm test:run && pnpm --filter @safe-ugc-ui/demo typecheck && pnpm --filter @safe-ugc-ui/demo build",
     "test:contracts": "pnpm --filter @safe-ugc-ui/validator test:contracts && pnpm --filter @safe-ugc-ui/react test:contracts",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
