@@ -5,12 +5,25 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@safe-ugc-ui/types': fileURLToPath(new URL('../types/src/index.ts', import.meta.url)),
-      '@safe-ugc-ui/validator': fileURLToPath(
-        new URL('../validator/src/index.ts', import.meta.url),
-      ),
-      '@safe-ugc-ui/react': fileURLToPath(new URL('../react/src/index.ts', import.meta.url)),
-    },
+    alias: [
+      {
+        find: '@safe-ugc-ui/types/internal/style-semantics',
+        replacement: fileURLToPath(
+          new URL('../types/src/internal/style-semantics.ts', import.meta.url),
+        ),
+      },
+      {
+        find: /^@safe-ugc-ui\/types$/,
+        replacement: fileURLToPath(new URL('../types/src/index.ts', import.meta.url)),
+      },
+      {
+        find: /^@safe-ugc-ui\/validator$/,
+        replacement: fileURLToPath(new URL('../validator/src/index.ts', import.meta.url)),
+      },
+      {
+        find: /^@safe-ugc-ui\/react$/,
+        replacement: fileURLToPath(new URL('../react/src/index.ts', import.meta.url)),
+      },
+    ],
   },
 });

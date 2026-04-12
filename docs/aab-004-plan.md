@@ -3,6 +3,15 @@
 This document defines the execution plan for `AAB-004` from
 `docs/2026-04-12-audit-backlog.md`.
 
+## Current Status
+
+- `AAB-004a` landed on `2026-04-13`.
+- Shared style merge and responsive semantics now live in
+  `packages/types/src/internal/style-semantics.ts`.
+- Shared semantic matrix tests now live in
+  `packages/types/src/internal/style-semantics.test.ts`.
+- `AAB-004` remains open because `004b` and `004c` are still pending.
+
 ## Goal
 
 Reduce duplicated author-facing DSL semantics across validator and renderer

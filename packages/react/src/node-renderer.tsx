@@ -23,6 +23,10 @@ import {
   STYLE_OBJECTS_TOTAL_MAX_BYTES,
   MAX_OVERFLOW_AUTO_COUNT,
 } from '@safe-ugc-ui/types';
+import {
+  getEffectiveStyleForMode,
+  mergeNamedStyleRef,
+} from '@safe-ugc-ui/types/internal/style-semantics';
 
 import { resolveRef, resolveTextValue, resolveValue } from './state-resolver.js';
 import { evaluateCondition } from './condition-resolver.js';
@@ -167,43 +171,13 @@ function utf8ByteLength(str: string): number {
 }
 
 /**
- * Merge a single style object from cardStyles with inline style overrides.
- * Returns the merged raw style (unresolved $ref values) and the style
- * without $style key.
- */
-function mergeNamedStyle(
-  style: Record<string, unknown> | undefined,
-  cardStyles: Record<string, Record<string, unknown>> | undefined,
-): Record<string, unknown> | undefined {
-  if (!style) return undefined;
-
-  const rawStyleName = style.$style;
-  const styleName = typeof rawStyleName === 'string' ? rawStyleName.trim() : rawStyleName;
-  if (!styleName || typeof styleName !== 'string' || !cardStyles) {
-    // Return style without $style key if present
-    if (style.$style !== undefined) {
-      const { $style: _, ...rest } = style;
-      return rest;
-    }
-    return style;
-  }
-
-  const baseStyle = cardStyles[styleName];
-  if (!baseStyle) return style;
-
-  // Merge: base from cardStyles, overridden by inline (excluding $style key)
-  const { $style: _, ...inlineWithout$style } = style;
-  return { ...baseStyle, ...inlineWithout$style };
-}
-
-/**
  * Merge node style and nested hoverStyle against cardStyles.
  */
 function mergeStyleWithCardStyles(
   nodeStyle: Record<string, unknown> | undefined,
   cardStyles: Record<string, Record<string, unknown>> | undefined,
 ): Record<string, unknown> | undefined {
-  const mergedStyle = mergeNamedStyle(nodeStyle, cardStyles);
+  const mergedStyle = mergeNamedStyleRef(nodeStyle, cardStyles);
   if (!mergedStyle) return undefined;
 
   const rawHoverStyle = mergedStyle.hoverStyle;
@@ -211,7 +185,7 @@ function mergeStyleWithCardStyles(
     return mergedStyle;
   }
 
-  const mergedHoverStyle = mergeNamedStyle(rawHoverStyle as Record<string, unknown>, cardStyles);
+  const mergedHoverStyle = mergeNamedStyleRef(rawHoverStyle as Record<string, unknown>, cardStyles);
 
   if (!mergedHoverStyle) {
     return mergedStyle;
@@ -223,51 +197,20 @@ function mergeStyleWithCardStyles(
   };
 }
 
-function getResponsiveOverrideStyle(
-  nodeResponsive: Record<string, unknown> | undefined,
-  mode: 'medium' | 'compact',
-): Record<string, unknown> | undefined {
-  if (!nodeResponsive) return undefined;
-
-  const override = nodeResponsive[mode];
-  if (override == null || typeof override !== 'object' || Array.isArray(override)) {
-    return undefined;
-  }
-
-  return override as Record<string, unknown>;
-}
-
 function mergeEffectiveNodeStyle(
   node: UGCNodeLike,
   ctx: RenderContext,
 ): Record<string, unknown> | undefined {
   const baseStyle = mergeStyleWithCardStyles(node.style, ctx.cardStyles);
-  const mediumOverride = mergeNamedStyle(
-    getResponsiveOverrideStyle(node.responsive, 'medium'),
+  const mode = ctx.responsive.compact ? 'compact' : ctx.responsive.medium ? 'medium' : 'default';
+  return getEffectiveStyleForMode(
+    {
+      style: baseStyle,
+      responsive: node.responsive,
+    },
     ctx.cardStyles,
+    mode,
   );
-  const compactOverride = mergeNamedStyle(
-    getResponsiveOverrideStyle(node.responsive, 'compact'),
-    ctx.cardStyles,
-  );
-
-  const {
-    hoverStyle: _mediumHoverStyle,
-    transition: _mediumTransition,
-    ...mediumStyleWithoutInteractiveFields
-  } = mediumOverride ?? {};
-
-  const {
-    hoverStyle: _compactHoverStyle,
-    transition: _compactTransition,
-    ...compactStyleWithoutInteractiveFields
-  } = compactOverride ?? {};
-
-  return {
-    ...(baseStyle ?? {}),
-    ...(ctx.responsive.medium ? mediumStyleWithoutInteractiveFields : {}),
-    ...(ctx.responsive.compact ? compactStyleWithoutInteractiveFields : {}),
-  };
 }
 
 function resolveTextPayload(node: UGCNodeLike, ctx: RenderContext): ResolvedTextPayload {

@@ -15,6 +15,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./internal/style-semantics": {
+      "types": "./dist/internal/style-semantics.d.ts",
+      "import": "./dist/internal/style-semantics.js"
     }
   },
   "files": [
