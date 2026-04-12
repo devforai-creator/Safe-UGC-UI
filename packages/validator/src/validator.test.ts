@@ -1843,7 +1843,7 @@ describe('validateSecurity', () => {
     expect(codes(errors)).toContain('ASSET_PATH_TRAVERSAL');
   });
 
-  it('skips Image src $ref when state key does not exist (loop-local)', () => {
+  it('skips unresolved Image src $ref when no state or locals value is available', () => {
     const views = makeViews({
       type: 'Image',
        src: { $ref: '$item.img' } ,
@@ -1851,6 +1851,78 @@ describe('validateSecurity', () => {
     const state = { unrelated: 'value' };
     const errors = validateSecurity({ views, state });
     // Should NOT produce any src-related errors — unresolvable $ref is skipped
+    const srcErrors = errors.filter(
+      (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
+    );
+    expect(srcErrors).toHaveLength(0);
+  });
+
+  it('rejects Image src $ref resolving to external URL via loop locals', () => {
+    const views = makeViews({
+      type: 'Column',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: {
+          type: 'Image',
+          src: { $ref: '$item.img' },
+        },
+      },
+    });
+    const state = {
+      items: [
+        { img: 'https://evil.com/payload.png' },
+      ],
+    };
+    const errors = validateSecurity({ views, state });
+    expect(codes(errors)).toContain('EXTERNAL_URL');
+  });
+
+  it('rejects fragment Image src $ref resolving to external URL via loop locals', () => {
+    const views = makeViews({
+      type: 'Column',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { $use: 'avatar' },
+      },
+    });
+    const fragments = {
+      avatar: {
+        type: 'Image',
+        src: { $ref: '$item.img' },
+      },
+    };
+    const state = {
+      items: [
+        { img: 'https://evil.com/payload.png' },
+      ],
+    };
+    const errors = validateSecurity({ views, state, fragments });
+    expect(codes(errors)).toContain('EXTERNAL_URL');
+  });
+
+  it('accepts fragment Image src $ref resolving to valid @assets/ path via loop locals', () => {
+    const views = makeViews({
+      type: 'Column',
+      children: {
+        for: 'item',
+        in: '$items',
+        template: { $use: 'avatar' },
+      },
+    });
+    const fragments = {
+      avatar: {
+        type: 'Image',
+        src: { $ref: '$item.img' },
+      },
+    };
+    const state = {
+      items: [
+        { img: '@assets/avatar.png' },
+      ],
+    };
+    const errors = validateSecurity({ views, state, fragments });
     const srcErrors = errors.filter(
       (e) => e.code === 'EXTERNAL_URL' || e.code === 'INVALID_ASSET_PATH' || e.code === 'ASSET_PATH_TRAVERSAL',
     );
@@ -2247,6 +2319,36 @@ describe('validate', () => {
         },
       },
       state: { img: 'https://evil.com/payload.png' },
+    };
+    const result = validate(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('EXTERNAL_URL');
+  });
+
+  it('rejects card with loop-local $ref Image src resolving to external URL via validate() pipeline', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Column',
+          children: {
+            for: 'item',
+            in: '$items',
+            template: { $use: 'avatar' },
+          },
+        },
+      },
+      fragments: {
+        avatar: {
+          type: 'Image',
+          src: { $ref: '$item.img' },
+        },
+      },
+      state: {
+        items: [
+          { img: 'https://evil.com/payload.png' },
+        ],
+      },
     };
     const result = validate(card);
     expect(result.valid).toBe(false);

@@ -12,15 +12,19 @@
  */
 
 import {
+  MAX_LOOP_ITERATIONS,
   hasForbiddenRefPathSegments,
   isRef,
   parseRefPathSegments,
-  resolveRefPath,
+  resolveRefPathSegments,
 } from '@safe-ugc-ui/types';
 
 import { type ValidationError, createError } from './result.js';
 
 import {
+  getEmbeddedRenderables,
+  isFragmentUseLike,
+  isTraversableNode,
   type TraversableNode,
   type TraversalContext,
   traverseCard,
@@ -153,33 +157,43 @@ function checkSrcValue(
   type: string,
   errorPath: string,
   errors: ValidationError[],
+  seen?: Set<string>,
 ): void {
   if (isForbiddenUrl(resolved)) {
-    errors.push(
-      createError(
-        'EXTERNAL_URL',
-        `External URLs are not allowed in ${type}.src. Got "${resolved}".`,
-        errorPath,
-      ),
+    const error = createError(
+      'EXTERNAL_URL',
+      `External URLs are not allowed in ${type}.src. Got "${resolved}".`,
+      errorPath,
     );
+    if (seen) {
+      pushUniqueError(errors, seen, error);
+    } else {
+      errors.push(error);
+    }
   } else {
     const assetError = validateAssetPath(resolved);
     if (assetError === 'ASSET_PATH_TRAVERSAL') {
-      errors.push(
-        createError(
-          'ASSET_PATH_TRAVERSAL',
-          `Asset path contains path traversal ("../"). Got "${resolved}".`,
-          errorPath,
-        ),
+      const error = createError(
+        'ASSET_PATH_TRAVERSAL',
+        `Asset path contains path traversal ("../"). Got "${resolved}".`,
+        errorPath,
       );
+      if (seen) {
+        pushUniqueError(errors, seen, error);
+      } else {
+        errors.push(error);
+      }
     } else if (assetError === 'INVALID_ASSET_PATH') {
-      errors.push(
-        createError(
-          'INVALID_ASSET_PATH',
-          `Asset path must start with "@assets/". Got "${resolved}".`,
-          errorPath,
-        ),
+      const error = createError(
+        'INVALID_ASSET_PATH',
+        `Asset path must start with "@assets/". Got "${resolved}".`,
+        errorPath,
       );
+      if (seen) {
+        pushUniqueError(errors, seen, error);
+      } else {
+        errors.push(error);
+      }
     }
   }
 }
@@ -195,6 +209,184 @@ function pushUniqueError(
   }
   seen.add(key);
   errors.push(error);
+}
+
+function isForLoopLike(
+  value: unknown,
+): value is { for: string; in: string; template: unknown } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    typeof (value as Record<string, unknown>).for === 'string' &&
+    typeof (value as Record<string, unknown>).in === 'string' &&
+    'template' in (value as Record<string, unknown>)
+  );
+}
+
+function resolveRefWithLocals(
+  refPath: string,
+  state: Record<string, unknown> | undefined,
+  locals?: Record<string, unknown>,
+): unknown {
+  const segments = parseRefPathSegments(refPath);
+  const firstSeg = segments[0];
+  const root =
+    locals && firstSeg && firstSeg in locals
+      ? locals
+      : state;
+
+  if (!root) {
+    return undefined;
+  }
+
+  return resolveRefPathSegments(segments, root);
+}
+
+function validateResolvedAssetSrcsForRenderable(
+  renderable: unknown,
+  path: string,
+  state: Record<string, unknown> | undefined,
+  fragments: Record<string, unknown> | undefined,
+  errors: ValidationError[],
+  seen: Set<string>,
+  locals?: Record<string, unknown>,
+  fragmentStack: string[] = [],
+): void {
+  if (isFragmentUseLike(renderable)) {
+    if (fragmentStack.includes(renderable.$use)) {
+      return;
+    }
+
+    const target = fragments?.[renderable.$use];
+    if (!target) {
+      return;
+    }
+
+    validateResolvedAssetSrcsForRenderable(
+      target,
+      path,
+      state,
+      fragments,
+      errors,
+      seen,
+      locals,
+      [...fragmentStack, renderable.$use],
+    );
+    return;
+  }
+
+  if (!isTraversableNode(renderable)) {
+    return;
+  }
+
+  if (renderable.type === 'Image' || renderable.type === 'Avatar') {
+    const src = (renderable as Record<string, unknown>).src;
+    if (typeof src === 'string') {
+      checkSrcValue(src, renderable.type, `${path}.src`, errors, seen);
+    } else if (isRef(src)) {
+      const resolved = resolveRefWithLocals(src.$ref, state, locals);
+      if (typeof resolved === 'string') {
+        checkSrcValue(resolved, renderable.type, `${path}.src`, errors, seen);
+      }
+    }
+  }
+
+  const children = renderable.children;
+  if (Array.isArray(children)) {
+    for (let i = 0; i < children.length; i++) {
+      validateResolvedAssetSrcsForRenderable(
+        children[i],
+        `${path}.children[${i}]`,
+        state,
+        fragments,
+        errors,
+        seen,
+        locals,
+        fragmentStack,
+      );
+    }
+  } else if (isForLoopLike(children)) {
+    validateResolvedAssetSrcsForRenderable(
+      children.template,
+      `${path}.children.template`,
+      state,
+      fragments,
+      errors,
+      seen,
+      locals,
+      fragmentStack,
+    );
+
+    const source = resolveRefWithLocals(children.in, state, locals);
+    if (Array.isArray(source)) {
+      const maxIter = Math.min(source.length, MAX_LOOP_ITERATIONS);
+      for (let i = 0; i < maxIter; i++) {
+        const nextLocals: Record<string, unknown> = {
+          ...(locals ?? {}),
+          [children.for]: source[i],
+          index: i,
+        };
+        validateResolvedAssetSrcsForRenderable(
+          children.template,
+          `${path}.children.template`,
+          state,
+          fragments,
+          errors,
+          seen,
+          nextLocals,
+          fragmentStack,
+        );
+      }
+    }
+  }
+
+  for (const entry of getEmbeddedRenderables(renderable)) {
+    validateResolvedAssetSrcsForRenderable(
+      entry.renderable,
+      `${path}.${entry.pathSuffix}`,
+      state,
+      fragments,
+      errors,
+      seen,
+      locals,
+      fragmentStack,
+    );
+  }
+}
+
+function validateResolvedAssetSrcs(
+  views: Record<string, unknown>,
+  state: Record<string, unknown> | undefined,
+  fragments: Record<string, unknown> | undefined,
+  errors: ValidationError[],
+  seen: Set<string>,
+): void {
+  for (const [viewName, rootNode] of Object.entries(views)) {
+    validateResolvedAssetSrcsForRenderable(
+      rootNode,
+      `views.${viewName}`,
+      state,
+      fragments,
+      errors,
+      seen,
+    );
+  }
+
+  if (!fragments) {
+    return;
+  }
+
+  for (const [fragmentName, fragmentRoot] of Object.entries(fragments)) {
+    validateResolvedAssetSrcsForRenderable(
+      fragmentRoot,
+      `fragments.${fragmentName}`,
+      state,
+      fragments,
+      errors,
+      seen,
+    );
+  }
 }
 
 function getScannableNodeFields(
@@ -381,6 +573,8 @@ export function validateSecurity(card: {
     }
   }
 
+  validateResolvedAssetSrcs(views, state, fragments, errors, seen);
+
   walkRenderableCard(views, fragments, (node, context) => {
     if (!('type' in node) || typeof node.type !== 'string') {
       return;
@@ -398,31 +592,7 @@ export function validateSecurity(card: {
     const nodeFields = getScannableNodeFields(traversableNode);
 
     // -----------------------------------------------------------------
-    // 1. External URL blocking — Image and Avatar `src`
-    // -----------------------------------------------------------------
-    if (type === 'Image' || type === 'Avatar') {
-      const src = (node as Record<string, unknown>).src;
-      if (typeof src === 'string') {
-        // Literal string src
-        checkSrcValue(src, type, `${path}.src`, errors);
-      } else if (isRef(src)) {
-        // $ref src — resolve from state if available
-        if (state) {
-          const resolved = resolveRefPath(
-            (src as { $ref: string }).$ref,
-            state,
-          );
-          if (typeof resolved === 'string') {
-            checkSrcValue(resolved, type, `${path}.src`, errors);
-          }
-          // If resolution fails (undefined), skip — may be a loop-local variable
-        }
-        // If no state provided, skip $ref resolution
-      }
-    }
-
-    // -----------------------------------------------------------------
-    // 2. Scan all style string values for `url()` pattern
+    // 1. Scan all style string values for `url()` pattern
     // -----------------------------------------------------------------
     scanStyleStringsForUrl(style, `${path}.style`, errors);
 
@@ -476,7 +646,7 @@ export function validateSecurity(card: {
     }
 
     // -----------------------------------------------------------------
-    // 3. Prototype pollution check on $ref values in node fields and style
+    // 2. Prototype pollution check on $ref values in node fields and style
     // -----------------------------------------------------------------
     scanForRefs(nodeFields, path, errors);
     if (style) {
