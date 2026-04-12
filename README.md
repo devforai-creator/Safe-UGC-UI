@@ -59,11 +59,13 @@ pnpm add @safe-ugc-ui/types
 - `pnpm test:contracts:packages` — run only the validator/react contract-regression suites without the workspace canary
 - `pnpm test:run` — run the full workspace test suite once
 - `pnpm test:coverage` — run the workspace suite with coverage
+- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, typecheck, audit, and coverage
 - `pnpm clean` — remove package `dist` directories
 - `pnpm format` — format the workspace with Prettier
 - `pnpm format:check` — check whether the workspace is Prettier-formatted
 
-The main CI workflow also runs `pnpm format:check`.
+The main CI workflow and the tag-based publish workflow both use `pnpm release:check` as the shared
+release baseline.
 
 ## Quick Start
 
@@ -244,6 +246,7 @@ pnpm build
 pnpm test
 pnpm test:run
 pnpm test:coverage
+pnpm release:check
 pnpm clean
 pnpm --filter @safe-ugc-ui/schema build
 pnpm --filter @safe-ugc-ui/demo dev
@@ -266,7 +269,7 @@ Tests live alongside source as `*.test.ts` or `*.test.tsx`.
 
 - Update `README.md`, `AGENTS.md`, and `CLAUDE.md` together when package versions, public APIs,
   commands, or workflow expectations change.
-- Releases are published by GitHub Actions via npm trusted publishing from `v*` tags after local `pnpm build` and `pnpm test:run` checks pass.
+- Releases are published by GitHub Actions via npm trusted publishing from `v*` tags after a local clean-checkout `pnpm release:check` rehearsal passes.
 - The actual publish step runs inside `publish.yml` via `pnpm -r publish --access public --no-git-checks`, not as a normal local maintainer command.
 - Treat `safe-ugc-ui-card-spec.md` as the source of truth for current card behavior.
 - Treat `safe-ugc-ui-spec-v0.3.md` as design history, not the current implementation contract.

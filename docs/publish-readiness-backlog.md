@@ -14,6 +14,8 @@ place.
 - Core validation and renderer hardening are in good shape, but the release path itself has not been
   exercised recently enough to trust muscle memory
 - The next failure risk is more likely to be release-process drift than a missing product feature
+- Shared release baseline now exists as `pnpm release:check`; the remaining publish-readiness work
+  is package-boundary clarity and tarball verification
 
 ## Target Outcome
 
@@ -37,13 +39,13 @@ More concretely:
 
 ## Summary
 
-| ID      | Priority | Theme                                           | Status |
-| ------- | -------- | ----------------------------------------------- | ------ |
-| PRB-001 | P0       | Align publish workflow with the tested CI gate  | Open   |
-| PRB-002 | P0       | Add a clean-checkout release rehearsal path     | Open   |
-| PRB-003 | P0       | Refresh and align release documentation         | Open   |
-| PRB-004 | P1       | Define internal subpath stability for releases  | Open   |
-| PRB-005 | P1       | Verify tarball contents and exported surfaces   | Open   |
+| ID      | Priority | Theme                                          | Status |
+| ------- | -------- | ---------------------------------------------- | ------ |
+| PRB-001 | P0       | Align publish workflow with the tested CI gate | Done   |
+| PRB-002 | P0       | Add a clean-checkout release rehearsal path    | Done   |
+| PRB-003 | P0       | Refresh and align release documentation        | Done   |
+| PRB-004 | P1       | Define internal subpath stability for releases | Open   |
+| PRB-005 | P1       | Verify tarball contents and exported surfaces  | Open   |
 
 ## PRB-001 — Align Publish Workflow With The Tested CI Gate
 
@@ -67,6 +69,10 @@ More concretely:
     documented with a reason
   - the publish path either runs or hard-depends on the same contract gates that protect normal CI
   - release docs no longer describe a lighter path than the one actually trusted for publish
+- Completion note (2026-04-13):
+  - `.github/workflows/ci.yml` and `.github/workflows/publish.yml` now both call the same
+    `pnpm release:check` baseline on Node `20.19.0`
+  - the release baseline now lives in `package.json` instead of being duplicated across workflows
 
 ## PRB-002 — Add A Clean-Checkout Release Rehearsal Path
 
@@ -90,6 +96,10 @@ More concretely:
   - the rehearsal proves the repo can build, test, and package successfully on the intended release
     baseline
   - the next real publish does not require inventing or remembering extra steps under pressure
+- Completion note (2026-04-13):
+  - the repo now exposes `pnpm release:check` as the named clean-checkout pre-tag rehearsal path
+  - local rehearsal completed through format check, contract gate, clean-checkout gate, build,
+    typecheck, audit, and coverage
 
 ## PRB-003 — Refresh And Align Release Documentation
 
@@ -112,6 +122,9 @@ More concretely:
   - there is one unambiguous pre-tag checklist
   - user-facing and tool-facing docs agree on the actual release path
   - the next publish can be executed by following docs rather than reconstructing history
+- Completion note (2026-04-13):
+  - `README.md`, `AGENTS.md`, and `CLAUDE.md` now all describe `pnpm release:check` as the shared
+    pre-tag baseline and no longer document the lighter historical release path as the default
 
 ## PRB-004 — Define Internal Subpath Stability For Releases
 

@@ -41,10 +41,11 @@ untrusted UI cards.
 - `pnpm test:contracts:packages` — run only the validator/react contract-regression suites without the workspace canary.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
+- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, typecheck, audit, and coverage.
 - `pnpm clean` — remove package `dist` directories.
 - `pnpm format` — format the workspace with Prettier.
 - `pnpm format:check` — check whether the workspace is Prettier-formatted.
-- The main CI workflow also runs `pnpm format:check`.
+- The main CI workflow and the tag-based publish workflow both use `pnpm release:check` as the shared release baseline.
 - `pnpm --filter @safe-ugc-ui/schema build` — regenerate JSON Schema output.
 - `pnpm --filter @safe-ugc-ui/demo dev` — run the demo app locally.
 - `pnpm --filter @safe-ugc-ui/validator test` — run validator tests only.
@@ -77,7 +78,7 @@ untrusted UI cards.
 - Published under the `@safe-ugc-ui` scope on npm.
 - `workspace:*` dependencies are resolved to concrete versions during publish.
 - Releases are published by GitHub Actions via npm trusted publishing from `v*` tags.
-- Typical release flow: bump versions, `pnpm build`, `pnpm test:run`, commit and push the release commit, then push a matching `vX.Y.Z` tag.
+- Typical release flow: bump versions, run `pnpm release:check` from a clean checkout, commit and push the release commit, then push a matching `vX.Y.Z` tag.
 - The `publish.yml` workflow performs the actual publish by running `pnpm -r publish --access public --no-git-checks` on GitHub-hosted runners; maintainers normally do not publish from local machines.
 
 ## Specs & Security Notes

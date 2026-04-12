@@ -10,6 +10,7 @@
     "test:contracts:clean-workspace": "pnpm clean && pnpm test:contracts:packages && pnpm --filter @safe-ugc-ui/demo typecheck",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "release:check": "pnpm format:check && pnpm test:contracts && pnpm test:clean-checkout && pnpm build && pnpm -r exec tsc --noEmit && pnpm audit && pnpm test:coverage",
     "clean": "pnpm -r exec rm -rf dist",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

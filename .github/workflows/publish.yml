@@ -24,18 +24,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20.19.0'
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test:run
+      - name: Release baseline gate
+        run: pnpm release:check
 
       - name: Publish public packages
         run: pnpm -r publish --access public --no-git-checks
