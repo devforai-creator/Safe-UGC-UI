@@ -11,9 +11,9 @@ as the historical audit ledger that tracks older items and prior closure state.
 - Audit score: `3.90 / 5.00`
 - Audit grade: `A`
 - Current ruling:
-  - current production gate blockers are closed
-  - remaining open work is strategic duplication reduction, not an immediate
-    deployment blocker
+  - all current audit backlog items are closed
+  - remaining work can now be planned as new backlog, not as unresolved audit
+    carryover
 
 ## Priority Model
 
@@ -32,7 +32,7 @@ as the historical audit ledger that tracks older items and prior closure state.
 | AAB-001 | P0       | Before production | Clean-checkout workspace verification loop           | Closed |
 | AAB-002 | P0       | Before production | Structured diagnostics for host integration failures | Closed |
 | AAB-003 | P1       | Next iteration    | Regression coverage for integration-failure paths    | Closed |
-| AAB-004 | P2       | Strategic         | Shared style/responsive/limit semantics layer        | Open   |
+| AAB-004 | P2       | Strategic         | Shared style/responsive/limit semantics layer        | Closed |
 
 ## AAB-001 — Make The Workspace Verification Loop Reproducible From A Clean Checkout
 
@@ -156,14 +156,15 @@ as the historical audit ledger that tracks older items and prior closure state.
 - Current progress:
   - `AAB-004a` is landed
   - `AAB-004b` is landed
-  - `AAB-004c` initial capability-registry slice is landed
+  - `AAB-004c` capability-registry slices are landed
   - shared enum/value-domain lists are now wired through schema, validator, and
     renderer-internal helpers
   - shared text-span and validator property-category constants are now wired
     through `types` and validator validation paths
   - shared allowed-key registries are now wired through
     `types/internal/style-key-sets` and validator key validation paths
-  - broader `AAB-004c` registry work remains open
+  - remaining validator-local sets are explicitly documented as
+    validator-only implementation helpers, not shared DSL semantics
 - Risk:
   - the same author-facing DSL semantics are still encoded in multiple high-risk
     files, so a future rule change will keep demanding parallel edits
@@ -187,6 +188,17 @@ as the historical audit ledger that tracks older items and prior closure state.
     helper boundary
   - a representative rule change no longer requires editing the same concept in
     multiple high-risk files
+- Closure:
+  - shared `$style` and responsive merge semantics now live in
+    `packages/types/src/internal/style-semantics.ts` and are consumed by both
+    validator and renderer paths
+  - shared renderer-equivalent style output and byte-counting semantics now
+    live in `packages/types/src/internal/style-output.ts`
+  - shared capability/value-domain lists now live in
+    `packages/types/src/constants.ts`, and shared allowed-key registries now
+    live in `packages/types/src/internal/style-key-sets.ts`
+  - the remaining validator-local collections are explicitly treated as local
+    lookup helpers rather than duplicated cross-package DSL registries
 
 ## Suggested Order
 

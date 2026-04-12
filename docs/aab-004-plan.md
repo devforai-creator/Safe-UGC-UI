@@ -23,8 +23,7 @@ This document defines the execution plan for `AAB-004` from
 - Shared allowed-key registries now live in
   `packages/types/src/internal/style-key-sets.ts` and feed validator-side
   style, hover-style, responsive-style, and text-span key validation.
-- `AAB-004` remains open because the broader `004c` registry work is still
-  pending.
+- `AAB-004` is complete as of `2026-04-13`.
 
 ## Goal
 
@@ -314,10 +313,13 @@ The first `004c` slice is landed:
   `LENGTH_STYLE_PROPERTIES`, and `RANGE_LIMITED_LENGTH_STYLE_PROPERTIES` are
   now shared between `types` constants and validator-side style validation
 
-Still open:
+Residual validator-local sets are now implementation helpers, not duplicated
+author-facing DSL registries:
 
-- the style validator still owns some property categorization sets that are not
-  yet shared
+- `Set` wrappers such as `STYLE_ALLOWED_KEYS` and `COLOR_PROPERTIES` are now
+  thin lookup caches over shared constants or shared internal key lists
+- `STRUCTURED_FIELDS` remains local because it is a per-call validation option
+  set, not a reusable DSL capability definition
 
 ### Exit Criteria
 
@@ -370,3 +372,9 @@ Before merging any `AAB-004` slice, confirm:
   as intentionally separate
 - a representative DSL rule change demonstrably touches fewer high-risk files
   than it does today
+
+Status:
+
+- complete on `2026-04-13`
+- the remaining validator-local collections are intentionally separate
+  implementation details rather than duplicated cross-package semantics
