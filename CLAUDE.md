@@ -41,7 +41,8 @@ pick up the same project context.
 - `pnpm test:contracts:packages` — run only the validator/react contract-regression suites without the workspace canary.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
-- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, typecheck, audit, and coverage.
+- `pnpm release:pack-check` — verify that each publishable tarball contains the expected build outputs and exported entrypoints.
+- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, tarball/export verification, typecheck, audit, and coverage.
 - `pnpm clean` — remove `dist` folders.
 - `pnpm format` — format the workspace with Prettier.
 - `pnpm format:check` — check whether the workspace is Prettier-formatted.
@@ -69,9 +70,12 @@ pick up the same project context.
 ## Publishing
 
 - 유지보수자는 보통 로컬에서 직접 publish하지 않는다.
+- semver로 지원하는 공개 패키지 경계는 각 패키지의 루트 export와 `@safe-ugc-ui/schema/ugc-card.schema.json`이다.
+- `@safe-ugc-ui/types/internal/*`는 workspace 조정과 고급 도구 사용을 위해 export를 유지하지만, semver 안정성 보장은 하지 않는다. 외부 소비자는 가능하면 피하거나 exact version을 고정한다.
 - 릴리스는 GitHub Actions의 `publish.yml`이 npm trusted publishing으로 처리한다.
 - 실제 publish 명령은 워크플로 안에서 `pnpm -r publish --access public --no-git-checks`로 실행한다. `npm publish`를 쓰면 `workspace:*` 의존성이 실제 버전으로 치환되지 않는다.
 - 절차: 버전 bump → 깨끗한 checkout에서 `pnpm release:check` 실행 → 릴리스 커밋 push → `vX.Y.Z` 태그 push.
+- `pnpm release:pack-check`는 publish 전에 tarball 내용과 export 경계를 검증한다.
 - 로컬 `.npmrc`에 npm write 토큰을 지속적으로 저장하지 않는다.
 - 1.2.0은 `npm publish`로 잘못 나갔으므로 사용하지 않는다. 이후 릴리스에서도 최신 버전 표기와 package.json 버전을 함께 갱신한다.
 

@@ -41,7 +41,8 @@ untrusted UI cards.
 - `pnpm test:contracts:packages` — run only the validator/react contract-regression suites without the workspace canary.
 - `pnpm test:run` — non-watch test run.
 - `pnpm test:coverage` — run the workspace test suite with coverage output.
-- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, typecheck, audit, and coverage.
+- `pnpm release:pack-check` — verify that each publishable tarball contains the expected build outputs and exported entrypoints.
+- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, tarball/export verification, typecheck, audit, and coverage.
 - `pnpm clean` — remove package `dist` directories.
 - `pnpm format` — format the workspace with Prettier.
 - `pnpm format:check` — check whether the workspace is Prettier-formatted.
@@ -77,8 +78,11 @@ untrusted UI cards.
 
 - Published under the `@safe-ugc-ui` scope on npm.
 - `workspace:*` dependencies are resolved to concrete versions during publish.
+- The semver-supported public package surface is the package root exports plus `@safe-ugc-ui/schema/ugc-card.schema.json`.
+- `@safe-ugc-ui/types/internal/*` remains exported for workspace coordination and advanced tooling, but it is not covered by semver stability promises; external consumers should avoid it or pin exact versions.
 - Releases are published by GitHub Actions via npm trusted publishing from `v*` tags.
 - Typical release flow: bump versions, run `pnpm release:check` from a clean checkout, commit and push the release commit, then push a matching `vX.Y.Z` tag.
+- `pnpm release:pack-check` verifies tarball contents and exported entrypoints before npm publish.
 - The `publish.yml` workflow performs the actual publish by running `pnpm -r publish --access public --no-git-checks` on GitHub-hosted runners; maintainers normally do not publish from local machines.
 
 ## Specs & Security Notes

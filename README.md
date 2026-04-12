@@ -26,6 +26,12 @@ validator, and a React renderer that keeps user-provided UI inside a constrained
 | `@safe-ugc-ui/react`     | `UGCRenderer`, `UGCContainer`, renderer internals, asset/style helpers         |
 | `@safe-ugc-ui/demo`      | Vite-based playground for editing card JSON and previewing output              |
 
+### Package boundary policy
+
+- Semver-supported public entrypoints are the package root exports and `@safe-ugc-ui/schema/ugc-card.schema.json`.
+- `@safe-ugc-ui/types/internal/*` stays exported for workspace coordination and advanced tooling, but it is not covered by semver stability promises.
+- External consumers should avoid `@safe-ugc-ui/types/internal/*` unless they are prepared to pin exact versions and absorb internal refactors.
+
 ### Dependency graph
 
 ```text
@@ -59,7 +65,8 @@ pnpm add @safe-ugc-ui/types
 - `pnpm test:contracts:packages` — run only the validator/react contract-regression suites without the workspace canary
 - `pnpm test:run` — run the full workspace test suite once
 - `pnpm test:coverage` — run the workspace suite with coverage
-- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, typecheck, audit, and coverage
+- `pnpm release:pack-check` — verify that each publishable tarball contains the expected build outputs and exported entrypoints
+- `pnpm release:check` — run the shared pre-tag release baseline: format check, contract gate, clean-checkout gate, build, tarball/export verification, typecheck, audit, and coverage
 - `pnpm clean` — remove package `dist` directories
 - `pnpm format` — format the workspace with Prettier
 - `pnpm format:check` — check whether the workspace is Prettier-formatted
@@ -246,6 +253,7 @@ pnpm build
 pnpm test
 pnpm test:run
 pnpm test:coverage
+pnpm release:pack-check
 pnpm release:check
 pnpm clean
 pnpm --filter @safe-ugc-ui/schema build
@@ -271,6 +279,7 @@ Tests live alongside source as `*.test.ts` or `*.test.tsx`.
   commands, or workflow expectations change.
 - Releases are published by GitHub Actions via npm trusted publishing from `v*` tags after a local clean-checkout `pnpm release:check` rehearsal passes.
 - The actual publish step runs inside `publish.yml` via `pnpm -r publish --access public --no-git-checks`, not as a normal local maintainer command.
+- `pnpm release:pack-check` verifies packed tarballs before publish so exported entrypoints and generated artifacts are checked before npm sees them.
 - Treat `safe-ugc-ui-card-spec.md` as the source of truth for current card behavior.
 - Treat `safe-ugc-ui-spec-v0.3.md` as design history, not the current implementation contract.
 

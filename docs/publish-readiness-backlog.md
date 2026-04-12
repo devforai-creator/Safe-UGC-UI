@@ -14,8 +14,10 @@ place.
 - Core validation and renderer hardening are in good shape, but the release path itself has not been
   exercised recently enough to trust muscle memory
 - The next failure risk is more likely to be release-process drift than a missing product feature
-- Shared release baseline now exists as `pnpm release:check`; the remaining publish-readiness work
-  is package-boundary clarity and tarball verification
+- Shared release baseline now exists as `pnpm release:check`
+- Internal subpath policy and tarball/export verification are now implemented
+- The next real tag publish should be treated as a confirmation run, not as the first time these
+  controls are exercised
 
 ## Target Outcome
 
@@ -44,8 +46,8 @@ More concretely:
 | PRB-001 | P0       | Align publish workflow with the tested CI gate | Done   |
 | PRB-002 | P0       | Add a clean-checkout release rehearsal path    | Done   |
 | PRB-003 | P0       | Refresh and align release documentation        | Done   |
-| PRB-004 | P1       | Define internal subpath stability for releases | Open   |
-| PRB-005 | P1       | Verify tarball contents and exported surfaces  | Open   |
+| PRB-004 | P1       | Define internal subpath stability for releases | Done   |
+| PRB-005 | P1       | Verify tarball contents and exported surfaces  | Done   |
 
 ## PRB-001 — Align Publish Workflow With The Tested CI Gate
 
@@ -147,6 +149,11 @@ More concretely:
   - docs explicitly state the stability expectation for exported internal subpaths
   - maintainers have one clear rule for whether changes to those helpers require public API treatment
   - the next release does not leave external consumers guessing from `exports` alone
+- Completion note (2026-04-13):
+  - `README.md`, `AGENTS.md`, and `CLAUDE.md` now state that semver-supported public surfaces are the
+    package root exports plus `@safe-ugc-ui/schema/ugc-card.schema.json`
+  - `@safe-ugc-ui/types/internal/*` is now explicitly documented as exported-but-unstable for
+    workspace coordination and advanced tooling
 
 ## PRB-005 — Verify Tarball Contents And Exported Surfaces Before Publish
 
@@ -170,6 +177,11 @@ More concretely:
   - maintainers can inspect or automatically verify the tarball contents for each publishable package
   - the next release proves that generated outputs and exported entrypoints match intent
   - package boundary regressions are caught before npm, not after
+- Completion note (2026-04-13):
+  - the repo now exposes `pnpm release:pack-check` via `scripts/release-pack-check.mjs`
+  - `pnpm release:check` now includes tarball/export verification after the workspace build
+  - local validation passed for `@safe-ugc-ui/types`, `@safe-ugc-ui/schema`,
+    `@safe-ugc-ui/validator`, and `@safe-ugc-ui/react`
 
 ## Exit Criteria
 
