@@ -542,6 +542,7 @@ export function validateSecurity(card: {
 
   walkRenderableCard(views, fragments, (node, context) => {
     if (!('type' in node) || typeof node.type !== 'string') {
+      scanForRefs(node, context.path, errors);
       return;
     }
 

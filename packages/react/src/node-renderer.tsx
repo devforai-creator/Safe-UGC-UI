@@ -15,7 +15,7 @@
  *   7. Recursively render children (arrays and for-loops)
  */
 
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useMemo, useRef, type CSSProperties, type ReactNode } from 'react';
 import {
   MAX_NODE_COUNT,
   MAX_LOOP_ITERATIONS,
@@ -134,6 +134,7 @@ export interface RenderContext {
   iconResolver?: (name: string) => ReactNode;
   onAction?: (type: string, actionId: string, payload?: unknown) => void;
   onError?: RendererErrorHandler;
+  runtimeErrors?: RendererError[];
   limits: RuntimeLimits;
   responsive: {
     compact: boolean;
@@ -310,8 +311,21 @@ function renderSwitchBranch(
   return null;
 }
 
+function emitRuntimeErrors(ctx: RenderContext, errors: RendererError[]): void {
+  if (ctx.runtimeErrors) {
+    ctx.runtimeErrors.push(...errors);
+    return;
+  }
+
+  ctx.onError?.(errors);
+}
+
+function emitRuntimeError(ctx: RenderContext, error: RendererError): void {
+  emitRuntimeErrors(ctx, [error]);
+}
+
 function reportRuntimeError(ctx: RenderContext, error: RendererError): null {
-  ctx.onError?.([error]);
+  emitRuntimeError(ctx, error);
   return null;
 }
 
@@ -386,36 +400,30 @@ export function renderNode(node: unknown, ctx: RenderContext, key: string | numb
     }
 
     if ((ctx.fragmentStack?.length ?? 0) > 0) {
-      ctx.onError?.([
-        {
-          code: 'RUNTIME_FRAGMENT_NESTED_USE',
-          message: 'Fragments may not contain nested "$use" references',
-          path: String(key),
-        },
-      ]);
+      emitRuntimeError(ctx, {
+        code: 'RUNTIME_FRAGMENT_NESTED_USE',
+        message: 'Fragments may not contain nested "$use" references',
+        path: String(key),
+      });
       return null;
     }
 
     if (ctx.fragmentStack?.includes(node.$use)) {
-      ctx.onError?.([
-        {
-          code: 'RUNTIME_FRAGMENT_CYCLE',
-          message: `Fragment "${node.$use}" recursively references itself`,
-          path: String(key),
-        },
-      ]);
+      emitRuntimeError(ctx, {
+        code: 'RUNTIME_FRAGMENT_CYCLE',
+        message: `Fragment "${node.$use}" recursively references itself`,
+        path: String(key),
+      });
       return null;
     }
 
     const fragment = ctx.fragments?.[node.$use];
     if (fragment == null) {
-      ctx.onError?.([
-        {
-          code: 'RUNTIME_FRAGMENT_NOT_FOUND',
-          message: `Fragment "${node.$use}" was not found`,
-          path: String(key),
-        },
-      ]);
+      emitRuntimeError(ctx, {
+        code: 'RUNTIME_FRAGMENT_NOT_FOUND',
+        message: `Fragment "${node.$use}" was not found`,
+        path: String(key),
+      });
       return null;
     }
 
@@ -464,43 +472,35 @@ export function renderNode(node: unknown, ctx: RenderContext, key: string | numb
 
   // --- Batch limit checks (all-or-nothing) ---
   if (ctx.limits.nodeCount + 1 > MAX_NODE_COUNT) {
-    ctx.onError?.([
-      {
-        code: 'RUNTIME_NODE_LIMIT',
-        message: `Node count exceeds maximum of ${MAX_NODE_COUNT}`,
-        path: String(key),
-      },
-    ]);
+    emitRuntimeError(ctx, {
+      code: 'RUNTIME_NODE_LIMIT',
+      message: `Node count exceeds maximum of ${MAX_NODE_COUNT}`,
+      path: String(key),
+    });
     return null;
   }
   if (ctx.limits.styleBytes + styleDelta > STYLE_OBJECTS_TOTAL_MAX_BYTES) {
-    ctx.onError?.([
-      {
-        code: 'RUNTIME_STYLE_LIMIT',
-        message: `Style bytes exceed maximum of ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`,
-        path: String(key),
-      },
-    ]);
+    emitRuntimeError(ctx, {
+      code: 'RUNTIME_STYLE_LIMIT',
+      message: `Style bytes exceed maximum of ${STYLE_OBJECTS_TOTAL_MAX_BYTES}`,
+      path: String(key),
+    });
     return null;
   }
   if (ctx.limits.overflowAutoCount + overflowDelta > MAX_OVERFLOW_AUTO_COUNT) {
-    ctx.onError?.([
-      {
-        code: 'RUNTIME_OVERFLOW_LIMIT',
-        message: `Overflow auto count exceeds maximum of ${MAX_OVERFLOW_AUTO_COUNT}`,
-        path: String(key),
-      },
-    ]);
+    emitRuntimeError(ctx, {
+      code: 'RUNTIME_OVERFLOW_LIMIT',
+      message: `Overflow auto count exceeds maximum of ${MAX_OVERFLOW_AUTO_COUNT}`,
+      path: String(key),
+    });
     return null;
   }
   if (ctx.limits.textBytes + textDelta > TEXT_CONTENT_TOTAL_MAX_BYTES) {
-    ctx.onError?.([
-      {
-        code: 'RUNTIME_TEXT_LIMIT',
-        message: `Text bytes exceed maximum of ${TEXT_CONTENT_TOTAL_MAX_BYTES}`,
-        path: String(key),
-      },
-    ]);
+    emitRuntimeError(ctx, {
+      code: 'RUNTIME_TEXT_LIMIT',
+      message: `Text bytes exceed maximum of ${TEXT_CONTENT_TOTAL_MAX_BYTES}`,
+      path: String(key),
+    });
     return null;
   }
 
@@ -806,13 +806,11 @@ function renderForLoop(loop: ForLoopLike, ctx: RenderContext): ReactNode[] {
   }
   if (!Array.isArray(source)) {
     // Hard error: source exists but is not an array (type mismatch)
-    ctx.onError?.([
-      {
-        code: 'RUNTIME_LOOP_SOURCE_INVALID',
-        message: `Loop source "${loop.in}" is not an array (got ${typeof source})`,
-        path: `for(${loop.for} in ${loop.in})`,
-      },
-    ]);
+    emitRuntimeError(ctx, {
+      code: 'RUNTIME_LOOP_SOURCE_INVALID',
+      message: `Loop source "${loop.in}" is not an array (got ${typeof source})`,
+      path: `for(${loop.for} in ${loop.in})`,
+    });
     return [];
   }
 
@@ -837,6 +835,36 @@ function renderForLoop(loop: ForLoopLike, ctx: RenderContext): ReactNode[] {
 // ---------------------------------------------------------------------------
 // RenderTree --- render an entire view tree
 // ---------------------------------------------------------------------------
+
+function runtimeErrorKey(errors: readonly RendererError[]): string {
+  return errors.map((error) => `${error.code}|${error.path}|${error.message}`).join('\n');
+}
+
+function RuntimeErrorReporter({
+  errors,
+  onError,
+}: {
+  errors: RendererError[];
+  onError: RendererErrorHandler;
+}) {
+  const lastReportedKey = useRef<string | null>(null);
+  const errorKey = useMemo(() => runtimeErrorKey(errors), [errors]);
+
+  useEffect(() => {
+    if (errors.length === 0 || errorKey.length === 0) {
+      return;
+    }
+
+    if (lastReportedKey.current === errorKey) {
+      return;
+    }
+
+    lastReportedKey.current = errorKey;
+    onError(errors);
+  }, [errorKey, errors, onError]);
+
+  return null;
+}
 
 /**
  * Render a full view tree starting from the root node.
@@ -870,6 +898,7 @@ export function renderTree(
     styleBytes: 0,
     overflowAutoCount: 0,
   };
+  const runtimeErrors: RendererError[] = [];
   const ctx: RenderContext = {
     state,
     assets,
@@ -879,11 +908,23 @@ export function renderTree(
     iconResolver,
     onAction,
     onError,
+    runtimeErrors,
     limits,
     responsive: {
       compact: responsive.compact,
       medium: responsive.medium ?? responsive.compact,
     },
   };
-  return renderNode(rootNode, ctx, 'root');
+  const renderedTree = renderNode(rootNode, ctx, 'root');
+
+  if (!onError || runtimeErrors.length === 0) {
+    return renderedTree;
+  }
+
+  return (
+    <>
+      <RuntimeErrorReporter errors={runtimeErrors} onError={onError} />
+      {renderedTree}
+    </>
+  );
 }

@@ -92,8 +92,12 @@ describe('resolveRef', () => {
     expect(resolveRef('$users[0].posts[1].title', state)).toBe('World');
   });
 
-  it('handles ref path without leading $', () => {
-    expect(resolveRef('hp', { hp: 200 })).toBe(200);
+  it('returns undefined for ref paths without a leading $', () => {
+    expect(resolveRef('hp', { hp: 200 })).toBeUndefined();
+  });
+
+  it('returns undefined for ref paths with array indices above the spec limit', () => {
+    expect(resolveRef('$items[10000]', { items: ['blocked'] })).toBeUndefined();
   });
 
   it('resolves to falsy values correctly', () => {

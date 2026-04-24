@@ -7,7 +7,7 @@
  * - Literal values pass through unchanged
  */
 
-import { parseRefPathSegments, resolveRefPathSegments } from '@safe-ugc-ui/types';
+import { parseValidRefPathSegments, resolveRefPathSegments } from '@safe-ugc-ui/types';
 
 /**
  * Resolves a $ref path (e.g. "$hp", "$items[0].name") from card state.
@@ -23,7 +23,10 @@ export function resolveRef(
   state: Record<string, unknown>,
   locals?: Record<string, unknown>,
 ): unknown {
-  const segments = parseRefPathSegments(refPath);
+  const segments = parseValidRefPathSegments(refPath);
+  if (!segments) {
+    return undefined;
+  }
 
   // Choose starting object: locals first, then state
   const firstSeg = segments[0];

@@ -21,7 +21,7 @@ import { z } from 'zod';
 import { MAX_INTERACTIVE_ITEMS } from './constants.js';
 import { conditionSchema } from './conditions.js';
 import { responsivePropsSchema, stylePropsSchema } from './styles.js';
-import { dynamicSchema, templatedStringSchema } from './values.js';
+import { dynamicSchema, refSchema, templatedStringSchema } from './values.js';
 import {
   textPropsSchema,
   imagePropsSchema,
@@ -70,7 +70,7 @@ export type FragmentUseNode = {
  */
 export const forLoopSchema = z.object({
   for: z.string(),
-  in: z.string(),
+  in: refSchema.shape.$ref,
   template: z.lazy(() => renderableNodeSchema),
 });
 

@@ -10,13 +10,19 @@
  */
 
 import { z } from 'zod';
+import { isValidRefPathSyntax } from './ref-path.js';
 
 // ---------------------------------------------------------------------------
 // 1. Ref — state variable reference
 // ---------------------------------------------------------------------------
 
+const refPathSchema = z.string().refine(isValidRefPathSyntax, {
+  message:
+    '$ref paths must start with "$", contain 1-5 path segments, and use array indices from 0 to 9999.',
+});
+
 export const refSchema = z.object({
-  $ref: z.string(),
+  $ref: refPathSchema,
 });
 
 export type Ref = z.infer<typeof refSchema>;

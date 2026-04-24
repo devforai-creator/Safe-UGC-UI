@@ -21,8 +21,16 @@ describe('parseRefPathSegments', () => {
     expect(parseRefPathSegments('$data[1][0]')).toEqual(['data', '1', '0']);
   });
 
-  it('accepts paths without a leading dollar sign', () => {
-    expect(parseRefPathSegments('items[0]')).toEqual(['items', '0']);
+  it('rejects paths without a leading dollar sign', () => {
+    expect(parseRefPathSegments('items[0]')).toEqual([]);
+  });
+
+  it('rejects invalid bracket notation', () => {
+    expect(parseRefPathSegments('$items[abc]')).toEqual([]);
+  });
+
+  it('rejects array indices above the spec limit', () => {
+    expect(parseRefPathSegments('$items[10000]')).toEqual([]);
   });
 });
 
@@ -47,6 +55,14 @@ describe('resolveRefPath', () => {
 
   it('returns undefined for prototype pollution segments', () => {
     expect(resolveRefPath('$safe.__proto__.bad', { safe: {} })).toBeUndefined();
+  });
+
+  it('returns undefined for refs without a leading dollar sign', () => {
+    expect(resolveRefPath('safe.path', { safe: { path: 'blocked' } })).toBeUndefined();
+  });
+
+  it('returns undefined for refs with array indices above the spec limit', () => {
+    expect(resolveRefPath('$items[10000]', { items: ['blocked'] })).toBeUndefined();
   });
 
   it('returns undefined when the path exceeds the default depth limit', () => {

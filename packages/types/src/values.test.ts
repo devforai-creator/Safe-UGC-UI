@@ -187,16 +187,26 @@ describe('isAssetPath', () => {
 
 describe('refSchema', () => {
   it('accepts a valid Ref object', () => {
-    const result = refSchema.safeParse({ $ref: 'foo' });
+    const result = refSchema.safeParse({ $ref: '$foo' });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toEqual({ $ref: 'foo' });
+      expect(result.data).toEqual({ $ref: '$foo' });
     }
   });
 
-  it('accepts a Ref with an empty string value', () => {
+  it('rejects a Ref with an empty string value', () => {
     const result = refSchema.safeParse({ $ref: '' });
-    expect(result.success).toBe(true);
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a Ref without a leading dollar sign', () => {
+    const result = refSchema.safeParse({ $ref: 'foo' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a Ref with an array index above the spec limit', () => {
+    const result = refSchema.safeParse({ $ref: '$items[10000]' });
+    expect(result.success).toBe(false);
   });
 
   it('rejects when $ref is a number', () => {
@@ -220,11 +230,11 @@ describe('refSchema', () => {
   });
 
   it('strips extra keys (zod default behavior)', () => {
-    const result = refSchema.safeParse({ $ref: 'x', extra: 'y' });
+    const result = refSchema.safeParse({ $ref: '$x', extra: 'y' });
     expect(result.success).toBe(true);
     if (result.success) {
       // Zod strips unknown keys by default in z.object
-      expect(result.data).toEqual({ $ref: 'x' });
+      expect(result.data).toEqual({ $ref: '$x' });
     }
   });
 });

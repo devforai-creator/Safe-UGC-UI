@@ -84,6 +84,38 @@ describe('validateSchema', () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  it('rejects $ref paths that do not start with "$"', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Text',
+          content: { $ref: 'message' },
+        },
+      },
+    };
+
+    const result = validateSchema(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
+  });
+
+  it('rejects $ref paths with array indices above the spec limit', () => {
+    const card = {
+      meta: { name: 'test', version: '1.0.0' },
+      views: {
+        Main: {
+          type: 'Text',
+          content: { $ref: '$items[10000]' },
+        },
+      },
+    };
+
+    const result = validateSchema(card);
+    expect(result.valid).toBe(false);
+    expect(codes(result.errors)).toContain('SCHEMA_ERROR');
+  });
+
   it('accepts $if, disabled, and aspectRatio in schema validation', () => {
     const card = {
       meta: { name: 'test', version: '1.0.0' },
@@ -1863,6 +1895,23 @@ describe('validateSecurity', () => {
     const errors = validateSecurity({ views });
     const pollutionErrors = errors.filter((e) => e.code === 'PROTOTYPE_POLLUTION');
     expect(pollutionErrors).toHaveLength(0);
+  });
+
+  it('rejects prototype pollution refs on fragment-use wrappers', () => {
+    const views = makeViews({
+      type: 'Box',
+      children: [{ $use: 'safe', $if: { $ref: '$__proto__.polluted' } }],
+    });
+    const fragments = {
+      safe: {
+        type: 'Text',
+        content: 'safe',
+      },
+    };
+
+    const errors = validateSecurity({ views, fragments });
+    expect(codes(errors)).toContain('PROTOTYPE_POLLUTION');
+    expect(errors.some((e) => e.path.includes('children[0]'))).toBe(true);
   });
 
   // --- Fix 1: $ref external URL bypass ---

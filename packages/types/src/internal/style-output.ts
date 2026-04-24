@@ -47,7 +47,7 @@ import {
   ZINDEX_MAX,
   ZINDEX_MIN,
 } from '../constants.js';
-import { parseRefPathSegments, resolveRefPathSegments } from '../ref-path.js';
+import { parseValidRefPathSegments, resolveRefPathSegments } from '../ref-path.js';
 
 export type ResolvedCssValue = string | number;
 export type ResolvedCssStyle = Record<string, ResolvedCssValue>;
@@ -57,7 +57,11 @@ function resolveRef(
   state: Record<string, unknown>,
   locals?: Record<string, unknown>,
 ): unknown {
-  const segments = parseRefPathSegments(refPath);
+  const segments = parseValidRefPathSegments(refPath);
+  if (!segments) {
+    return undefined;
+  }
+
   const firstSeg = segments[0];
   const root = locals && firstSeg && firstSeg in locals ? locals : state;
 
