@@ -62,6 +62,9 @@ export interface UGCRendererProps {
 
   /** Optional callback for Button/Toggle interaction actions. */
   onAction?: (type: string, actionId: string, payload?: unknown) => void;
+
+  /** Host-controlled escape hatch for the outer container's overflow. Other protected isolation keys (isolation/contain/position) stay enforced. containerStyle.overflow remains ignored. */
+  hostOverflow?: 'hidden' | 'visible' | 'auto' | 'scroll';
 }
 
 // ---------------------------------------------------------------------------
@@ -95,6 +98,7 @@ export function UGCRenderer({
   assets = {},
   state: stateOverride,
   containerStyle,
+  hostOverflow,
   onError,
   iconResolver,
   onAction,
@@ -243,7 +247,7 @@ export function UGCRenderer({
 
   // Render the view tree inside the secure container
   return (
-    <UGCContainer ref={setContainerElement} style={containerStyle}>
+    <UGCContainer ref={setContainerElement} style={containerStyle} hostOverflow={hostOverflow}>
       {renderTree(
         result.rootNode,
         result.state,

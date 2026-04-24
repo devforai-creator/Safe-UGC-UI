@@ -16,6 +16,7 @@ import type { CSSProperties, ReactNode } from 'react';
 interface UGCContainerProps {
   children?: ReactNode;
   style?: CSSProperties;
+  hostOverflow?: 'hidden' | 'visible' | 'auto' | 'scroll';
 }
 
 const containerStyle: CSSProperties = {
@@ -32,10 +33,10 @@ const containerStyle: CSSProperties = {
  * core isolation properties defined above.
  */
 export const UGCContainer = forwardRef<HTMLDivElement, UGCContainerProps>(function UGCContainer(
-  { children, style },
+  { children, style, hostOverflow },
   ref,
 ) {
-  const mergedStyle: CSSProperties = style ? { ...style, ...containerStyle } : containerStyle;
+  const mergedStyle: CSSProperties = { ...style, ...containerStyle, ...(hostOverflow ? { overflow: hostOverflow } : {}) };
 
   return (
     <div ref={ref} style={mergedStyle}>
