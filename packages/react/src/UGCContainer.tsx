@@ -36,7 +36,11 @@ export const UGCContainer = forwardRef<HTMLDivElement, UGCContainerProps>(functi
   { children, style, hostOverflow },
   ref,
 ) {
-  const mergedStyle: CSSProperties = { ...style, ...containerStyle, ...(hostOverflow ? { overflow: hostOverflow } : {}) };
+  const mergedStyle: CSSProperties = {
+    ...style,
+    ...containerStyle,
+    ...(hostOverflow ? { overflow: hostOverflow } : {}),
+  };
 
   return (
     <div ref={ref} style={mergedStyle}>

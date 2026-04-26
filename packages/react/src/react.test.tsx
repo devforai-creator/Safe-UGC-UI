@@ -784,6 +784,51 @@ describe('UGCRenderer', () => {
     expect(outerDiv.style.overflow).toBe('hidden');
   });
 
+  it('allows host to override overflow via hostOverflow prop', () => {
+    const { container } = render(<UGCContainer hostOverflow="visible" />);
+    const outerDiv = container.firstElementChild as HTMLElement;
+    expect(outerDiv.style.overflow).toBe('visible');
+  });
+
+  it('keeps overflow style when hostOverflow prop is not specified', () => {
+    const { container } = render(<UGCContainer />);
+    const outerDiv = container.firstElementChild as HTMLElement;
+    expect(outerDiv.style.overflow).toBe('hidden');
+  });
+
+  it('keeps protected UGCContainer props styles even when hostOverflow exists', () => {
+    const { container } = render(
+      <UGCContainer
+        hostOverflow="visible"
+        style={{ isolation: 'auto', contain: 'none', position: 'static', overflow: 'scroll' }}
+      />,
+    );
+    const outerDiv = container.firstElementChild as HTMLElement;
+    expect(outerDiv.style.overflow).toBe('visible');
+    expect(outerDiv.style.isolation).toBe('isolate');
+    expect(outerDiv.style.contain).toBe('content');
+    expect(outerDiv.style.position).toBe('relative');
+  });
+
+  it('ignores containerStyle.overflow even when hostOverflow is not specified', () => {
+    const { container } = render(
+      <UGCContainer
+        style={{ isolation: 'auto', contain: 'none', position: 'static', overflow: 'scroll' }}
+      />,
+    );
+    const outerDiv = container.firstElementChild as HTMLElement;
+    expect(outerDiv.style.overflow).toBe('hidden');
+    expect(outerDiv.style.isolation).toBe('isolate');
+    expect(outerDiv.style.contain).toBe('content');
+    expect(outerDiv.style.position).toBe('relative');
+  });
+
+  it('forwards hostOverflow from UGCRenderer to UGCContainer', () => {
+    const { container } = render(<UGCRenderer card={validCard as any} hostOverflow="visible" />);
+    const outerDiv = container.firstElementChild as HTMLElement;
+    expect(outerDiv.style.overflow).toBe('visible');
+  });
+
   it('keeps protected isolation styles when containerStyle tries to override them', () => {
     const { container } = render(
       <UGCRenderer
