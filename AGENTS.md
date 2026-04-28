@@ -100,4 +100,4 @@ untrusted UI cards.
 - Invalid `viewName` values are reported via `onError` as `RUNTIME_VIEW_NOT_FOUND` and render `null`.
 - Missing `iconResolver` soft-skips `Icon` nodes and reports `RUNTIME_ICON_RESOLVER_MISSING`.
 - Text and style limits apply to resolved render output, not just authored literals.
-- `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`, and those keys are not overridable via `containerStyle`.
+- `UGCContainer` enforces renderer-side layout isolation with `overflow: hidden`, `isolation: isolate`, `contain: content`, and `position: relative`, and those keys are not overridable via `containerStyle`. Hosts can override only the overflow key, and only via the hostOverflow prop.

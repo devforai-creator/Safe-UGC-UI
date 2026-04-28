@@ -151,6 +151,7 @@ Key renderer props:
 - `assets` to resolve `@assets/...` references to host-controlled URLs; the host owns final URL provenance and any origin allowlist policy
 - `state` to override or extend `card.state`; the merged state is revalidated before rendering
 - `containerStyle` to style the outer isolation container without replacing protected isolation properties
+- `hostOverflow` to override only the `overflow` key among the protected isolation properties
 - `iconResolver` to map icon names to React nodes; if omitted, `Icon` nodes soft-skip and emit `RUNTIME_ICON_RESOLVER_MISSING` through `onError`
 - `onAction` to receive Button and Toggle action events
 - `onError` receives structured `RendererError[]` diagnostics for validation failures and runtime renderer issues
@@ -225,6 +226,7 @@ Recommended host boundary:
 - treat card-authored `state` and any host-provided runtime `state` overrides as untrusted inputs
 - treat final `assets` map values as host-controlled inputs; card authors may reference `@assets/...`, but hosts decide the actual file/URL provenance and any origin restrictions
 - let `UGCRenderer` revalidate the effective merged runtime state before rendering
+- if the host sets `hostOverflow` to any value other than `hidden`, the host must provide an outer wrapper (e.g. `overflow-x: auto`); otherwise overflow can leak to the page viewport
 
 The validation pipeline enforces:
 
@@ -237,7 +239,7 @@ The validation pipeline enforces:
 - prototype-pollution protection in `$ref` paths
 
 `UGCContainer` adds renderer-side isolation with `overflow: hidden`, `isolation: isolate`,
-`contain: content`, and `position: relative`, and `containerStyle` cannot override those keys.
+`contain: content`, and `position: relative`, and `containerStyle` cannot override those keys. Hosts can override only the overflow key, and only via the hostOverflow prop.
 
 ## Development
 
