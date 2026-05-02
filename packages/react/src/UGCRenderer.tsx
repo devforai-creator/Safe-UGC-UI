@@ -18,6 +18,15 @@
  *   - onError:        Optional error callback
  *   - iconResolver:   Optional callback to resolve icon names to ReactNode
  *   - onAction:       Optional callback for Button/Toggle actions
+ *   - hostOverflow:   Optional 'overflow' override on the container (default 'hidden')
+ *
+ * Notes:
+ *   - `hostOverflow` only changes the `overflow` style. Other isolation keys
+ *     (`isolation`, `contain`, `position`) remain enforced.
+ *   - Use `'auto'` for in-card horizontal scroll when content may be wider
+ *     than the container.
+ *   - `'visible'` has no visible effect — the container's `contain: paint`
+ *     still clips painting regardless of `overflow`. Use `'auto'` instead.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react';
