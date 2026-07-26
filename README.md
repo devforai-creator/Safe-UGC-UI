@@ -280,6 +280,11 @@ Tests live alongside source as `*.test.ts` or `*.test.tsx`.
 
 - Update `README.md`, `AGENTS.md`, and `CLAUDE.md` together when package versions, public APIs,
   commands, or workflow expectations change.
+- Dependency maintenance is security-first: Dependabot routine version-update PRs are disabled,
+  grouped security-update PRs remain enabled, and routine upgrades are handled intentionally during
+  maintenance windows.
+- GitHub CodeQL default setup performs JavaScript/TypeScript code scanning through repository
+  settings rather than a committed workflow file.
 - Releases are published by GitHub Actions via npm trusted publishing from `v*` tags after a local clean-checkout `pnpm release:check` rehearsal passes.
 - `publish.yml` intentionally runs the release baseline on Node `24` even though local development and CI target Node `20.19.0`; this exception exists to satisfy npm trusted publishing requirements.
 - The actual publish step runs inside `publish.yml` via `pnpm -r publish --access public --no-git-checks`, not as a normal local maintainer command.

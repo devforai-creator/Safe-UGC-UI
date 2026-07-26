@@ -2,6 +2,8 @@ version: 2
 updates:
   - package-ecosystem: 'npm'
     directory: '/'
+    # A schedule is required for this ecosystem entry, but routine version
+    # update PRs are intentionally disabled below.
     schedule:
       interval: 'weekly'
     groups:
@@ -9,27 +11,4 @@ updates:
         applies-to: 'security-updates'
         patterns:
           - '*'
-      test-toolchain:
-        patterns:
-          - 'vitest'
-          - '@vitest/*'
-          - 'jsdom'
-      demo-vite:
-        patterns:
-          - 'vite'
-          - '@vitejs/*'
-      react-types:
-        patterns:
-          - '@types/react'
-          - '@types/react-dom'
-      node-types:
-        patterns:
-          - '@types/node'
-      schema-runtime:
-        patterns:
-          - 'zod'
-      build-tooling:
-        patterns:
-          - 'typescript'
-          - 'tsup'
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 0

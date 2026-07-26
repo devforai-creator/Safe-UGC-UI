@@ -89,6 +89,8 @@ untrusted UI cards.
 
 ## Specs & Security Notes
 
+- Dependency maintenance is security-first: Dependabot routine version-update PRs are disabled, grouped security-update PRs remain enabled, and routine upgrades are handled intentionally during maintenance windows.
+- GitHub CodeQL default setup performs JavaScript/TypeScript code scanning through repository settings rather than a committed workflow file.
 - JSON Schema is structural only; security and limits live in the validator.
 - Prefer `loadCardRaw()` for untrusted raw JSON ingress and `loadCard()` for already-parsed inputs.
 - Asset references must go through `@assets/...` and are checked in both validator and renderer.
