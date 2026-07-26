@@ -49,6 +49,7 @@ The `assets` field declares which local assets the card references. Each value m
 - No path traversal (`../`)
 - The actual image files or final resolved URLs are provided by the platform at render time
 - Final asset URL provenance, remote fetch policy, and allowed origins are host/platform responsibilities rather than card-authored behavior
+- Resolved asset values accept HTTP(S), blob, relative, or safe raster data-image URLs; executable, active-document, local-file, and unknown schemes are rejected
 
 ---
 

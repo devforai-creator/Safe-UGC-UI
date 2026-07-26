@@ -10,8 +10,8 @@ interface ImageComponentProps {
 }
 
 /**
- * Renders an image. Defense-in-depth: reject unresolved asset paths and the
- * one URL scheme the validator/renderer explicitly forbid at render time.
+ * Renders an image. Defense-in-depth: reject unresolved asset paths,
+ * unsupported URL schemes, and non-raster data URLs at render time.
  */
 export function Image({ src, alt, style, hoverStyle }: ImageComponentProps) {
   const { style: resolvedStyle, onMouseEnter, onMouseLeave } = useHoverStyle(style, hoverStyle);

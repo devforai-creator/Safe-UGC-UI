@@ -50,6 +50,36 @@ describe('contract regressions — react renderer', () => {
     ]);
   });
 
+  it.each([
+    'javascript:alert(1)',
+    'java\nscript:alert(1)',
+    'vbscript:msgbox(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'data:image/svg+xml,<svg onload="alert(1)"/>',
+  ])('rejects unsafe resolved asset URL %s at runtime', (resolvedUrl) => {
+    const node = { type: 'Image', src: '@assets/avatar.png' } as const;
+    const onError = vi.fn();
+
+    const { container } = render(
+      <>
+        {renderTree(
+          node,
+          {},
+          { '@assets/avatar.png': resolvedUrl },
+          undefined,
+          undefined,
+          undefined,
+          onError,
+        )}
+      </>,
+    );
+
+    expect(container.firstChild).toBeNull();
+    expect(onError).toHaveBeenCalledWith([
+      expect.objectContaining({ code: 'RUNTIME_ASSET_URL_UNSAFE' }),
+    ]);
+  });
+
   it('reports invalid viewName through onError and renders null', async () => {
     const onError = vi.fn();
     const multiViewCard = {

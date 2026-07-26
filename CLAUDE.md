@@ -89,7 +89,7 @@ pick up the same project context.
 - Prefer `loadCardRaw()` for untrusted raw JSON ingress and `loadCard()` for already-parsed inputs.
 - Asset references must use `@assets/...`.
 - Style objects are a closed DSL; unknown style keys are rejected instead of ignored.
-- Final `assets` map values are host-controlled; origin policy and remote URL provenance are host responsibilities.
+- Final `assets` map values are host-controlled; the renderer accepts HTTP(S), blob, relative, or safe raster data-image URLs, while origin policy and remote URL provenance remain host responsibilities.
 - Card-authored `state` and any host-provided runtime `state` overrides are treated as untrusted inputs for validation and limits.
 - Low-level renderer exports such as `renderTree()` assume prior validation by the caller.
 - `UGCRenderer` revalidates the effective merged runtime state before rendering.

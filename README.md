@@ -224,7 +224,7 @@ Recommended host boundary:
 - treat `validateRaw()` and `validate()` as lower-level diagnostics APIs
 - treat low-level renderer internals such as `renderTree()` as advanced APIs that assume prior validation
 - treat card-authored `state` and any host-provided runtime `state` overrides as untrusted inputs
-- treat final `assets` map values as host-controlled inputs; card authors may reference `@assets/...`, but hosts decide the actual file/URL provenance and any origin restrictions
+- treat final `assets` map values as host-controlled inputs; card authors may reference `@assets/...`, while the renderer accepts HTTP(S), blob, relative, or safe raster data-image URLs and hosts decide the actual provenance and any origin restrictions
 - let `UGCRenderer` revalidate the effective merged runtime state before rendering
 - if the host sets `hostOverflow` to any value other than `hidden`, the host must provide an outer wrapper (e.g. `overflow-x: auto`); otherwise overflow can leak to the page viewport
 

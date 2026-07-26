@@ -5,7 +5,7 @@ import { BACKDROP_BLUR_MAX, FONT_SIZE_MAX, TEXT_CONTENT_TOTAL_MAX_BYTES } from '
 import { resolveRef, resolveTemplate, resolveTextValue, resolveValue } from './state-resolver.js';
 import { evaluateCondition } from './condition-resolver.js';
 import { mapStyle, mapTransition } from './style-mapper.js';
-import { resolveAsset } from './asset-resolver.js';
+import { isSafeResolvedAssetUrl, resolveAsset } from './asset-resolver.js';
 import { renderTree } from './node-renderer.js';
 import { UGCContainer } from './UGCContainer.js';
 import { UGCRenderer } from './UGCRenderer.js';
@@ -599,6 +599,36 @@ describe('resolveAsset', () => {
     expect(resolveAsset('@assets/img.png', bothAssets)).toBe(
       'https://cdn.example.com/full-path.png',
     );
+  });
+});
+
+describe('isSafeResolvedAssetUrl', () => {
+  it.each([
+    'https://cdn.example.com/avatar.png',
+    'http://localhost/avatar.png',
+    'blob:https://example.com/asset-id',
+    '/images/avatar.png',
+    '//cdn.example.com/avatar.png',
+    'data:image/png;base64,AAAA',
+    'DATA:image/jpeg;base64,AAAA',
+  ])('allows supported image URL %s', (url) => {
+    expect(isSafeResolvedAssetUrl(url)).toBe(true);
+  });
+
+  it.each([
+    '',
+    '   ',
+    '@assets/avatar.png',
+    ' javascript:alert(1)',
+    'java\nscript:alert(1)',
+    '\tVbScRiPt:msgbox(1)',
+    'data:text/html,<script>alert(1)</script>',
+    'data:image/svg+xml,<svg onload="alert(1)"/>',
+    'data:image/png;base64',
+    'file:///tmp/avatar.png',
+    'custom:avatar.png',
+  ])('rejects unsafe or unsupported image URL %s', (url) => {
+    expect(isSafeResolvedAssetUrl(url)).toBe(false);
   });
 });
 
