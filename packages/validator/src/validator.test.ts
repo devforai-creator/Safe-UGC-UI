@@ -489,7 +489,7 @@ describe('validateSchema', () => {
 
     expect(result.valid).toBe(false);
     expect(codes(result.errors)).toContain('SCHEMA_ERROR');
-    expect(result.errors.some((e) => e.path === 'views.Main')).toBe(true);
+    expect(result.errors.some((e) => e.path === 'views.Main.style')).toBe(true);
     expect(result.errors.some((e) => e.message.includes('fontSzie'))).toBe(true);
   });
 
